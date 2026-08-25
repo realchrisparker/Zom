@@ -71,9 +71,9 @@ void UZomAnimInstanceBase::NativeUpdateAnimation(float DeltaSeconds)
 	CurrentMaxAcceleration = MovementComponent->GetMaxAcceleration();
 	CurrentMaxDeceleration = MovementComponent->GetMaxBrakingDeceleration();
 
-	// Movement state pass-through from the movement component
+	// Movement state pass-through from the character (Gait) and movement component (everything else)
 	Gait_LastFrame = Gait;
-	Gait = MovementComponent->Gait;
+	Gait = Character->Gait;
 
 	RotationMode_LastFrame = RotationMode;
 	RotationMode = MovementComponent->RotationMode;

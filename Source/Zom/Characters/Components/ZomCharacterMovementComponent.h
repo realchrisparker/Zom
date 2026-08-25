@@ -63,10 +63,6 @@ public:
 	// Properties
 	// -------------
 
-	// Current gait, used to drive the max speed returned by GetMaxSpeed()
-	UPROPERTY(BlueprintReadWrite, Category = "Zom|Movement State", meta = (DisplayName = "Gait"))
-	EGait Gait = EGait::Walk;
-
 	// Current rotation mode, used to drive how the component orients the character while moving
 	UPROPERTY(BlueprintReadWrite, Category = "Zom|Movement State", meta = (DisplayName = "Rotation Mode"))
 	ERotationMode RotationMode = ERotationMode::OrientToMovement;
@@ -81,7 +77,7 @@ public:
 
 	// Max speed while Gait is Sprint
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Zom|Movement State", meta = (DisplayName = "Sprint Speed"))
-	float SprintSpeed = 650.0f;
+	float SprintSpeed = 600.0f;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Zom|Movement", meta = (DisplayName = "Just Landed"))
 	bool bJustLanded = false;

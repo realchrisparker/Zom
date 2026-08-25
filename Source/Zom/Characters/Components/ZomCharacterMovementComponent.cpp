@@ -41,6 +41,7 @@ void UZomCharacterMovementComponent::OnCharacterPossessed(AController* NewContro
 // Called when the owning character is unpossessed by its controller
 void UZomCharacterMovementComponent::OnCharacterUnPossessed()
 {
+	// Clear the reference to the owning character when unpossessed
 	OwningCharacter = nullptr;
 }
 
@@ -54,14 +55,19 @@ float UZomCharacterMovementComponent::GetMaxSpeed() const
 			return MaxWalkSpeedCrouched;
 		}
 
-		switch (Gait)
+		const AZomPlayerCharacter* ZomCharacterOwner = Cast<AZomPlayerCharacter>(GetCharacterOwner());
+
+		if (ZomCharacterOwner)
 		{
-		case EGait::Walk:
-			return WalkSpeed;
-		case EGait::Run:
-			return RunSpeed;
-		case EGait::Sprint:
-			return SprintSpeed;
+			switch (ZomCharacterOwner->Gait)
+			{
+			case EGait::Walk:
+				return WalkSpeed;
+			case EGait::Run:
+				return RunSpeed;
+			case EGait::Sprint:
+				return SprintSpeed;
+			}
 		}
 	}
 
@@ -92,6 +98,21 @@ void UZomCharacterMovementComponent::UpdateCharacterStateAfterMovement(float Del
 {
 	Super::UpdateCharacterStateAfterMovement(DeltaSeconds);
 
+	AZomPlayerCharacter* ZomCharacterOwner = Cast<AZomPlayerCharacter>(GetCharacterOwner());
+
+	if (!ZomCharacterOwner)
+	{
+		return;
+	}
+
+	// Sprint is a manual override (set by AZomPlayerController in response to the sprint input action) and
+	// isn't derived from speed, so leave it alone here; only classify between Walk and Run.
+	if (ZomCharacterOwner->Gait == EGait::Sprint)
+	{
+		return;
+	}
+
+	ZomCharacterOwner->Gait = (Velocity.Size2D() <= WalkSpeed) ? EGait::Walk : EGait::Run;
 }
 
 // Called when the movement mode changes (e.g. walking, falling, custom modes)
@@ -121,5 +142,5 @@ void UZomCharacterMovementComponent::ProcessLanded(const FHitResult& Hit, float 
 // Returns whether the character can crouch in its current state
 bool UZomCharacterMovementComponent::CanCrouchInCurrentState() const
 {
-	return Super::CanCrouchInCurrentState();
+	return Super::CanCrouchInCurrentState() && Velocity.Size2D() < 2.9f;
 }

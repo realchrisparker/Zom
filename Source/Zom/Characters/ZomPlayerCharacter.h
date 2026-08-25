@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Zom/Characters/Enums/ZomCharacterEnums.h"
 #include "ZomPlayerCharacter.generated.h"
 
 
@@ -56,6 +57,11 @@ public:
 	// -------------
 	// Properties
 	// -------------
+
+	// Current gait. Walk/Run are set automatically by UZomCharacterMovementComponent based on current speed;
+	// Sprint is set manually (by AZomPlayerController, in response to the sprint input action).
+	UPROPERTY(BlueprintReadWrite, Category = "Zom|Movement State", meta = (DisplayName = "Gait"))
+	EGait Gait = EGait::Walk;
 
 protected:
 
