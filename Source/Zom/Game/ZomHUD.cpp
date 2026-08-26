@@ -2,6 +2,8 @@
 
 
 #include "Zom/Game/ZomHUD.h"
+#include "Zom/UI/ZomHUDWidget.h"
+#include "Blueprint/UserWidget.h"
 
 AZomHUD::AZomHUD()
 {
@@ -13,6 +15,14 @@ void AZomHUD::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (HUDWidgetClass)
+	{
+		HUDWidgetInstance = CreateWidget<UZomHUDWidget>(GetOwningPlayerController(), HUDWidgetClass);
+		if (HUDWidgetInstance)
+		{
+			HUDWidgetInstance->AddToViewport();
+		}
+	}
 }
 
 void AZomHUD::DrawHUD()

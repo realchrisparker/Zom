@@ -79,7 +79,7 @@ AActor
 | `AZomPlayerCharacterBase` | `ACharacter` | [Design, confirmed] Shared movement setup. Implements `IAbilitySystemInterface::GetAbilitySystemComponent()` once, returning a cached `TObjectPtr<UAbilitySystemComponent>` populated by subclasses (Section 4.5). Also hosts shared helpers (`InitializeAbilitySystem()`, `GrantAbilitySet()`) so combat code doesn't care where the ASC physically lives. `PrimaryActorTick.bCanEverTick = false` at this level; subclasses opt back in only if they have a proven per-frame need. |
 | `AZomPlayerState` | `APlayerState` | [Design, confirmed] Owns `UAbilitySystemComponent`, `UZomAttributeSetBase`, and `UZomPlayerAttributeSet` for the player as real subobjects. Implements `IAbilitySystemInterface` directly (some GAS lookups resolve the ASC by calling the interface on whatever actor they're handed, which is sometimes the PlayerState, not the pawn). |
 | `AZomPlayerCharacter` | `AZomPlayerCharacterBase` | [Design] Player character/pawn. Creates no ASC of its own, calls `InitializeAbilitySystem(PlayerState, this)` from `PossessedBy()`/`OnRep_PlayerState()` to populate the inherited cached pointer. Adds `UZomInventoryComponent`, handles Enhanced Input binding. |
-| `AZomZombieBase` | `AZomPlayerCharacterBase` | [Design] Creates its own `UAbilitySystemComponent` and `UZomZombieAttributeSet` as real subobjects, calls `InitializeAbilitySystem(this, this)` from its own `BeginPlay`. Also owns `UStateTreeComponent`, `UZomZombieAIComponent` (Section 5.5), and a `TObjectPtr<UZombieTypeData>` reference. No per-type C++ subclassing, behavior differences come from data and from which senses are configured on the perception component inside `UZomZombieAIComponent`. |
+| `AZomZombieBase` | `AZomPlayerCharacterBase` | [Design] Creates its own `UAbilitySystemComponent` and `UZomZombieAttributeSet` as real subobjects, calls `InitializeAbilitySystem(this, this)` from its own `BeginPlay`. Sets `AIControllerClass = AZomZombieAIController::StaticClass()` and `AutoPossessAI = PlacedInWorldOrSpawned` (Section 5.5, revised) rather than owning perception/State Tree itself, and holds a `TObjectPtr<UZombieTypeData>` reference. No per-type C++ subclassing, behavior differences come from data and from which senses are configured on the possessing `AZomZombieAIController`. |
 | `AZomBoss` | `AZomPlayerCharacterBase` | [Design] Same ASC pattern as `AZomZombieBase`, including reusing `UZomZombieAttributeSet` (confirmed, see 4.1). Bespoke `UStateTreeComponent` (separate asset from the crowd base tree), owns `UZomBossData`, dialogue playback, phase-transition tag. Explicitly **not** pooled and **not** difficulty-scaled. |
 | `AZomGameMode` | `AGameModeBase` | [Design] Constructor sets `DefaultPawnClass = AZomPlayerCharacter::StaticClass()` and, critically, `PlayerStateClass = AZomPlayerState::StaticClass()`, without this the engine silently spawns a default `APlayerState` and the entire ASC-on-PlayerState design from Section 2 quietly does nothing. `PlayerControllerClass` stays the engine default per the `AZomPlayerController` row below. Also overrides `ChoosePlayerStart_Implementation` to select the `AZomCheckpoint` matching the loaded save's checkpoint ID, and loads the save slot on `InitGame`/early `PostLogin`. |
 
@@ -145,7 +145,7 @@ Full GAS per your resolved decision (design doc: "teaching GAS itself is worth t
 | `UZomAbilitySetData` | `UPrimaryDataAsset` | [Design] Grants an ability/effect set to a character on BeginPlay. The extensibility hook for combat. |
 | `Zom.Status.Attacking`, `Zom.Status.Staggered`, `Zom.Status.Dodging` | Gameplay Tags | [Design] Persistent, live on the ASC's tag container. Drive animation and ability gating instead of bools. Renamed from `Zom.State.*`, "State" already means something else in this project (State Tree states, Section 5.2), `Status` is the GAS-conventional term and doesn't collide. |
 | `Zom.Objective.Fetch.Complete`, `Zom.Objective.Repair.Complete`, `Zom.Objective.Defend.Complete`, `Zom.Objective.Boss.Complete`, `Zom.Objective.Extracted.Complete` | Gameplay Tags | [Design, confirmed] Extended to cover all five `EZomObjectiveStep` values. `UZomObjectiveSubsystem` sets both together in one function on step completion, never one without the other, that's what keeps them from drifting apart. The enum and the tags aren't actually duplicating the same job: the enum drives the subsystem's own internal sequencing and the checkpoint mapping (`EZomCheckpointID` comparison in `AZomGameMode::ChoosePlayerStart_Implementation`), the tags are the GAS-queryable mirror of that same progress, since GAS's own `ActivationRequiredTags`/effect tag requirements can't read a raw `uint8` enum at all. Mechanically: the subsystem resolves the player's ASC via `AZomPlayerCharacterBase::GetAbilitySystemComponent()` (4.5) and calls `AddLooseGameplayTag()` on the matching tag, that's the piece that was missing before, "enables GAS gating" only means something once a tag actually lands on an ASC somewhere. |
-| `Zom.Perception.Sight.TargetSeen`, `Zom.Perception.Sight.TargetLost`, `Zom.Perception.Hearing.NoiseHeard` | Gameplay Tags | [Proposed] Transient, never touch a tag container, passed through `FStateTreeEvent` once via `SendStateTreeEvent` and gone. Raised by `UZomZombieAIComponent` (Section 5.5), consumed by Event-triggered transitions on the crowd State Tree. |
+| `Zom.Perception.Sight.TargetSeen`, `Zom.Perception.Sight.TargetLost`, `Zom.Perception.Hearing.NoiseHeard`, `Zom.Perception.Damage.Taken` | Gameplay Tags | [Proposed] Transient, never touch a tag container, passed through `FStateTreeEvent` once via `SendStateTreeEvent` and gone. Raised by `AZomZombieAIController` (Section 5.5, revised), consumed by Event-triggered transitions on the crowd State Tree. `Damage.Taken` added post-hoc (not in the original draft) so a zombie can react to being shot/hit even from outside sight/hearing range - see 5.5. |
 
 **Tag taxonomy, not just a flat list:** the three rows above split by *mechanism*, not just by which system happens to raise the tag. `Status` tags persist on the ASC and get queried repeatedly (ability gating, animation state). `Perception` tags are one-shot signals that exist for the instant `SendStateTreeEvent` fires, then nothing holds a reference to them. `Objective` tags are the GAS-queryable mirror described above. Keeping these as separate branches under one `Zom.` root, rather than flattening everything, is what lets a `Zom.Perception` hierarchical match catch both `Sight` and `Hearing` children without the two mechanisms bleeding into each other.
 
@@ -209,26 +209,32 @@ Shared State Tree states: `Idle → Patrol → Investigate → Chase → Attack 
 
 ### 5.4 Cross-Zombie Alerting — [Open, wanted, not yet scheduled]
 
-Confirmed as a feature you want; the mechanism isn't decided yet, and this is explicitly a "later" item, not on the current build path. Not building any of it now. When you're ready to design it, the tagged events in `UZomZombieAIComponent` (5.5) are the natural payload to rebroadcast to nearby zombies, no new detection architecture needed, the plumbing already exists once 5.5 is built. Resist the urge to add a "just in case" broadcast delegate today; a delegate shaped around a guess at the design would likely need reworking once the real mechanism is chosen.
+Confirmed as a feature you want; the mechanism isn't decided yet, and this is explicitly a "later" item, not on the current build path. Not building any of it now. When you're ready to design it, the tagged events in `AZomZombieAIController` (5.5) are the natural payload to rebroadcast to nearby zombies, no new detection architecture needed, the plumbing already exists once 5.5 is built. Resist the urge to add a "just in case" broadcast delegate today; a delegate shaped around a guess at the design would likely need reworking once the real mechanism is chosen.
 
-### 5.5 `UZomZombieAIComponent`
+### 5.5 `AZomZombieAIController` [Revised — was `UZomZombieAIComponent`]
+
+**Revision note:** the original draft of this section proposed a `UActorComponent` living on `AZomZombieBase` to own perception and raise State Tree events, with `UStateTreeComponent` living directly on the pawn alongside it. On explicit direction, this was rebuilt as a dedicated `AAIController` subclass instead, matching UE 5.8's own intended State Tree AI pattern: `UStateTreeAIComponent`/`UStateTreeAIComponentSchema` (in `GameplayStateTreeModule`) are explicitly documented as "designed to be run on an AIController" and guarantee the State Tree's bindings access to the controller (and, through it, the possessed pawn). Perception now lives on the controller too, since it's a "brain" concept, not a "body" one. `AZomZombieBase` no longer owns either piece directly, only `AIControllerClass = AZomZombieAIController::StaticClass()` and `AutoPossessAI = PlacedInWorldOrSpawned`.
 
 | Item | Notes |
 |---|---|
-| `UZomZombieAIComponent` : `UActorComponent` | [Proposed] Owned by `AZomZombieBase`, created in its constructor. Consolidates perception configuration and event-raising into one purpose-built component instead of leaving that logic loose on the Actor. `PrimaryComponentTick.bCanEverTick = false`, event-driven off the perception delegate exclusively. |
+| `AZomZombieAIController` : `AAIController` | [Design, revised] Possesses `AZomZombieBase` via `AutoPossessAI`. Owns perception (Sight, Hearing, and Damage senses) and the crowd `UStateTreeAIComponent`. Event-driven off the perception delegate exclusively; the State Tree component itself is what ticks (not this controller directly). |
 
 **What it owns and does:**
 
-- Creates and owns the actual `UAIPerceptionComponent` as its own subobject. This moves perception off `AZomZombieBase` directly, the Actor now holds `UStateTreeComponent` plus this one AI component instead of three loosely related pieces.
-- At `BeginPlay`, reads sight/hearing radii and sensitivity off the owning zombie's `UZombieTypeData` (via a getter on `AZomZombieBase`, it doesn't hold a second reference to the same asset) and calls `UAIPerceptionComponent::ConfigureSense()` for `UAISenseConfig_Sight` and `UAISenseConfig_Hearing`. This is the concrete implementation behind the Section 5.2 claim that Auds and Eyes are "the same component with one sense's config zeroed out", that claim previously had no code location; now it does.
-- Holds a cached `TObjectPtr<UStateTreeComponent>`, set by `AZomZombieBase` (which owns both components) rather than found via a runtime component search.
-- Subscribes to `OnTargetPerceptionUpdated`. On a successful sense, raises a tagged State Tree event via `UStateTreeComponent::SendStateTreeEvent(Tag, Payload, Origin)` (confirmed against the UE 5.8 API, `Components/StateTreeComponent.h`), rather than caching state for the tree to poll. The tag identifies *which* sense fired, so the tree doesn't need a separate query to find out:
+- Assigns a `UAIPerceptionComponent` subobject into `AAIController`'s own inherited `PerceptionComponent` pointer via `SetPerceptionComponent()` — that pointer already exists on the base engine class, a same-named member on the subclass would be a UHT shadowing error.
+- Owns a `UStateTreeAIComponent` (not the plain `UStateTreeComponent` originally proposed) — the AI-specific subclass, using `UStateTreeAIComponentSchema` so the State Tree asset's bindings can reach this controller and its possessed pawn.
+- **Three senses**, not two: Sight and Hearing are radius-based (`UAISenseConfig_Sight`/`UAISenseConfig_Hearing`, tuned per `UZombieTypeData`); **Damage** (`UAISenseConfig_Damage`) is new, added post-hoc, and works differently — it has no radius or affiliation filter at all (`UAISenseConfig_Damage` doesn't declare one, confirmed against the 5.8 header), it's purely an explicit `UAISense_Damage::ReportDamageEvent()` call. `AZomZombieBase` binds to its own `UZomZombieAttributeSet::OnDamageTaken` (Section 12's damage-indicator delegate, reused here) and reports the hit on every damage instance, so a zombie can react to being shot/hit even from outside sight/hearing range. The reported "sensed actor" on the resulting stimulus is the damage *instigator* (confirmed via `UAISense_Damage::RegisterWrappedEvent` — `RegisterStimulus(Event.Instigator, ...)` on the damaged actor's own listener), not the zombie itself, so the controller reacts to "who hit me," not "I got hit."
+- `OnPossess(APawn* InPawn)` reads sight/hearing radii and sensitivity off the newly-possessed zombie's `UZombieTypeData` (via a getter on `AZomZombieBase`, the controller doesn't hold a second reference to the same asset) and calls `ConfigureForType()`, which in turn calls `UAIPerceptionComponent::ConfigureSense()` for `UAISenseConfig_Sight` and `UAISenseConfig_Hearing` (Damage needs no per-type configuration). This is the concrete implementation behind the Section 5.2 claim that Auds and Eyes are "the same component with one sense's config zeroed out."
+- `ConfigureForType()` is re-callable, not just an `OnPossess`-time thing: `AZomZombieBase::InitializeForType()` calls back into it whenever `UZomZombiePoolSubsystem` reactivates a pooled zombie as a (possibly different) type, since the controller possesses once and is never re-spawned alongside pooling — pooled reactivation only hides/shows the pawn, so re-seeding perception on every activation has to be an explicit, separately-callable path.
+- `PauseBrain()`/`ResumeBrain()` call the State Tree component's own `StopLogic()`/`StartLogic()` (confirmed present on `UStateTreeComponent` in `Components/StateTreeComponent.h`) — called by `UZomZombiePoolSubsystem` on release/reactivation so a hidden pooled zombie's brain doesn't keep running while deactivated.
+- Subscribes to `OnTargetPerceptionUpdated`. On a successful sense, raises a tagged State Tree event via `UStateTreeComponent::SendStateTreeEvent(Tag, Payload, Origin)` (confirmed against the UE 5.8 API), rather than caching state for the tree to poll. The tag identifies *which* sense fired, so the tree doesn't need a separate query to find out:
 
 | Gameplay Tag | Raised when |
 |---|---|
 | `Zom.Perception.Sight.TargetSeen` | Sight sense successfully senses the player |
 | `Zom.Perception.Sight.TargetLost` | Sight sense loses the player |
 | `Zom.Perception.Hearing.NoiseHeard` | Hearing sense registers a stimulus (footsteps, gunfire) |
+| `Zom.Perception.Damage.Taken` | The zombie takes damage (via `UZomZombieAttributeSet::OnDamageTaken` → `ReportDamageEvent`), regardless of sight/hearing range |
 
   (Added to the tag list in 4.4, same table as `Zom.Status.*`/`Zom.Objective.*`.)
 
@@ -237,7 +243,7 @@ Confirmed as a feature you want; the mechanism isn't decided yet, and this is ex
 
 **Dropped from the previous draft:** `EZomPerceptionStimulus`/`GetLastStimulusType()`. The event tag itself now answers "which sense fired", a separate polling enum for the same question would just be a second way to ask something the tag already tells you.
 
-**Boss doesn't get this component.** [Proposed, flag if wrong] The encounter is a single gated, always-aware fight, not a detection problem, `UZomBossData` has no per-sense radius fields to configure against, and the design doc already treats Boss AI as bespoke rather than data-driven. If the Boss needs to notice the player at all before the fight starts, a trigger volume is simpler than standing up a full perception setup for a one-off encounter.
+**Boss doesn't get this controller.** [Proposed, flag if wrong] The encounter is a single gated, always-aware fight, not a detection problem, `UZomBossData` has no per-sense radius fields to configure against, and the design doc already treats Boss AI as bespoke rather than data-driven. `AZomBoss` keeps its bespoke `UStateTreeComponent` directly on the pawn (Section 6), not this AIController pattern — not revisited as part of this section's rebuild, since the ask was scoped to the crowd zombie AI class specifically. If the Boss needs to notice the player at all before the fight starts, a trigger volume is simpler than standing up a full perception setup for a one-off encounter.
 
 ---
 
@@ -377,7 +383,7 @@ All bound to delegates, no per-frame polling, per project performance rules.
 Already baked into the design, called out here so it isn't lost during implementation:
 
 - `AZomPlayerCharacterBase`, `AZomZombieBase`, `AZomBoss` disable Tick by default; State Tree and GAS event-driven logic cover behavior without polling.
-- `UZomZombieAIComponent` disables Tick too, target caching is driven off `OnTargetPerceptionUpdated`, not a per-frame distance scan.
+- `AZomZombieAIController` doesn't tick itself, target caching is driven off `OnTargetPerceptionUpdated`, not a per-frame distance scan; the State Tree component it owns is what actually ticks.
 - `AZomPlayerState` and the AI actors each own their own ASC instance; no cross-actor lookups needed to find "the" ASC, `GetAbilitySystemComponent()` on any humanoid resolves it locally.
 - Zombie pool never calls `SpawnActor()`/`Destroy()` at runtime.
 - Player/zombie cross-references use `TWeakObjectPtr` to avoid GC circular holds.
@@ -394,7 +400,7 @@ Matches the design doc's milestone sequence. **Updated per the Section 17 audit*
 0. Add `GameplayAbilities`/`GameplayTasks`/`GameplayTags` module dependencies to `Zom.Build.cs`; create `Config/DefaultGameplayTags.ini` (or native `FNativeGameplayTag` registration) for the `Zom.*` tag root. Nothing in step 2 onward compiles without this.
 1. Repurpose `AZomPlayerCharacterBase` into the real shared humanoid base (ASC pointer, `IAbilitySystemInterface`, `InitializeAbilitySystem`/`GrantAbilitySet`/`ApplyGameplayEffectToSelf`/`GetHealth`/`HandleDeath`); make `AZomPlayerCharacter` inherit from it instead of `ACharacter` directly. `AZomPlayerState` core movement/camera pieces already exist and stay as-is; add ASC/AttributeSet ownership to `AZomPlayerState`. Enhanced Input binding still needs wiring on `AZomPlayerCharacter`/`AZomPlayerController` (module is linked, no bindings exist yet).
 2. GAS integration: `UZomAttributeSetBase`, `UZomPlayerAttributeSet`, `UZomZombieAttributeSet`, `UZomGameplayAbility`/`UZomGameplayEffect` bases, base abilities.
-3. `AZomZombieBase`, `UZomZombieAIComponent` + Regular type (Walker/Runner) on State Tree.
+3. `AZomZombieBase`, `AZomZombieAIController` (revised from a `UActorComponent` to an `AAIController` — see Section 5.5) + Regular type (Walker/Runner) on State Tree.
 4. Auds, Eyes, Bloater + `AZomToxicGasVolume`, `UZomZombiePoolSubsystem`, `UZomZombieSpawnDirector`.
 5. `UZomInventoryComponent`, `UZomItemData` (resolve the weapon list first, Section 7).
 6. `UZomObjectiveSubsystem` + the four objective actors.
@@ -408,49 +414,61 @@ Matches the design doc's milestone sequence. **Updated per the Section 17 audit*
 
 ---
 
-## 17. Current Build Status (audit as of 2026-08-24)
+## 17. Current Build Status (audit as of 2026-08-24; C++ layer completed same day per `agile-percolating-tiger.md`)
 
-Audited by comparing this document against the actual `Source/Zom/` tree, `Content/`, and `Config/`. Legend: ✅ built & matches · 🟡 partial/diverges · ⬜ not built.
+Legend: ✅ built & compiles · 🟡 partial · ⬜ not built · 🔶 requires editor-side content (data assets, State Tree assets, Blueprint children, Widget Blueprints, Input Action/Mapping Context assets) before it's usable in-game, even though the C++ compiles clean.
 
-**Headline finding:** the `GameplayAbilities`/`GameplayTasks` modules are not linked in `Zom.Build.cs`, and no `DefaultGameplayTags.ini` exists — Section 4 (all of GAS) and everything downstream of it (Sections 5–13) is unbuilt. Current code is pre-production locomotion scaffolding: a custom `UZomCharacterMovementComponent` (ALS/Lyra-style gait/stance/rotation-mode system), `UZomAnimInstanceBase`, motion warping, and a Customizable-Object character system — none of it documented here, all of it real work worth preserving.
+**Headline: every class/enum/struct/subsystem/native tag in Sections 2–13 now exists in `Source/Zom/` and the project compiles clean (`ZomEditor Win64 Development`) after all 12 phases.** What remains is entirely editor-side content authoring (data asset instances, State Tree assets, Animation/Widget Blueprints, Input Action/Mapping Context assets, GA/GE Blueprint children with tuned numbers, level placement of objective/checkpoint actors) — none of it C++, all of it necessary before the game is actually playable end to end. New source folders: `Abilities/` (+ `AttributeSets/`, `GA/`, `Effects/`), `AI/` (+ `Components/`, `Enums/`), `Items/`, `Objectives/`, `UI/`, `Accessibility/`.
+
+### Corrections made during implementation (the doc's assumptions vs. what UE 5.8 actually required)
+
+- **`GameplayAbilities` needed a `.uproject` Plugins entry**, contrary to this doc's Phase-0 assumption — it's a plugin in 5.8 (`Engine/Plugins/Runtime/GameplayAbilities`), not a bare engine module. Added; `GameplayTasks` is a bare module, no plugin entry needed for it.
+- **`UZomGE_Infection`'s custom duration-extend need was outdated.** UE 5.8's `EGameplayEffectStackingDurationPolicy` already has a native `ExtendDuration` value — no custom `UGameplayEffectComponent` was needed. `UZomGE_Infection` leaves `DurationPolicy` unset in C++ specifically so two Blueprint children can pick different policies (`GE_Infection_Bite` = Infinite, `GE_Infection_Gas` = HasDuration + `ExtendDuration` stacking).
+- **`AZomPlayerState` gets a single `UZomPlayerAttributeSet` subobject, not two separate instances.** The doc's literal "owns `UZomAttributeSetBase` and `UZomPlayerAttributeSet` as real subobjects" would register two ASC-attached instances that both `IsA(UZomAttributeSetBase)`, making GAS's modifier-target resolution ambiguous. `UZomPlayerAttributeSet` already inherits everything from the base, so one instance covers both.
+- **`WalkToRunSpeedThreshold` was added then removed** during the Gait work preceding this build pass — `WalkSpeed` itself is the Walk/Run boundary now, per explicit correction.
+- **New classes/tags not in the doc's original tables**, added where the doc named a requirement but not the mechanism: `UZomGE_RestoreFromSave` (Section 11's "via a Gameplay Effect, not a direct attribute write"), `FOnZomDamageTaken` delegate on `UZomAttributeSetBase` (Section 12's "directional" damage indicator needs a data source), `TAG_Zom_Boss_Phase2` (Section 6's unnamed phase-transition tag), `TAG_Zom_SetByCaller_Magnitude`/`Duration`/`RestoreHealth`/`RestoreStamina` (Section 4.3's "consistent SetByCaller scheme").
+- **`AZomPlayerCharacterBase` naming stays "Player"-scoped** despite being the shared base for `AZomZombieBase`/`AZomBoss` too — carried forward as flagged, not resolved.
+- **`BP_ZomGameMode` vs. actual `BP_GameMode`** — per the "existing code wins" precedent, treat `BP_GameMode` as correct; the C++ base works regardless of the Blueprint asset's name.
+- **`UZomZombieAIComponent` rebuilt as `AZomZombieAIController` (post-hoc, on explicit direction).** Perception and the State Tree moved off a `UActorComponent` on the pawn and onto a dedicated `AAIController` subclass, matching UE 5.8's own `UStateTreeAIComponent`/`UStateTreeAIComponentSchema` pattern (in `GameplayStateTreeModule`), which is explicitly documented as designed to run on an AIController. Also surfaced that `AAIController` already declares a `PerceptionComponent` member — the subclass assigns into it via `SetPerceptionComponent()` rather than redeclaring one (a UHT shadowing error). See Section 5.5.
 
 ### Section 2/3 — Core Framework
 
 | Item | Status | Notes |
 |---|---|---|
-| `AZomPlayerCharacterBase` | 🟡 | Exists as dead scaffolding (empty overrides, not inherited by anything). Per decision: repurpose into the real shared base rather than replace. |
-| `AZomPlayerCharacter` | 🟡 | Exists, inherits `ACharacter` directly (skips the Base class — to be fixed per step 1 above). Has `UMotionWarpingComponent`, `UGameplayCameraComponent`, cached controller ptr. No `UZomInventoryComponent`, no GAS, no Enhanced Input binding in C++. |
-| `AZomZombieBase` | ⬜ | Not built. `Content/ZombieMale_AAB/` is cosmetic template art only, no gameplay class. |
-| `AZomBoss` | ⬜ | Not built. |
-| `AZomPlayerState` | 🟡 | Plain `APlayerState`, constructor-only stub. No ASC/AttributeSets yet. |
-| `AZomCheckpoint` | ⬜ | Not built. |
-| `AZomGameMode` | 🟡 | `DefaultPawnClass`/`PlayerStateClass`/`PlayerControllerClass`/`GameStateClass`/`GameSessionClass`/`HUDClass` all correctly set in constructor. Missing `ChoosePlayerStart_Implementation` and save-loading in `InitGame`/`PostLogin`. |
-| `BP_ZomGameMode` | 🟡 | Exists as `BP_GameMode` (naming mismatch, not yet resolved — see Section 3 status note). Assigned as `GlobalDefaultGameMode`. |
-| `AZomToxicGasVolume` | ⬜ | Not built. |
-| `AZomFetchItem` / `AZomRepairTarget` / `AZomDefendVolume` / `AZomExtractionPoint` | ⬜ | Not built (all). |
-| `AZomPlayerController` | 🟡 | Built and minimal, as expected at this stage. Caches possessed pawn only; no Enhanced Input mapping context added yet (module linked, unused). |
+| `AZomPlayerCharacterBase` | ✅ | Repurposed: `IAbilitySystemInterface`, cached ASC pointer, `InitializeAbilitySystem`/`GrantAbilitySet`/`ApplyGameplayEffectToSelf`/`GetHealth`/`GetMaxHealth`/`HandleDeath`, health-changed delegate binding. Tick disabled by default. |
+| `AZomPlayerCharacter` | ✅ | Reparented onto the base. Inventory component added. Full Enhanced Input wiring (Move/Look/Jump/Sprint/Crouch/six ability inputs) — 🔶 needs `IA_*`/`IMC_Default` assets under `Content/_Game/Input/`, none exist yet. |
+| `AZomZombieBase` | ✅ | Own ASC + `UZomZombieAttributeSet`. `AIControllerClass = AZomZombieAIController`, `AutoPossessAI = PlacedInWorldOrSpawned` (revised, see Section 5.5 — perception/State Tree moved off the pawn onto the controller). `InitializeForType()` re-seeds attributes on `BeginPlay` and pooled reactivation, and nudges the possessing controller to reconfigure perception. 🔶 needs a crowd State Tree asset, `BP_ZombieBase` wrapper. |
+| `AZomZombieAIController` | ✅ | New (Section 5.5, revised from `UZomZombieAIComponent`). Owns `UAIPerceptionComponent` (via `AAIController`'s inherited slot, Sight + Hearing + Damage senses) + `UStateTreeAIComponent`, raises `Zom.Perception.*` events (incl. `Damage.Taken`, added post-hoc), `PauseBrain()`/`ResumeBrain()` wired into pool release/reactivation. `AZomZombieBase` reports damage via `UAISense_Damage::ReportDamageEvent()` off its own `OnDamageTaken` delegate. |
+| `AZomBoss` | ✅ | Own ASC reusing `UZomZombieAttributeSet`, bespoke `UStateTreeComponent` directly on the pawn (not the `AZomZombieAIController` pattern — explicitly not revisited, per the doc's own flag), no perception component, phase-2 tag toggle, dialogue `UAudioComponent`. 🔶 needs a Boss State Tree asset, `BP_Boss`, `UZomBossData` instance. |
+| `AZomPlayerState` | ✅ | Owns ASC + single `UZomPlayerAttributeSet` (see correction above). |
+| `AZomCheckpoint` | ✅ | `APlayerStart` + `EZomCheckpointID`. 🔶 needs instances placed in the level(s). |
+| `AZomGameMode` | ✅ | `ChoosePlayerStart_Implementation`, `InitGame` (loads save), `PostLogin` (reapplies Health/Stamina via `UZomGE_RestoreFromSave`, resumes objective step) all implemented. |
+| `BP_ZomGameMode` | 🟡 | Still exists as `BP_GameMode` — naming divergence noted above, not renamed. |
+| `AZomToxicGasVolume` | ✅ | Sphere overlap, 3s lifespan, applies infection via `SetByCaller`. |
+| `AZomFetchItem` / `AZomRepairTarget` / `AZomDefendVolume` / `AZomExtractionPoint` | ✅ | All four built; `AZomDefendVolume` spawns a wave via the pool/spawn-director and polls clearance on a 1s timer (not per-frame); `AZomExtractionPoint` listens for `Zom.Objective.Boss.Complete`. 🔶 needs level placement + mesh/VFX dressing. |
+| `AZomPlayerController` | ✅ | Adds `DefaultMappingContext` via the Enhanced Input subsystem in `SetupInputComponent`. |
 
-### Section 4 — Combat/GAS: entirely ⬜
-No AttributeSets, abilities, effects, `UZomAbilitySetData`, or gameplay tags. `GameplayAbilities` module not linked.
+### Section 4 — Combat/GAS: ✅ complete
+`UZomAttributeSetBase`/`UZomPlayerAttributeSet`/`UZomZombieAttributeSet` (incl. `AttackDamage`, built per explicit confirmation), `UZomGameplayAbility`/`UZomGameplayEffect` bases, all six abilities (`LightAttack`/`HeavyAttack`/`RangedShoot`/`Reload` are structural shells pending weapon/montage content; `Dodge` is timer-driven; `Shove` has real sphere-sweep+stagger+launch logic), all four effects, `UZomAbilitySetData` + `GrantAbilitySet()`, all native tags. 🔶 GA/GE Blueprint children for tuned numbers, `UZomAbilitySetData` asset instance(s).
 
-### Section 5 — Zombie AI: entirely ⬜
-`AI/Controllers/` and `AI/StateTree/` source folders exist but are empty (scaffolded, unused).
+### Section 5 — Zombie AI: ✅ complete
+`UZombieTypeData` (+ `EZomZombieCategory`), `AZomZombieAIController` (revised from a component to an `AAIController` — perception config, event-raising, `ConfigureForType`/`PauseBrain`/`ResumeBrain` re-callable for pooling), `FZomPerceptionEventPayload`. 🔶 crowd State Tree asset, `UZombieTypeData` instances for all five types. Cross-zombie alerting (5.4) remains explicitly unbuilt, confirmed open.
 
-### Section 6 — Boss: entirely ⬜
+### Section 6 — Boss: ✅ complete (`AZomBoss`, `UZomBossData`, `UZomSubtitleWidget`)
 
-### Section 7 — Inventory: entirely ⬜
+### Section 7 — Inventory: ✅ complete (`UZomItemData`, `UZomInventoryComponent`). 🔶 item data asset instances, weapon meshes.
 
-### Section 8 — Objectives: entirely ⬜
+### Section 8 — Objectives: ✅ complete (`UZomObjectiveSubsystem`, `EZomObjectiveStep`, all four actors). Plugin extraction still explicitly out of scope.
 
-### Section 9 — Spawning/Pooling: entirely ⬜
+### Section 9 — Spawning/Pooling: ✅ complete (`UZomZombiePoolSubsystem`, `UZomZombieSpawnDirector`, owned relationship wired via `Initialize()`).
 
-### Section 10 — Difficulty: entirely ⬜
+### Section 10 — Difficulty: ✅ complete (`UZomDifficultyData`, spawn director reads `TargetActiveCrowdCount`). 🔶 per-tier asset instances.
 
-### Section 11 — Save: entirely ⬜
+### Section 11 — Save: ✅ complete (`UZomSaveGame`, `EZomCheckpointID`, full `AZomGameMode` restore flow).
 
-### Section 12 — UI: 🟡 only `AZomHUD` (bare `AHUD`, `DrawHUD()` override, no widgets)
+### Section 12 — UI: ✅ complete (all five widgets + `UZomSubtitleWidget`, `AZomHUD` creates/adds the root widget). 🔶 every `WBP_*` Widget Blueprint — the largest remaining content lift.
 
-### Section 13 — Accessibility: entirely ⬜
+### Section 13 — Accessibility: ✅ complete (`UZomAccessibilitySettings : UGameUserSettings`).
 
 ### Undocumented code present (not in this document, kept for context)
 
@@ -460,7 +478,7 @@ No AttributeSets, abilities, effects, `UZomAbilitySetData`, or gameplay tags. `G
 - `AZomGameState`, `AZomGameSession`, `UZomGameInstance`, `UZomCheatManager` — constructor-only engine-class stubs.
 - `ZomLogChannels.h/.cpp` — custom log categories.
 - `Content/_Game/Characters/Player/Mutable/` — Customizable Object character system.
-- Plugin stack: Mutable, SmartObjects, MotionWarping, PoseSearch, StateTree/GameplayStateTree, Chooser, etc. No GAS plugin enabled yet.
+- Plugin stack: Mutable, SmartObjects, MotionWarping, PoseSearch, StateTree/GameplayStateTree, Chooser, etc., now joined by `GameplayAbilities` (added in Section 17's build pass).
 - `DefaultGame.ini` still points `GameDefaultMap` at the stock `/Engine/Maps/Templates/OpenWorld` template map.
 
 ---

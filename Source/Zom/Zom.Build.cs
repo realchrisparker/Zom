@@ -24,6 +24,8 @@ public class Zom : ModuleRules
 			"StateTreeModule",
 			"GameplayStateTreeModule",
 			"NavigationSystem",
+			"GameplayAbilities",
+			"GameplayTasks",
 			"Niagara",
 			"EngineCameras",
 			"GameplayCameras",
@@ -32,13 +34,11 @@ public class Zom : ModuleRules
 			"Chooser",
 			"PropertyPath",
 			"DrawDebugLibrary",
-			"CustomizableObject"
+			"CustomizableObject",
+			"UMG"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] {  });
-
-		// Uncomment if you are using Slate UI
-		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 		
 		// Uncomment if you are using online features
 		// PrivateDependencyModuleNames.Add("OnlineSubsystem");

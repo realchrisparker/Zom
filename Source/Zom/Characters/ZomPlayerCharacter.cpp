@@ -5,7 +5,11 @@
 #include "Zom/Characters/Components/ZomCharacterMovementComponent.h"
 #include "MotionWarpingComponent.h"
 #include "GameFramework/GameplayCameraComponent.h"
+#include "GameFramework/PlayerState.h"
 #include "ZomPlayerController.h"
+#include "Zom/Misc/ZomLogChannels.h"
+#include "Zom/Misc/ZomGameplayTags.h"
+#include "Zom/Characters/Components/ZomInventoryComponent.h"
 
 
 // Sets default values
@@ -20,6 +24,11 @@ AZomPlayerCharacter::AZomPlayerCharacter(const FObjectInitializer& ObjectInitial
 
 	// Create the gameplay camera component and attach it to the character's mesh
 	GameplayCamera = CreateDefaultSubobject<UGameplayCameraComponent>(TEXT("GameplayCamera"));
+
+	// Create the inventory component
+	Inventory = CreateDefaultSubobject<UZomInventoryComponent>(TEXT("Inventory"));
+
+	CurrentCamera = TAG_Zom_Camera_State_Default.GetTag();
 }
 
 // Called when the game starts or when spawned
@@ -32,12 +41,6 @@ void AZomPlayerCharacter::BeginPlay()
 void AZomPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-}
-
-// Called to bind functionality to input
-void AZomPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
 // Called when this pawn is possessed by a controller
@@ -53,6 +56,10 @@ void AZomPlayerCharacter::PossessedBy(AController* NewController)
 
 	// Cache the player controller reference if the new controller is a player controller
 	CachedPlayerController = Cast<AZomPlayerController>(NewController);
+
+	// GetPlayerState(), not NewController->PlayerState: by the time PossessedBy runs server-side, the pawn's
+	// own PlayerState is already valid, avoiding the null-timing window NewController->PlayerState can hit.
+	InitializeAbilitySystem(GetPlayerState(), this);
 }
 
 // Called when this pawn is unpossessed by its controller
@@ -68,4 +75,18 @@ void AZomPlayerCharacter::UnPossessed()
 
 	// Clear the cached player controller reference
 	CachedPlayerController = nullptr;
+}
+
+// Called on clients when PlayerState is replicated; mirrors PossessedBy's ASC initialization
+void AZomPlayerCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	InitializeAbilitySystem(GetPlayerState(), this);
+}
+
+// Fires once Health reaches zero. Log-only for now - the real save/respawn flow lands with Section 11's save system.
+void AZomPlayerCharacter::HandleDeath()
+{
+	UE_LOG(LogZomCharacter, Log, TEXT("%s died (respawn flow not implemented yet)."), *GetName());
 }
