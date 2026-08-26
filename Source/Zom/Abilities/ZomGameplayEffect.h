@@ -8,7 +8,7 @@
 
 
 /**
- * [Proposed] Shared effect base for the four Zom effects. GameplayEffects are mostly data (duration policy,
+ * Shared effect base for the four Zom effects. GameplayEffects are mostly data (duration policy,
  * modifiers, tags), not code, so unlike UZomGameplayAbility there's little runtime logic to hoist here - its
  * real value is a single place to anchor naming/tag conventions across UZomGE_Damage/StaminaDrain/Infection/Stagger
  * (Section 4.3 of the dev doc).

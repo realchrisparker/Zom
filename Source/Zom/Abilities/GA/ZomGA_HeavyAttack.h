@@ -8,7 +8,7 @@
 
 
 /**
- * [Design] Melee heavy attack, gated by Stamina cost. CostGameplayEffectClass defaults to the base
+ * Melee heavy attack, gated by Stamina cost. CostGameplayEffectClass defaults to the base
  * UZomGE_StaminaDrain (0 magnitude); assign a tuned Blueprint child (e.g. GE_StaminaDrain_HeavyAttack) to
  * this ability's own Blueprint child to set the actual cost.
  */

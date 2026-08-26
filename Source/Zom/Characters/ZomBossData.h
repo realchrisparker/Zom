@@ -25,7 +25,7 @@ struct FZomBossDialogueBark
 
 
 /**
- * [Design] Health, damage, phase threshold, dialogue audio cues (Section 6 of the dev doc). Tuning only -
+ * Health, damage, phase threshold, dialogue audio cues (Section 6 of the dev doc). Tuning only -
  * unlike crowd UZombieTypeData, the Boss is intentionally not fully data-driven; behavior stays in code.
  * Three barks minimum (encounter start, mid-fight taunt, death line).
  */

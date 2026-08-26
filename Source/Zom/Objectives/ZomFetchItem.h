@@ -11,7 +11,7 @@ class USphereComponent;
 
 
 /**
- * [Proposed] Pickup actor for the Fetch objective (Section 2/8 of the dev doc). Completes
+ * Pickup actor for the Fetch objective (Section 2/8 of the dev doc). Completes
  * EZomObjectiveStep::Fetch on player overlap.
  */
 UCLASS()

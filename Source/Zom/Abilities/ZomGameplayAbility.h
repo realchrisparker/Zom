@@ -8,7 +8,7 @@
 
 
 /**
- * [Proposed] Shared ability base for all six Zom abilities. Sets InstancingPolicy/NetExecutionPolicy once,
+ * Shared ability base for all six Zom abilities. Sets InstancingPolicy/NetExecutionPolicy once,
  * consistent with the full-GAS decision to teach production patterns even though prediction goes unused in a
  * singleplayer build, and blocks activation while staggered so no individual ability class has to remember to
  * (Section 4.2 of the dev doc).

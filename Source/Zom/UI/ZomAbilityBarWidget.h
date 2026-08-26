@@ -15,7 +15,7 @@ struct FActiveGameplayEffect;
 
 
 /**
- * [Design] Bound to ASC cooldown delegates (Section 12 of the dev doc). C++ resolves the owning player's ASC
+ * Bound to ASC cooldown delegates (Section 12 of the dev doc). C++ resolves the owning player's ASC
  * and re-fires OnAbilityBarNeedsRefresh whenever any GameplayEffect is added/removed on it (covers cooldowns
  * without needing per-ability cooldown tags the doc doesn't name); Blueprint queries GetCooldownTimeRemaining
  * per ability slot and updates the WBP_* visuals.

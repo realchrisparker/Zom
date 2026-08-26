@@ -8,7 +8,7 @@
 
 
 /**
- * [Design] One asset per tier, read by UZomZombieSpawnDirector. A new tier is a new asset, not new code
+ * One asset per tier, read by UZomZombieSpawnDirector. A new tier is a new asset, not new code
  * (Section 10 of the dev doc). Explicitly does NOT scale the Bloater cap or the Boss encounter, only crowd
  * density/cadence - no fields for either are added here, since that would misrepresent the design.
  */

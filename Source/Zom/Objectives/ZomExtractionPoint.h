@@ -12,7 +12,7 @@ class UBoxComponent;
 
 
 /**
- * [Proposed] Locked-until-objectives-complete exit trigger (Section 2/8 of the dev doc). Listens to
+ * Locked-until-objectives-complete exit trigger (Section 2/8 of the dev doc). Listens to
  * UZomObjectiveSubsystem's completion delegate and unlocks on EZomObjectiveStep::Boss, completing
  * EZomObjectiveStep::Extracted on player overlap once unlocked.
  */

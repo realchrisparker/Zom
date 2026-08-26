@@ -13,7 +13,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnZomObjectiveStepCompleted, EZomOb
 
 
 /**
- * [Design] Owns the objective state machine, broadcasts delegates on state change, and mirrors progress onto
+ * Owns the objective state machine, broadcasts delegates on state change, and mirrors progress onto
  * the player's ASC as Gameplay Tags (Zom.Objective.*.Complete, see Section 4.4) so abilities/effects can gate
  * on it. UGameInstanceSubsystem so it persists across OpenLevel calls, required since checkpoints reload the
  * level (Section 8).

@@ -11,7 +11,7 @@ class UZomInventoryComponent;
 
 
 /**
- * [Design] Grid view over UZomInventoryComponent (Section 12 of the dev doc). C++ resolves the owning
+ * Grid view over UZomInventoryComponent (Section 12 of the dev doc). C++ resolves the owning
  * player's inventory component and binds to its delegate; the WBP_* grid layout is editor-side.
  */
 UCLASS()

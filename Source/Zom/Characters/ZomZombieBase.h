@@ -13,7 +13,7 @@ class AZomToxicGasVolume;
 
 
 /**
- * [Design] Crowd zombies (Regular/Auds/Eyes/Bloater). Owns its own ASC/AttributeSet as real subobjects (unlike
+ * Crowd zombies (Regular/Auds/Eyes/Bloater). Owns its own ASC/AttributeSet as real subobjects (unlike
  * the player, whose ASC lives on AZomPlayerState). No per-type C++ subclassing - behavior differences come
  * from UZombieTypeData and from which senses are configured on AZomZombieAIController (Section 3/5.1).
  * Perception and the State Tree live on that AIController, not a component on this pawn - AutoPossessAI +

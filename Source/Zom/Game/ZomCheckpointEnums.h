@@ -6,7 +6,7 @@
 #include "ZomCheckpointEnums.generated.h"
 
 
-/** [Design] Section 11 of the dev doc. */
+/** Section 11 of the dev doc. */
 UENUM(BlueprintType)
 enum class EZomCheckpointID : uint8
 {

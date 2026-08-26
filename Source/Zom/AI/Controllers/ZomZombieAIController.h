@@ -17,7 +17,7 @@ struct FAIStimulus;
 
 
 /**
- * [Design] Custom AIController for crowd zombies (Section 5.5 of the dev doc, revised): owns perception and
+ * Custom AIController for crowd zombies (Section 5.5 of the dev doc, revised): owns perception and
  * the State Tree, rather than a UActorComponent living on the pawn. This matches Epic's own intended pattern -
  * UStateTreeAIComponent/UStateTreeAIComponentSchema are explicitly "designed to be run on an AIController" and
  * guarantee State Tree bindings access to the controller (and, through it, the possessed pawn). Perception

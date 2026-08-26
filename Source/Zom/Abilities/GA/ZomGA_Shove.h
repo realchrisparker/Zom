@@ -8,7 +8,7 @@
 
 
 /**
- * [Design] Signature ability - staggers a zombie and creates distance. Sweeps a sphere in front of the avatar,
+ * Signature ability - staggers a zombie and creates distance. Sweeps a sphere in front of the avatar,
  * applies UZomGE_Stagger to whatever it hits, and launches the avatar backward to create the distance.
  */
 UCLASS()

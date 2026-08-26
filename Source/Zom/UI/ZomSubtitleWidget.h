@@ -11,7 +11,7 @@ class UTextBlock;
 
 
 /**
- * [Design] Displays subtitle text for Boss barks, triggered off the same UAudioComponent playback as the bark
+ * Displays subtitle text for Boss barks, triggered off the same UAudioComponent playback as the bark
  * itself, not a separate dialogue system (Section 6 of the dev doc). C++ base only - the WBP_* visual layout
  * (binding SubtitleTextBlock) is editor-side.
  */

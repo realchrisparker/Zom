@@ -7,7 +7,7 @@
 
 
 /**
- * [Proposed] The five-step objective chain (Section 8 of the dev doc). This is the interim implementation -
+ * The five-step objective chain (Section 8 of the dev doc). This is the interim implementation -
  * the future Objective plugin (not scheduled) retires this enum in favor of tagged UObjectiveDefinition content.
  */
 UENUM(BlueprintType)

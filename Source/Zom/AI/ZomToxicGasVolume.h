@@ -12,7 +12,7 @@ class UZomGameplayEffect;
 
 
 /**
- * [Design] Radial trigger volume, spawned at Bloater death, persists 3s, applies an infection effect on
+ * Radial trigger volume, spawned at Bloater death, persists 3s, applies an infection effect on
  * overlap (Section 5.3 of the dev doc). Not pooled - spawned fresh since it's rare/transient, unlike the
  * crowd/Bloater zombies themselves.
  */

@@ -14,7 +14,7 @@ class UZomDifficultyData;
 
 
 /**
- * [Design] Plain UObject, owned by UZomZombiePoolSubsystem. Decides which pooled zombie to activate, where,
+ * Plain UObject, owned by UZomZombiePoolSubsystem. Decides which pooled zombie to activate, where,
  * and of which type (Section 9 of the dev doc). Reading UZomDifficultyData for the active tier is deferred to
  * Phase 9 - that class doesn't exist yet, so type/rate selection here is a simple random pick until then.
  */

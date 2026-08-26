@@ -9,7 +9,7 @@
 
 
 /**
- * [Design] Health, speed, per-sense detection radius, damage, attack cooldown - one asset per zombie type
+ * Health, speed, per-sense detection radius, damage, attack cooldown - one asset per zombie type
  * (Walker/Runner/Auds/Eyes/Bloater). New crowd types are content, not code (Section 5.1 of the dev doc).
  * Auds/Eyes are the same shape as Walker/Runner with one sense's radius left at (or near) zero.
  *

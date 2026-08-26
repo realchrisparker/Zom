@@ -7,7 +7,7 @@
 
 
 /**
- * [Proposed] Used by UZomZombiePoolSubsystem to enforce the two separate density budgets (5-15 crowd, 1-2
+ * Used by UZomZombiePoolSubsystem to enforce the two separate density budgets (5-15 crowd, 1-2
  * Bloater) called out in the design doc - two independently-tracked counters, cleaner as an enum than a bool.
  */
 UENUM(BlueprintType, meta = (DisplayName = "Zom Zombie Category"))

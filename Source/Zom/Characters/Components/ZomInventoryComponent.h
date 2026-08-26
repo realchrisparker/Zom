@@ -14,12 +14,12 @@ class UZomItemData;
 
 // Delegates
 
-// [Design] Broadcasts when the inventory changes (Section 7 of the dev doc). UI widgets bind to this delegate to update themselves when the inventory changes, avoiding per-frame polling.
+// Broadcasts when the inventory changes (Section 7 of the dev doc). UI widgets bind to this delegate to update themselves when the inventory changes, avoiding per-frame polling.
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnZomInventoryChanged);
 
 
 /**
- * [Design] Attached to AZomPlayerCharacter (Section 7 of the dev doc). Delegate-driven, no per-frame polling
+ * Attached to AZomPlayerCharacter (Section 7 of the dev doc). Delegate-driven, no per-frame polling
  * per Section 15's performance rules - UI widgets bind to OnInventoryChanged.
  */
 UCLASS(ClassGroup = (Zom), meta = (BlueprintSpawnableComponent, DisplayName = "Zom Inventory Component"))

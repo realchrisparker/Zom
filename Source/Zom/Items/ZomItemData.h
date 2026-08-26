@@ -12,7 +12,7 @@ class UZomGameplayEffect;
 
 
 /**
- * What an item's activation does. [Proposed] - the doc names weapons/consumables but not this split explicitly;
+ * What an item's activation does. - the doc names weapons/consumables but not this split explicitly;
  * a single data asset class covering both (Section 7) needs some way to tell them apart at use-time.
  */
 UENUM(BlueprintType)
@@ -24,8 +24,8 @@ enum class EZomItemType : uint8
 
 
 /**
- * [Design] Covers both weapons and consumables (Section 7 of the dev doc). Confirmed weapon list: Machete,
- * Fire Axe, Pistol, Pump Shotgun, Crossbow. [Proposed] consumable list: Medicine, Pistol Ammo, Shotgun Shells,
+ * Covers both weapons and consumables (Section 7 of the dev doc). Confirmed weapon list: Machete,
+ * Fire Axe, Pistol, Pump Shotgun, Crossbow. Consumable list: Medicine, Pistol Ammo, Shotgun Shells,
  * Bandage.
  */
 UCLASS(BlueprintType)

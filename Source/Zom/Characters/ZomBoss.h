@@ -16,7 +16,7 @@ struct FZomBossDialogueBark;
 
 
 /**
- * [Design] Bespoke, does not use UZombieTypeData; owns its own ASC/AttributeSet, same pattern as zombies -
+ * Bespoke, does not use UZombieTypeData; owns its own ASC/AttributeSet, same pattern as zombies -
  * reuses UZomZombieAttributeSet (confirmed, Section 4.1) rather than a third attribute set class. A bespoke
  * StateTreeComponent (separate asset from the crowd base tree). Does NOT get UZomZombieAIComponent
  * ([Proposed, flag if wrong] per the dev doc's own Section 5.5 note - the encounter is a single gated,

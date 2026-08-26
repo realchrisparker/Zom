@@ -12,7 +12,7 @@ class AZomZombieBase;
 
 
 /**
- * [Proposed] Trigger volume that starts the Defend wave (Section 2/8 of the dev doc). On player entry, spawns
+ * Trigger volume that starts the Defend wave (Section 2/8 of the dev doc). On player entry, spawns
  * WaveSize zombies via UZomZombiePoolSubsystem/UZomZombieSpawnDirector at SpawnPoints, then polls (on a
  * low-frequency repeating timer, not per-frame Tick, per Section 15) whether they've all died/been released
  * back to the pool, completing EZomObjectiveStep::Defend once the wave is cleared.

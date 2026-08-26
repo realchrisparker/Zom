@@ -7,7 +7,7 @@
 
 
 /**
- * [Proposed] Payload carried by the Zom.Perception.* tagged State Tree events UZomZombieAIComponent raises
+ * Payload carried by the Zom.Perception.* tagged State Tree events UZomZombieAIComponent raises
  * (Section 5.5 of the dev doc). Wrapped via FConstStructView::Make() when calling SendStateTreeEvent.
  */
 USTRUCT(BlueprintType)

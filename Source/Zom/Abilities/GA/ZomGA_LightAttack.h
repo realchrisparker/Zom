@@ -8,7 +8,7 @@
 
 
 /**
- * [Design] Melee light attack. Commits (cooldown only, no Stamina cost per the dev doc) and ends immediately -
+ * Melee light attack. Commits (cooldown only, no Stamina cost per the dev doc) and ends immediately -
  * the real hit-detection/damage-application flow is driven by an AnimNotify on the weapon's light-attack
  * montage (content, not yet authored), which is expected to call into UZomInventoryComponent/UZomGE_Damage
  * once Section 7's weapon system exists. This class establishes the activation shape now.

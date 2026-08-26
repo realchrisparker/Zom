@@ -8,7 +8,7 @@
 #include "ZomCheckpoint.generated.h"
 
 
-/** [Design] Carries EZomCheckpointID (Section 11 of the dev doc). */
+/** Carries EZomCheckpointID (Section 11 of the dev doc). */
 UCLASS()
 class ZOM_API AZomCheckpoint : public APlayerStart
 {

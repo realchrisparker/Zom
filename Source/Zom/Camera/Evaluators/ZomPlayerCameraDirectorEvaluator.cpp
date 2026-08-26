@@ -1,10 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Zom/Camera/ZomPlayerCameraDirectorEvaluator.h"
+#include "Zom/Camera/Evaluators/ZomPlayerCameraDirectorEvaluator.h"
 #include "Zom/Characters/ZomPlayerCharacter.h"
 #include "Zom/Misc/ZomLogChannels.h"
 #include "Core/CameraRigAsset.h"
 
+/**
+ * Evaluates the AZomPlayerCharacter's CurrentCamera tag and activates the corresponding camera rig
+ * (or DefaultCameraRig if none is found) each tick. The AZomPlayerCharacter
+ */
 void UZomPlayerCameraDirectorEvaluator::EvaluateCameraRigForCurrentTag()
 {
 	// Lazily resolve the AZomPlayerCharacter owner once and cache it for future ticks, instead of re-running

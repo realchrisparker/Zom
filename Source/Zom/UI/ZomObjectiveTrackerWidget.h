@@ -9,7 +9,7 @@
 
 
 /**
- * [Design] Bound to UZomObjectiveSubsystem delegates (Section 12 of the dev doc). C++ handles the
+ * Bound to UZomObjectiveSubsystem delegates (Section 12 of the dev doc). C++ handles the
  * subsystem-binding lifecycle; OnObjectiveStepChanged is a BlueprintImplementableEvent so the WBP_* visual
  * update (text/icon changes) stays editor-side.
  */

@@ -11,7 +11,7 @@ class UZomAttributeSetBase;
 
 
 /**
- * [Design] Directional damage indicator, since the third-person camera doesn't always show the threat
+ * Directional damage indicator, since the third-person camera doesn't always show the threat
  * (Section 12 of the dev doc). Binds to UZomAttributeSetBase::OnDamageTaken; OnDamageReceived hands the
  * instigator's world location to Blueprint, which computes screen-space direction (a camera-relative
  * concern best left to UMG/materials) and drives the WBP_* visual.

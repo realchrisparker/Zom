@@ -27,7 +27,7 @@ struct FZomSavedInventorySlot
 
 
 /**
- * [Design] Checkpoint ID, player attribute snapshot, objective step, resource/inventory flags (Section 11 of
+ * Checkpoint ID, player attribute snapshot, objective step, resource/inventory flags (Section 11 of
  * the dev doc).
  */
 UCLASS()

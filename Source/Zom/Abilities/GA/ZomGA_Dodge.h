@@ -8,7 +8,7 @@
 
 
 /**
- * [Design] Gated by Stamina, applies Zom.Status.Dodging for the dodge's duration. The tag add/remove is
+ * Gated by Stamina, applies Zom.Status.Dodging for the dodge's duration. The tag add/remove is
  * automatic (ActivationOwnedTags, per GAS's own ability-activation lifecycle) - no manual AddLooseGameplayTag
  * needed. Timed via UAbilityTask_WaitDelay rather than a montage since no dodge/roll animation exists yet;
  * swap this for an AbilityTask_PlayMontageAndWait once one is authored.
