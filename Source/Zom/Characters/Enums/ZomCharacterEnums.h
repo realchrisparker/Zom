@@ -75,3 +75,16 @@ enum class EStance : uint8
 	Stand	UMETA(DisplayName = "Stand"),
 	Crouch	UMETA(DisplayName = "Crouch")
 };
+
+/**
+ * Combat state for a character.
+ */
+UENUM(BlueprintType, meta = (DisplayName = "Zom Character Combat State"))
+enum class ECombatState : uint8
+{
+	Unarmed	UMETA(DisplayName = "Unarmed"),
+	Machete	UMETA(DisplayName = "Machete"),
+	Pistol	UMETA(DisplayName = "Pistol"),
+	Rifle	UMETA(DisplayName = "Rifle"),
+	Shotgun	UMETA(DisplayName = "Shotgun"),
+};

@@ -78,6 +78,10 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Zom|Movement State", meta = (DisplayName = "Movement Direction"))
 	EMovementDirection MovementDirection = EMovementDirection::F;
 
+	// Current combat state. Unarmed is the default state; other states are set manually (by AZomPlayerController, in response to combat input actions).
+	UPROPERTY(BlueprintReadWrite, Category = "Zom|Combat", meta = (DisplayName = "Combat State"))
+	ECombatState CombatState = ECombatState::Unarmed;
+
 	// -------------
 	// Locomotion
 	// -------------
@@ -204,7 +208,7 @@ public:
 	FTransformTrajectory Trajectory;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Zom|Trajectory", meta = (DisplayName = "Trajectory Collision"))
-	FPoseSearchTrajectoryData TrajectoryCollision;
+	FPoseSearchTrajectory_WorldCollisionResults TrajectoryCollision;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Zom|Trajectory", meta = (DisplayName = "Previous Desired Controller Yaw"))
 	float PreviousDesiredControllerYaw = 0.0f;
@@ -276,30 +280,60 @@ public:
 	// Functions
 	// -------------
 
-	UFUNCTION(BlueprintCallable, Category = "Zom|Locomotion", meta = (DisplayName = "Is Moving"))
+	/**
+	 * Whether the character is moving: the current velocity and acceleration are both non-zero.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Zom|Locomotion", meta = (DisplayName = "Is Moving", BlueprintThreadSafe))
 	bool IsMoving() const;
 
 	/**
 	 * Whether the character is starting to move: the predicted future trajectory speed is significantly higher
 	 * than the current speed, and the currently selected database isn't already a pivot/transition database.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Zom|Motion Matching", meta = (DisplayName = "Is Starting"))
+	UFUNCTION(BlueprintPure, Category = "Zom|Motion Matching", meta = (DisplayName = "Is Starting", BlueprintThreadSafe))
 	bool IsStarting() const;
+
+	/**
+	 * Whether the character is pivoting: the character is moving, and its trajectory turn angle exceeds a
+	 * threshold that depends on the current rotation mode (looser while orienting to movement, tightest while aiming).
+	 */
+	UFUNCTION(BlueprintPure, Category = "Zom|Motion Matching", meta = (DisplayName = "Is Pivoting", BlueprintThreadSafe))
+	bool IsPivoting() const;
 
 	/**
 	 * Whether the character's rotation has diverged enough from the animation root's rotation, at high enough
 	 * speed, to warrant a spin transition, and the currently selected database isn't already a pivot/transition database.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Zom|Motion Matching", meta = (DisplayName = "Should Spin Transition"))
+	UFUNCTION(BlueprintPure, Category = "Zom|Motion Matching", meta = (DisplayName = "Should Spin Transition", BlueprintThreadSafe))
 	bool ShouldSpinTransition() const;
 
+	/**
+	 * Whether the character should turn in place: the orientation intent has diverged enough from the animation
+	 * root's rotation, and the character either wants to aim or has just come to a stop from moving.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Zom|Motion Matching", meta = (DisplayName = "Should Turn In Place", BlueprintThreadSafe))
+	bool ShouldTurnInPlace() const;
+
+	/**
+	 * The yaw angle between the direction the character is accelerating towards and its current direction of travel.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Zom|Motion Matching", meta = (DisplayName = "Get Trajectory Turn Angle", BlueprintThreadSafe))
+	float GetTrajectoryTurnAngle() const;
+
 	// Whether the character just landed with a vertical land speed below the heavy land threshold
-	UFUNCTION(BlueprintCallable, Category = "Zom|Landing", meta = (DisplayName = "Just Landed (Light)"))
+	UFUNCTION(BlueprintPure, Category = "Zom|Landing", meta = (DisplayName = "Just Landed (Light)", BlueprintThreadSafe))
 	bool JustLanded_Light() const;
 
 	// Whether the character just landed with a vertical land speed at or above the heavy land threshold
-	UFUNCTION(BlueprintCallable, Category = "Zom|Landing", meta = (DisplayName = "Just Landed (Heavy)"))
+	UFUNCTION(BlueprintPure, Category = "Zom|Landing", meta = (DisplayName = "Just Landed (Heavy)", BlueprintThreadSafe))
 	bool JustLanded_Heavy() const;
+
+	/**
+	 * Whether the character just traversed: no traversal montage is currently playing on the traversal slot, the
+	 * "MovingTraversal" curve is active, and the trajectory turn angle is shallow enough to still be moving forward.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Zom|Traversal", meta = (DisplayName = "Just Traversed", BlueprintThreadSafe))
+	bool JustTraversed() const;
 
 protected:
 	// Called when the anim instance is created and its owning component/actor are valid; good place to cache references

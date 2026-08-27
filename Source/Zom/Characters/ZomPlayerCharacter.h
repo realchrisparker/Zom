@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "Zom/Characters/Base/ZomPlayerCharacterBase.h"
 #include "Zom/Characters/Enums/ZomCharacterEnums.h"
+#include "Zom/Misc/ZomGameplayTags.h"
 #include "ZomPlayerCharacter.generated.h"
 
 
@@ -61,14 +62,7 @@ public:
 	 * @return The current camera tag.
 	 */
 	UFUNCTION(BlueprintPure, Category = "Zom", meta = (DisplayName = "Get Current Camera"))
-	FGameplayTag GetCurrentCamera() const { return CurrentCamera; }
-
-	/**
-	 * Sets the current camera tag.
-	 * @param NewCamera The new camera tag to set.
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Zom", meta = (DisplayName = "Set Current Camera"))
-	void SetCurrentCamera(FGameplayTag NewCamera) { CurrentCamera = NewCamera; }
+	FGameplayTagContainer GetCurrentCamera() const { return CurrentCamera; }
 
 	// -------------
 	// Properties
@@ -78,6 +72,18 @@ public:
 	// Sprint is set manually (by AZomPlayerController, in response to the sprint input action).
 	UPROPERTY(BlueprintReadWrite, Category = "Zom|Movement State", meta = (DisplayName = "Gait"))
 	EGait Gait = EGait::Walk;
+
+	// Current combat state. Unarmed is the default state; other states are set manually (by AZomPlayerController, in response to combat input actions).
+	UPROPERTY(BlueprintReadWrite, Category = "Zom|Combat", meta = (DisplayName = "Combat State"))
+	ECombatState CombatState = ECombatState::Unarmed;
+
+	// Current camera state. Read every RunCameraDirector tick by CDE_Player's Chooser Table (CHT_CurrentCamera)
+	// to pick which entry of its CameraRigsByTag map to activate. Set by whichever gameplay system owns a given
+	// camera state (e.g. aiming, targeting) - defaults to TAG_Zom_Camera_State_Default.
+	// FGameplayTagContainer rather than a bare FGameplayTag because Chooser Table Gameplay Tag columns can only
+	// bind to FGameplayTagContainer properties - see https://forums.unrealengine.com/t/2668708 (UE-324898).
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Zom|Camera State", meta = (DisplayName = "Current Camera"))
+	FGameplayTagContainer CurrentCamera = FGameplayTagContainer(TAG_Zom_Camera_State_Default.GetTag());
 
 protected:
 
@@ -129,9 +135,4 @@ private:
 
 	// Cached reference to the player controller that possesses this character
 	TWeakObjectPtr<AZomPlayerController> CachedPlayerController;
-
-	// Current camera state. Read every RunCameraDirector tick by UZomPlayerCameraDirectorEvaluator (CDE_Player)
-	// to pick which entry of its CameraRigsByTag map to activate. Set by whichever gameplay system owns a given
-	// camera state (e.g. aiming, targeting) - defaults to TAG_Zom_Camera_State_Default.
-	FGameplayTag CurrentCamera;
 };

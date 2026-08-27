@@ -75,6 +75,8 @@ void UZomAnimInstanceBase::NativeUpdateAnimation(float DeltaSeconds)
 	Gait_LastFrame = Gait;
 	Gait = Character->Gait;
 
+	CombatState = Character->CombatState;
+
 	RotationMode_LastFrame = RotationMode;
 	RotationMode = MovementComponent->RotationMode;
 
@@ -196,6 +198,9 @@ ECharacterMovementMode UZomAnimInstanceBase::MapNativeMovementMode(TEnumAsByte<E
 	}
 }
 
+/**
+ * Whether the character is moving: the current velocity and acceleration are both non-zero.
+ */
 bool UZomAnimInstanceBase::IsMoving() const
 {
 	if (Velocity.IsNearlyZero() || Acceleration.IsNearlyZero()) return false;
@@ -203,6 +208,10 @@ bool UZomAnimInstanceBase::IsMoving() const
 	return true;
 }
 
+/**
+ * Whether the character is starting to move: the predicted future trajectory speed is significantly higher
+ * than the current speed, and the currently selected database isn't already a pivot/transition database.
+ */
 bool UZomAnimInstanceBase::IsStarting() const
 {
 	constexpr float StartingVelocityDeltaThreshold = 100.0f;
@@ -213,6 +222,33 @@ bool UZomAnimInstanceBase::IsStarting() const
 	return IsMoving() && bAccelerating && !bHasPivotsTag;
 }
 
+bool UZomAnimInstanceBase::IsPivoting() const
+{
+	float PivotTurnAngleThreshold;
+
+	switch (RotationMode)
+	{
+	case ERotationMode::Strafe:
+		PivotTurnAngleThreshold = 30.0f;
+		break;
+	case ERotationMode::Aim:
+		PivotTurnAngleThreshold = 0.0f;
+		break;
+	case ERotationMode::OrientToMovement:
+	default:
+		PivotTurnAngleThreshold = 45.0f;
+		break;
+	}
+
+	const bool bPivoting = FMath::Abs(GetTrajectoryTurnAngle()) >= PivotTurnAngleThreshold;
+
+	return bPivoting && IsMoving();
+}
+
+/**
+ * Whether the character's rotation has diverged enough from the animation root's rotation, at high enough
+ * speed, to warrant a spin transition, and the currently selected database isn't already a pivot/transition database.
+ */
 bool UZomAnimInstanceBase::ShouldSpinTransition() const
 {
 	constexpr float SpinYawThreshold = 130.0f;
@@ -224,12 +260,53 @@ bool UZomAnimInstanceBase::ShouldSpinTransition() const
 	return (FMath::Abs(YawDelta) >= SpinYawThreshold) && (Speed2D >= SpinSpeedThreshold) && !bHasPivotsTag;
 }
 
+/**
+ * Whether the character should turn in place: the orientation intent has diverged enough from the animation
+ * root's rotation, and the character either wants to aim or has just come to a stop from moving.
+ */
+bool UZomAnimInstanceBase::ShouldTurnInPlace() const
+{
+	constexpr float TurnInPlaceYawThreshold = 50.0f;
+
+	const float YawDelta = FMath::FindDeltaAngleDegrees(RootTransform.Rotator().Yaw, OrientationIntent.Yaw);
+
+	const bool bWantsToAim = RotationMode == ERotationMode::Aim;
+	const bool bJustBecameIdle = (MovementState == EMovementState::Idle) && (MovementState_LastFrame == EMovementState::Moving);
+
+	return (FMath::Abs(YawDelta) >= TurnInPlaceYawThreshold) && (bWantsToAim || bJustBecameIdle);
+}
+
+/**
+ * The yaw angle between the direction the character is accelerating towards and its current direction of travel.
+ */
+float UZomAnimInstanceBase::GetTrajectoryTurnAngle() const
+{
+	return FMath::FindDeltaAngleDegrees(Velocity.Rotation().Yaw, Acceleration.Rotation().Yaw);
+}
+
+// Whether the character just landed with a vertical land speed below the heavy land threshold
 bool UZomAnimInstanceBase::JustLanded_Light() const
 {
 	return bJustLanded && (FMath::Abs(LandVelocity.Z) < FMath::Abs(HeavyLandSpeedThreshold));
 }
 
+// Whether the character just landed with a vertical land speed at or above the heavy land threshold
 bool UZomAnimInstanceBase::JustLanded_Heavy() const
 {
 	return bJustLanded && (FMath::Abs(LandVelocity.Z) >= FMath::Abs(HeavyLandSpeedThreshold));
+}
+
+/**
+ * Whether the character just traversed: no traversal montage is currently playing on the traversal slot, the
+ * "MovingTraversal" curve is active, and the trajectory turn angle is shallow enough to still be moving forward.
+ */
+bool UZomAnimInstanceBase::JustTraversed() const
+{
+	constexpr float TraversalTurnAngleThreshold = 50.0f;
+
+	const bool bSlotInactive = !IsSlotActive(FName("DefaultSlot"));
+	const bool bMovingTraversalActive = GetCurveValue(FName("MovingTraversal")) > 0.0f;
+	const bool bTurnAngleShallow = FMath::Abs(GetTrajectoryTurnAngle()) <= TraversalTurnAngleThreshold;
+
+	return bSlotInactive && bMovingTraversalActive && bTurnAngleShallow;
 }

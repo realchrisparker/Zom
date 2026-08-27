@@ -24,11 +24,12 @@ AZomPlayerCharacter::AZomPlayerCharacter(const FObjectInitializer& ObjectInitial
 
 	// Create the gameplay camera component and attach it to the character's mesh
 	GameplayCamera = CreateDefaultSubobject<UGameplayCameraComponent>(TEXT("GameplayCamera"));
+	GameplayCamera->SetupAttachment(GetMesh());
 
 	// Create the inventory component
 	Inventory = CreateDefaultSubobject<UZomInventoryComponent>(TEXT("Inventory"));
 
-	CurrentCamera = TAG_Zom_Camera_State_Default.GetTag();
+	CurrentCamera = FGameplayTagContainer(TAG_Zom_Camera_State_Default.GetTag());
 }
 
 // Called when the game starts or when spawned
