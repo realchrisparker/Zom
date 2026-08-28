@@ -112,7 +112,10 @@ void UZomCharacterMovementComponent::UpdateCharacterStateAfterMovement(float Del
 		return;
 	}
 
-	ZomCharacterOwner->Gait = (Velocity.Size2D() <= WalkSpeed) ? EGait::Walk : EGait::Run;
+	// A lightly-pressed gamepad stick (MovementInputAmount below the threshold) is held to Walk even once
+	// residual velocity has crept past WalkSpeed, so it never gets to accelerate up toward run speed.
+	const bool bInputWantsRun = ZomCharacterOwner->MovementInputAmount >= RunInputThreshold;
+	ZomCharacterOwner->Gait = (bInputWantsRun && Velocity.Size2D() > WalkSpeed) ? EGait::Run : EGait::Walk;
 }
 
 // Called when the movement mode changes (e.g. walking, falling, custom modes)

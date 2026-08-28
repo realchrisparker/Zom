@@ -4,6 +4,7 @@
 #include "Zom/Characters/Animations/Base/ZomAnimInstanceBase.h"
 #include "Zom/Characters/ZomPlayerCharacter.h"
 #include "Zom/Characters/Components/ZomCharacterMovementComponent.h"
+#include "BlendStack/BlendStackAnimNodeLibrary.h"
 
 
 // Constructor
@@ -52,6 +53,8 @@ void UZomAnimInstanceBase::NativeUpdateAnimation(float DeltaSeconds)
 
 	AZomPlayerCharacter* Character = CachedPlayerCharacter.Get();
 	UZomCharacterMovementComponent* MovementComponent = CachedCharacterMovementComponent.Get();
+
+	UpdateTrajectory(DeltaSeconds);
 
 	// Transforms
 	CharacterTransform_LastFrame = CharacterTransform;
@@ -166,15 +169,54 @@ void UZomAnimInstanceBase::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
 		}
 	}
 
-	// Orientation intent: face the aim direction while strafing/aiming, otherwise face the movement direction
-	if (RotationMode == ERotationMode::Strafe || RotationMode == ERotationMode::Aim)
-	{
-		OrientationIntent = FRotator(0.0f, AimingRotation.Yaw, 0.0f);
-	}
-	else
-	{
-		OrientationIntent = bHasVelocity ? FRotator(0.0f, Velocity.Rotation().Yaw, 0.0f) : FRotator(0.0f, CharacterTransform.Rotator().Yaw, 0.0f);
-	}
+	// Orientation intent: simply the character's current facing
+	OrientationIntent = CharacterTransform.Rotator();
+}
+
+// Updates the predicted trajectory used by motion matching. Must run first in NativeUpdateAnimation, before anything else consumes this frame's trajectory.
+void UZomAnimInstanceBase::UpdateTrajectory(float DeltaSeconds)
+{
+	// Use the Moving trajectory model once there's any current speed, otherwise Idle
+	const FPoseSearchTrajectoryData& CurrentTrajectoryData = (Speed2D > 0.0f) ? TrajectoryGenerationData_Moving : TrajectoryGenerationData_Idle;
+
+	// Update trajectory history and generate a fresh history + prediction based on current character intent.
+	// Trajectory (history) and PreviousDesiredControllerYaw are updated in place; GeneratedTrajectory is the full result.
+	FTransformTrajectory GeneratedTrajectory;
+	UPoseSearchTrajectoryLibrary::PoseSearchGenerateTransformTrajectory(
+		this,
+		CurrentTrajectoryData,
+		DeltaSeconds,
+		Trajectory,
+		PreviousDesiredControllerYaw,
+		GeneratedTrajectory,
+		/*InHistorySamplingInterval*/ -1.0f,
+		/*InTrajectoryHistoryCount*/ 30,
+		/*InPredictionSamplingInterval*/ 0.1f,
+		/*InTrajectoryPredictionCount*/ 15);
+
+	// Apply gravity and floor/obstacle collision to the predicted trajectory (mainly relevant while in the air)
+	FTransformTrajectory CollisionAdjustedTrajectory;
+	UPoseSearchTrajectoryLibrary::HandleTransformTrajectoryWorldCollisions(
+		this,
+		this,
+		GeneratedTrajectory,
+		/*bApplyGravity*/ true,
+		/*FloorCollisionsOffset*/ 0.01f,
+		CollisionAdjustedTrajectory,
+		TrajectoryCollision,
+		UEngineTypes::ConvertToTraceType(ECC_Visibility),
+		/*bTraceComplex*/ false,
+		TArray<AActor*>(),
+		EDrawDebugTrace::None,
+		/*bIgnoreSelf*/ true,
+		/*MaxObstacleHeight*/ 150.0f);
+
+	Trajectory = CollisionAdjustedTrajectory;
+
+	// Sample predicted velocities at fixed points along the trajectory
+	UPoseSearchTrajectoryLibrary::GetTransformTrajectoryVelocity(Trajectory, -0.3f, -0.2f, Trj_PastVelocity);
+	UPoseSearchTrajectoryLibrary::GetTransformTrajectoryVelocity(Trajectory, 0.0f, 0.2f, Trj_CurrentVelocity);
+	UPoseSearchTrajectoryLibrary::GetTransformTrajectoryVelocity(Trajectory, 0.4f, 0.5f, Trj_FutureVelocity);
 }
 
 ECharacterMovementMode UZomAnimInstanceBase::MapNativeMovementMode(TEnumAsByte<EMovementMode> NativeMode) const
@@ -240,7 +282,10 @@ bool UZomAnimInstanceBase::IsPivoting() const
 		break;
 	}
 
-	const bool bPivoting = FMath::Abs(GetTrajectoryTurnAngle()) >= PivotTurnAngleThreshold;
+	// GetTrajectoryTurnAngle() compares Velocity against InputAcceleration; with no input, InputAcceleration is
+	// zero and FVector::Rotation() on a zero vector returns Yaw 0, producing a bogus angle rather than "no turn".
+	const bool bHasInputAcceleration = !InputAcceleration.IsNearlyZero();
+	const bool bPivoting = bHasInputAcceleration && (FMath::Abs(GetTrajectoryTurnAngle()) >= PivotTurnAngleThreshold);
 
 	return bPivoting && IsMoving();
 }
@@ -281,7 +326,7 @@ bool UZomAnimInstanceBase::ShouldTurnInPlace() const
  */
 float UZomAnimInstanceBase::GetTrajectoryTurnAngle() const
 {
-	return FMath::FindDeltaAngleDegrees(Velocity.Rotation().Yaw, Acceleration.Rotation().Yaw);
+	return FMath::FindDeltaAngleDegrees(Velocity.Rotation().Yaw, InputAcceleration.Rotation().Yaw);
 }
 
 // Whether the character just landed with a vertical land speed below the heavy land threshold
@@ -309,4 +354,132 @@ bool UZomAnimInstanceBase::JustTraversed() const
 	const bool bTurnAngleShallow = FMath::Abs(GetTrajectoryTurnAngle()) <= TraversalTurnAngleThreshold;
 
 	return bSlotInactive && bMovingTraversalActive && bTurnAngleShallow;
+}
+
+/**
+ * Whether root motion can currently be steered: the character is moving or in the air (steering idle animations
+ * can cause them to slide), and the blend stack's currently active anim (given by Node) is active.
+ */
+bool UZomAnimInstanceBase::EnableSteering(const FAnimNodeReference& Node) const
+{
+	const bool bMovingOrInAir = (MovementState != EMovementState::Idle) || (MovementMode != ECharacterMovementMode::OnGround);
+
+	return bMovingOrInAir && UBlendStackAnimNodeLibrary::GetCurrentBlendStackAnimIsActive(Node);
+}
+
+/**
+ * The steering node's target rotation: the predicted trajectory's facing half a second into the future, so
+ * steering rotates towards where the character is headed rather than lagging behind its current rotation.
+ */
+FQuat UZomAnimInstanceBase::GetDesiredFacing() const
+{
+	return Trajectory.GetSampleAtTime(0.5f).Facing;
+}
+
+/**
+ * The warping space Orientation Warping should use: the root bone transform when Offset Root Bone is enabled
+ * (since that lets the root bone and component transforms diverge), otherwise the component transform.
+ */
+EOrientationWarpingSpace UZomAnimInstanceBase::GetOrientationWarpingWarpingSpace() const
+{
+	return bOffsetRootBoneEnabled ? EOrientationWarpingSpace::RootBoneTransform : EOrientationWarpingSpace::ComponentTransform;
+}
+
+/**
+ * The Motion Matching node's blend time: shorter right after landing (OnGround, was InAir) so land animations
+ * blend in quickly, very short right after jumping (InAir, moving up fast) for a snappy jump start, 0.5s otherwise.
+ */
+float UZomAnimInstanceBase::GetMMBlendTime() const
+{
+	switch (MovementMode)
+	{
+	case ECharacterMovementMode::OnGround:
+		switch (MovementMode_LastFrame)
+		{
+		case ECharacterMovementMode::OnGround:
+			return 0.5f;
+		case ECharacterMovementMode::InAir:
+			// Just landed: blend the land animation in faster
+			return 0.2f;
+		default:
+			break;
+		}
+		break;
+
+	case ECharacterMovementMode::InAir:
+		// Moving up quickly means we just jumped: blend the jump animation in very fast
+		return (Velocity.Z > 100.0f) ? 0.15f : 0.5f;
+
+	default:
+		break;
+	}
+
+	return 0.2f;
+}
+
+/**
+ * The Motion Matching node's notify recency time out, by Gait. Must stay larger than the time between footstep
+ * notifies for that gait, otherwise notifies get filtered out as stale.
+ */
+float UZomAnimInstanceBase::GetMMNotifyRecencyTimeOut() const
+{
+	switch (Gait)
+	{
+	case EGait::Walk:
+		return 0.2f;
+	case EGait::Run:
+		return 0.2f;
+	case EGait::Sprint:
+		return 0.16f;
+	}
+
+	return 0.2f;
+}
+
+/**
+ * The Motion Matching node's continuing-pose interrupt mode: interrupts the database search (allowing a
+ * database change) when the character's high level state has meaningfully changed since last frame.
+ */
+EPoseSearchInterruptMode UZomAnimInstanceBase::GetMMInterruptMode() const
+{
+	// Always interrupt if the movement mode has changed, since that usually means the character is jumping or landing
+	const bool bMovementModeChanged = (MovementMode != MovementMode_LastFrame);
+	if (bMovementModeChanged)
+	{
+		return EPoseSearchInterruptMode::InterruptOnDatabaseChange; //Quick out if the movement mode changed.
+	}
+
+	// ------
+	// From GASP. This is the check from the tripple OR.
+	// ------
+
+	// 1.A Movement state changed (Idle <-> Moving)
+	const bool bMovementStateChangedFinal = (MovementState != MovementState_LastFrame);
+
+	// 1.B Gait changed while moving (Idle <-> Moving doesn't count)
+	const bool bGaitChanged = (Gait != Gait_LastFrame);
+	const bool bMovementStateIsMoving = (MovementState == EMovementState::Moving);
+	const bool bGaitChangedWhileMovingFinal = bGaitChanged && bMovementStateIsMoving;
+
+	// 1.C Stance changed (Stand <-> Crouch)
+	const bool bStanceChangedFinal = (Stance != Stance_LastFrame);
+
+	// 1.D FINAL
+	const bool bStateOrGaitChangedFinal = bMovementStateChangedFinal || bGaitChangedWhileMovingFinal || bStanceChangedFinal;
+
+	// ------
+	// From GASP. This is the check from the first AND.
+	// ------
+
+	// 2.A Movement mode changed (OnGround <-> InAir)
+	const bool bMovementModeIsOnGround = (MovementMode == ECharacterMovementMode::OnGround);
+
+	// 2.B FINAL
+	const bool bMovementModeOnGroundTripleOrFinal = (bStateOrGaitChangedFinal && bMovementModeIsOnGround);
+
+	// 3.A FINAL. This is the check from the last OR.
+	if (bMovementModeChanged || bMovementModeOnGroundTripleOrFinal) return EPoseSearchInterruptMode::InterruptOnDatabaseChange;
+
+	// Default to not interrupt if none of the above conditions are met
+	return EPoseSearchInterruptMode::DoNotInterrupt;
 }

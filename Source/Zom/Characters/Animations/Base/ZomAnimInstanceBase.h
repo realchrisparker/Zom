@@ -4,10 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include "Animation/AnimNodeReference.h"
 #include "Animation/TrajectoryTypes.h"
+#include "BoneControllers/AnimNode_OrientationWarping.h"
+#include "Engine/EngineTypes.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "PoseSearch/PoseSearchTrajectoryLibrary.h"
 #include "PoseSearch/PoseSearchDatabase.h"
+#include "PoseSearch/PoseSearchLibrary.h"
 #include "Zom/Characters/Enums/ZomCharacterEnums.h"
 #include "ZomAnimInstanceBase.generated.h"
 
@@ -335,6 +339,48 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Zom|Traversal", meta = (DisplayName = "Just Traversed", BlueprintThreadSafe))
 	bool JustTraversed() const;
 
+	/**
+	 * Whether root motion can currently be steered: the character is moving or in the air (steering idle animations
+	 * can cause them to slide), and the blend stack's currently active anim (given by Node) is active.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Zom|Motion Matching", meta = (DisplayName = "Enable Steering", BlueprintThreadSafe))
+	bool EnableSteering(const FAnimNodeReference& Node) const;
+
+	/**
+	 * The steering node's target rotation: the predicted trajectory's facing half a second into the future, so
+	 * steering rotates towards where the character is headed rather than lagging behind its current rotation.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Zom|Motion Matching", meta = (DisplayName = "Get Desired Facing", BlueprintThreadSafe))
+	FQuat GetDesiredFacing() const;
+
+	/**
+	 * The warping space Orientation Warping should use: the root bone transform when Offset Root Bone is enabled
+	 * (since that lets the root bone and component transforms diverge), otherwise the component transform.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Zom|Motion Matching", meta = (DisplayName = "Get Orientation Warping Warping Space", BlueprintThreadSafe))
+	EOrientationWarpingSpace GetOrientationWarpingWarpingSpace() const;
+
+	/**
+	 * The Motion Matching node's blend time: shorter right after landing (OnGround, was InAir) so land animations
+	 * blend in quickly, very short right after jumping (InAir, moving up fast) for a snappy jump start, 0.5s otherwise.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Zom|Motion Matching", meta = (DisplayName = "Get MM Blend Time", BlueprintThreadSafe))
+	float GetMMBlendTime() const;
+
+	/**
+	 * The Motion Matching node's notify recency time out, by Gait. Must stay larger than the time between footstep
+	 * notifies for that gait, otherwise notifies get filtered out as stale.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Zom|Motion Matching", meta = (DisplayName = "Get MM Notify Recency Time Out", BlueprintThreadSafe))
+	float GetMMNotifyRecencyTimeOut() const;
+
+	/**
+	 * The Motion Matching node's continuing-pose interrupt mode: interrupts the database search (allowing a
+	 * database change) when the character's high level state has meaningfully changed since last frame.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Zom|Motion Matching", meta = (DisplayName = "Get MM Interrupt Mode", BlueprintThreadSafe))
+	EPoseSearchInterruptMode GetMMInterruptMode() const;
+
 protected:
 	// Called when the anim instance is created and its owning component/actor are valid; good place to cache references
 	virtual void NativeInitializeAnimation() override;
@@ -350,6 +396,9 @@ protected:
 
 	// Maps the movement component's native movement mode to our high level ECharacterMovementMode. Custom modes (Sliding, Traversing, Ragdoll) are not detectable yet and are left unchanged.
 	ECharacterMovementMode MapNativeMovementMode(TEnumAsByte<EMovementMode> NativeMode) const;
+
+	// Updates the predicted trajectory used by motion matching. Must run first in NativeUpdateAnimation, before anything else consumes this frame's trajectory.
+	void UpdateTrajectory(float DeltaSeconds);
 
 private:
 

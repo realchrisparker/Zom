@@ -31,6 +31,7 @@ public class Zom : ModuleRules
 			"GameplayCameras",
 			"GameplayTags",
 			"AnimationWarpingRuntime",
+			"BlendStack",
 			"Chooser",
 			"PropertyPath",
 			"DrawDebugLibrary",

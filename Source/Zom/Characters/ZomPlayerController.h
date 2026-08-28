@@ -135,6 +135,7 @@ private:
 	// -------------
 
 	void Input_Move(const FInputActionValue& Value);
+	void Input_MoveCompleted();
 	void Input_Look(const FInputActionValue& Value);
 	void Input_JumpStarted();
 	void Input_JumpCompleted();

@@ -68,10 +68,16 @@ public:
 	// Properties
 	// -------------
 
-	// Current gait. Walk/Run are set automatically by UZomCharacterMovementComponent based on current speed;
-	// Sprint is set manually (by AZomPlayerController, in response to the sprint input action).
+	// Current gait. Walk/Run are set automatically by UZomCharacterMovementComponent based on current speed and
+	// MovementInputAmount; Sprint is set manually (by AZomPlayerController, in response to the sprint input action).
 	UPROPERTY(BlueprintReadWrite, Category = "Zom|Movement State", meta = (DisplayName = "Gait"))
 	EGait Gait = EGait::Walk;
+
+	// Magnitude (0-1) of the last IA_Move input, e.g. how far a gamepad stick is pushed. Always 1.0 for digital
+	// input (keyboard). Set by AZomPlayerController::Input_Move; used by UZomCharacterMovementComponent to keep
+	// a lightly-pressed stick from accelerating the character past walk speed.
+	UPROPERTY(BlueprintReadWrite, Category = "Zom|Movement State", meta = (DisplayName = "Movement Input Amount"))
+	float MovementInputAmount = 0.0f;
 
 	// Current combat state. Unarmed is the default state; other states are set manually (by AZomPlayerController, in response to combat input actions).
 	UPROPERTY(BlueprintReadWrite, Category = "Zom|Combat", meta = (DisplayName = "Combat State"))

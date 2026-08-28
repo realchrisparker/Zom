@@ -38,6 +38,10 @@
 			"Enabled": true
 		},
 		{
+			"Name": "BlendStack",
+			"Enabled": true
+		},
+		{
 			"Name": "MotionWarping",
 			"Enabled": true
 		},

@@ -48,6 +48,8 @@ void AZomPlayerController::SetupInputComponent()
     if (IA_Move)
     {
         EnhancedInputComponent->BindAction(IA_Move, ETriggerEvent::Triggered, this, &AZomPlayerController::Input_Move);
+        EnhancedInputComponent->BindAction(IA_Move, ETriggerEvent::Completed, this, &AZomPlayerController::Input_MoveCompleted);
+        EnhancedInputComponent->BindAction(IA_Move, ETriggerEvent::Canceled, this, &AZomPlayerController::Input_MoveCompleted);
     }
     if (IA_Look)
     {
@@ -120,6 +122,10 @@ void AZomPlayerController::Input_Move(const FInputActionValue& Value)
 
     const FVector2D MovementVector = Value.Get<FVector2D>();
 
+    // How far the stick is pushed (1.0 for digital/keyboard input); read by UZomCharacterMovementComponent to
+    // keep a lightly-pressed gamepad stick from accelerating the character past walk speed.
+    PlayerCharacter->MovementInputAmount = FMath::Clamp(MovementVector.Size(), 0.0f, 1.0f);
+
     const FRotator ViewRotation = GetControlRotation();
     const FRotator YawRotation(0, ViewRotation.Yaw, 0);
 
@@ -128,6 +134,14 @@ void AZomPlayerController::Input_Move(const FInputActionValue& Value)
 
     PlayerCharacter->AddMovementInput(ForwardDirection, MovementVector.Y);
     PlayerCharacter->AddMovementInput(RightDirection, MovementVector.X);
+}
+
+void AZomPlayerController::Input_MoveCompleted()
+{
+    if (AZomPlayerCharacter* PlayerCharacter = CachedPlayerCharacter.Get())
+    {
+        PlayerCharacter->MovementInputAmount = 0.0f;
+    }
 }
 
 void AZomPlayerController::Input_Look(const FInputActionValue& Value)
