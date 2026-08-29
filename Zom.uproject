@@ -81,6 +81,10 @@
 		{
 			"Name": "GameplayAbilities",
 			"Enabled": true
+		},
+		{
+			"Name": "CurveExpression",
+			"Enabled": true
 		}
 	]
 }

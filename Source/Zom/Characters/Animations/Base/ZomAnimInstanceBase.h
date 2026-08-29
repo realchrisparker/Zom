@@ -6,6 +6,11 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimNodeReference.h"
 #include "Animation/TrajectoryTypes.h"
+#include "Animation/AnimClassInterface.h"
+#include "Animation/AnimSubsystem_Tag.h"
+#include "AnimationWarpingTypes.h"
+#include "BoneControllers/AnimNode_FootPlacement.h"
+#include "BoneControllers/AnimNode_OffsetRootBone.h"
 #include "BoneControllers/AnimNode_OrientationWarping.h"
 #include "Engine/EngineTypes.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -234,6 +239,22 @@ public:
 	float OffsetRootTranslationRadius = 0.0f;
 
 	// -------------
+	// Foot Placement
+	// -------------
+
+	UPROPERTY(BlueprintReadWrite, Category = "Zom|Foot Placement", meta = (DisplayName = "Plant Settings (Default)"))
+	FFootPlacementPlantSettings PlantSettings_Default;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Zom|Foot Placement", meta = (DisplayName = "Plant Settings (Stops)"))
+	FFootPlacementPlantSettings PlantSettings_Stops;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Zom|Foot Placement", meta = (DisplayName = "Interpolation Settings (Default)"))
+	FFootPlacementInterpolationSettings InterpolationSettings_Default;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Zom|Foot Placement", meta = (DisplayName = "Interpolation Settings (Stops)"))
+	FFootPlacementInterpolationSettings InterpolationSettings_Stops;
+
+	// -------------
 	// Motion Matching
 	// -------------
 
@@ -324,6 +345,35 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Zom|Motion Matching", meta = (DisplayName = "Get Trajectory Turn Angle", BlueprintThreadSafe))
 	float GetTrajectoryTurnAngle() const;
 
+	/**
+	 * The 2D lean amount used to drive lean/tilt animations: X is lateral lean, driven by the lateral (Y) component
+	 * of the relative acceleration amount and scaled up as speed ramps from 165 to 375. Y is currently unused.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Zom|Locomotion", meta = (DisplayName = "Get Lean Amount", BlueprintThreadSafe))
+	FVector2D GetLeanAmount() const;
+
+	/**
+	 * The aim offset value: X is the yaw delta and Y is the pitch delta between the aiming rotation and the root
+	 * bone's rotation, blended out to zero as the "Disable_AO" curve activates.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Zom|Locomotion", meta = (DisplayName = "Get AO Value", BlueprintThreadSafe))
+	FVector2D GetAOValue() const;
+
+	/**
+	 * The aim offset yaw: the aim offset value's yaw delta while strafing, otherwise 0 (orienting to movement or
+	 * aiming both keep the character facing the aim direction already, so there's no yaw offset left to apply).
+	 */
+	UFUNCTION(BlueprintPure, Category = "Zom|Locomotion", meta = (DisplayName = "Get AO Yaw", BlueprintThreadSafe))
+	float GetAOYaw() const;
+
+	/**
+	 * Whether aim offset should be enabled: the character is strafing, the aim offset yaw is within the threshold
+	 * for the current movement state (tighter while idle than while moving), and no montage is significantly
+	 * weighted in on the default slot (aim offset would fight a montage that's driving its own upper body pose).
+	 */
+	UFUNCTION(BlueprintPure, Category = "Zom|Locomotion", meta = (DisplayName = "Enable AO", BlueprintThreadSafe))
+	bool EnableAO() const;
+
 	// Whether the character just landed with a vertical land speed below the heavy land threshold
 	UFUNCTION(BlueprintPure, Category = "Zom|Landing", meta = (DisplayName = "Just Landed (Light)", BlueprintThreadSafe))
 	bool JustLanded_Light() const;
@@ -381,6 +431,44 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Zom|Motion Matching", meta = (DisplayName = "Get MM Interrupt Mode", BlueprintThreadSafe))
 	EPoseSearchInterruptMode GetMMInterruptMode() const;
 
+	/**
+	 * The Motion Matching node's offset root translation radius: the distance from the root bone to the component
+	 * transform at which the offset root bone is disabled, so the root bone and component transform don't diverge
+	 * too far apart.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Zom|Motion Matching", meta = (DisplayName = "Get Offset Root Translation Radius", BlueprintThreadSafe))
+	float GetOffsetRootTranslationRadius() const { return OffsetRootTranslationRadius; }
+
+	/**
+	 * The Offset Root Bone node's rotation mode: released while the default slot is playing a montage (so the
+	 * montage's own rotation drives the root), otherwise accumulated as normal.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Zom|Motion Matching", meta = (DisplayName = "Get Offset Root Rotation Mode", BlueprintThreadSafe))
+	EOffsetRootBoneMode GetOffsetRootRotationMode() const;
+
+	/**
+	 * The Offset Root Bone node's translation mode: released while the default slot is playing a montage, released
+	 * while on the ground and stationary (no motion to offset), interpolated while on the ground and moving so the
+	 * translation offset catches up smoothly, and released in every other movement mode.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Zom|Motion Matching", meta = (DisplayName = "Get Offset Root Translation Mode", BlueprintThreadSafe))
+	EOffsetRootBoneMode GetOffsetRootTranslationMode() const;
+
+	/**
+	 * The Offset Root Bone node's translation half life: shorter while idle so the offset catches up quickly,
+	 * longer while moving so it blends out more gradually.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Zom|Motion Matching", meta = (DisplayName = "Get Offset Root Translation Half Life", BlueprintThreadSafe))
+	float GetOffsetRootTranslationHalfLife() const;
+
+	// The Foot Placement node's plant settings: the Stops variant while the current database is tagged "Stops", otherwise the Default variant.
+	UFUNCTION(BlueprintPure, Category = "Zom|Foot Placement", meta = (DisplayName = "Get Foot Placement Plant Settings", BlueprintThreadSafe))
+	FFootPlacementPlantSettings GetFootPlacementPlantSettings() const;
+
+	// The Foot Placement node's interpolation settings: the Stops variant while the current database is tagged "Stops", otherwise the Default variant.
+	UFUNCTION(BlueprintPure, Category = "Zom|Foot Placement", meta = (DisplayName = "Get Foot Placement Interpolation Settings", BlueprintThreadSafe))
+	FFootPlacementInterpolationSettings GetFootPlacementInterpolationSettings() const;
+
 protected:
 	// Called when the anim instance is created and its owning component/actor are valid; good place to cache references
 	virtual void NativeInitializeAnimation() override;
@@ -400,6 +488,9 @@ protected:
 	// Updates the predicted trajectory used by motion matching. Must run first in NativeUpdateAnimation, before anything else consumes this frame's trajectory.
 	void UpdateTrajectory(float DeltaSeconds);
 
+	// The character's current acceleration relative to its facing, normalized by the max acceleration/deceleration for whichever is currently relevant.
+	FVector CalculateRelativeAccelerationAmount() const;
+
 private:
 
 	// -------------
@@ -414,4 +505,7 @@ private:
 
 	// Native movement mode gathered on the game thread in NativeUpdateAnimation, consumed by NativeThreadSafeUpdateAnimation
 	TEnumAsByte<EMovementMode> CachedNativeMovementMode = MOVE_None;
+
+	// Cached pointer to the AnimGraph's Offset Root Bone node, tagged "OffsetRoot", resolved once via FAnimSubsystem_Tag. Used every frame to read its simulated root transform.
+	FAnimNode_OffsetRootBone* CachedOffsetRootBoneNode = nullptr;
 };

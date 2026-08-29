@@ -10,6 +10,36 @@
 // Constructor
 UZomAnimInstanceBase::UZomAnimInstanceBase()
 {
+	// Plant Settings (Default)
+	PlantSettings_Default.SpeedThreshold = 1.0f;
+	PlantSettings_Default.DistanceToGround = 10.0f;
+	PlantSettings_Default.LockType = EFootPlacementLockType::PivotAroundBall;
+	PlantSettings_Default.UnplantRadius = 20.0f;
+	PlantSettings_Default.ReplantRadiusRatio = 0.2f;
+	PlantSettings_Default.UnplantAngle = 60.0f;
+	PlantSettings_Default.ReplantAngleRatio = 0.2f;
+	PlantSettings_Default.MaxExtensionRatio = 0.5f;
+	PlantSettings_Default.MinExtensionRatio = 0.2f;
+	PlantSettings_Default.SeparatingDistance = 0.0f;
+	PlantSettings_Default.UnalignmentSpeedThreshold = 100.0f;
+	PlantSettings_Default.AnkleTwistReduction = 0.75f;
+	PlantSettings_Default.bReconstructWorldPlantFromVelocity = false;
+	PlantSettings_Default.bAdjustHeelBeforePlanting = false;
+
+	// Interpolation Settings (Default)
+	InterpolationSettings_Default.UnplantLinearStiffness = 100.0f;
+	InterpolationSettings_Default.UnplantLinearDamping = 1.0f;
+	InterpolationSettings_Default.UnplantAngularStiffness = 450.0f;
+	InterpolationSettings_Default.UnplantAngularDamping = 1.0f;
+	InterpolationSettings_Default.bEnableFloorInterpolation = true;
+	InterpolationSettings_Default.FloorLinearStiffness = 1000.0f;
+	InterpolationSettings_Default.FloorLinearDamping = 1.0f;
+	InterpolationSettings_Default.FloorAngularStiffness = 450.0f;
+	InterpolationSettings_Default.FloorAngularDamping = 1.0f;
+	InterpolationSettings_Default.bSmoothRootBone = false;
+	InterpolationSettings_Default.bEnableSeparationInterpolation = true;
+	InterpolationSettings_Default.SeparationStiffness = 1000.0f;
+	InterpolationSettings_Default.SeparationDamping = 1.0f;
 }
 
 // Called when the anim instance is created and its owning component/actor are valid; good place to cache references
@@ -24,6 +54,16 @@ void UZomAnimInstanceBase::NativeInitializeAnimation()
 	CachedCharacterMovementComponent = CachedPlayerCharacter.IsValid() ? Cast<UZomCharacterMovementComponent>(CachedPlayerCharacter->GetCharacterMovement()) : nullptr;
 
 	bHasOwningActor = CachedPlayerCharacter.IsValid();
+
+	// Cache the AnimGraph's Offset Root Bone node, tagged "OffsetRoot", so NativeUpdateAnimation can read its simulated transform every frame without a tag lookup
+	CachedOffsetRootBoneNode = nullptr;
+	if (const IAnimClassInterface* AnimClassInterface = IAnimClassInterface::GetFromClass(GetClass()))
+	{
+		if (const FAnimSubsystem_Tag* TagSubsystem = AnimClassInterface->FindSubsystem<FAnimSubsystem_Tag>())
+		{
+			CachedOffsetRootBoneNode = TagSubsystem->FindNodeByTag<FAnimNode_OffsetRootBone>(FName("OffsetRoot"), this);
+		}
+	}
 }
 
 // Called when the anim instance is being uninitialized (e.g. anim class changing, owning component being destroyed); good place to clear cached references
@@ -35,6 +75,7 @@ void UZomAnimInstanceBase::NativeUninitializeAnimation()
 
 	CachedPlayerCharacter = nullptr;
 	CachedCharacterMovementComponent = nullptr;
+	CachedOffsetRootBoneNode = nullptr;
 
 	bHasOwningActor = false;
 }
@@ -61,9 +102,22 @@ void UZomAnimInstanceBase::NativeUpdateAnimation(float DeltaSeconds)
 	CharacterTransform = Character->GetActorTransform();
 	ActorTransform = CharacterTransform;
 
-	if (USkeletalMeshComponent* SkelMeshComponent = GetSkelMeshComponent())
+	// Root transform comes from the "OffsetRoot" Offset Root Bone node's simulated transform, carried over from the
+	// previous frame's AnimGraph evaluation, with a 90 degree yaw correction for this skeleton's root bone orientation.
+	// Falls back to the character transform if the tagged node couldn't be resolved (e.g. AnimGraph not yet initialized).
+	if (CachedOffsetRootBoneNode)
 	{
-		RootTransform = SkelMeshComponent->GetBoneTransform(0);
+		FTransform OffsetRootTransform;
+		CachedOffsetRootBoneNode->GetOffsetRootTransform(OffsetRootTransform);
+
+		FRotator OffsetRootRotation = OffsetRootTransform.Rotator();
+		OffsetRootRotation.Yaw += 90.0f;
+
+		RootTransform = FTransform(OffsetRootRotation, OffsetRootTransform.GetLocation(), FVector::OneVector);
+	}
+	else
+	{
+		RootTransform = CharacterTransform;
 	}
 
 	// Velocity / acceleration inputs
@@ -307,7 +361,8 @@ bool UZomAnimInstanceBase::ShouldSpinTransition() const
 
 /**
  * Whether the character should turn in place: the orientation intent has diverged enough from the animation
- * root's rotation, and the character either wants to aim or has just come to a stop from moving.
+ * root's rotation, and the character is idle while strafing (e.g. the aim offset has been rotated past its
+ * clamped range and can no longer absorb the difference on its own).
  */
 bool UZomAnimInstanceBase::ShouldTurnInPlace() const
 {
@@ -315,10 +370,12 @@ bool UZomAnimInstanceBase::ShouldTurnInPlace() const
 
 	const float YawDelta = FMath::FindDeltaAngleDegrees(RootTransform.Rotator().Yaw, OrientationIntent.Yaw);
 
-	const bool bWantsToAim = RotationMode == ERotationMode::Aim;
-	const bool bJustBecameIdle = (MovementState == EMovementState::Idle) && (MovementState_LastFrame == EMovementState::Moving);
+	// Matches EnableAO()'s bIsStrafing check: the aim offset (and therefore the yaw delta it can't absorb) is
+	// only ever produced while strafing, so that's the mode this needs to catch, not Aim.
+	const bool bIsStrafing = RotationMode == ERotationMode::Strafe;
+	const bool bIsIdle = MovementState == EMovementState::Idle;
 
-	return (FMath::Abs(YawDelta) >= TurnInPlaceYawThreshold) && (bWantsToAim || bJustBecameIdle);
+	return (FMath::Abs(YawDelta) >= TurnInPlaceYawThreshold) && bIsStrafing && bIsIdle;
 }
 
 /**
@@ -327,6 +384,81 @@ bool UZomAnimInstanceBase::ShouldTurnInPlace() const
 float UZomAnimInstanceBase::GetTrajectoryTurnAngle() const
 {
 	return FMath::FindDeltaAngleDegrees(Velocity.Rotation().Yaw, InputAcceleration.Rotation().Yaw);
+}
+
+// The character's current acceleration relative to its facing, normalized by the max acceleration/deceleration for whichever is currently relevant.
+FVector UZomAnimInstanceBase::CalculateRelativeAccelerationAmount() const
+{
+	if (FVector::DotProduct(Acceleration, Velocity) > 0.0f)
+	{
+		const float ClampedMaxAcceleration = FMath::Max(CurrentMaxAcceleration, 1.0f);
+		return CharacterTransform.InverseTransformVectorNoScale(Acceleration.GetClampedToMaxSize(ClampedMaxAcceleration)) / ClampedMaxAcceleration;
+	}
+
+	const float ClampedMaxDeceleration = FMath::Max(CurrentMaxDeceleration, 1.0f);
+	return CharacterTransform.InverseTransformVectorNoScale(Acceleration.GetClampedToMaxSize(ClampedMaxDeceleration)) / ClampedMaxDeceleration;
+}
+
+/**
+ * The 2D lean amount used to drive lean/tilt animations: X is lateral lean, driven by the lateral (Y) component
+ * of the relative acceleration amount and scaled up as speed ramps from 165 to 375. Y is currently unused.
+ */
+FVector2D UZomAnimInstanceBase::GetLeanAmount() const
+{
+	const float SpeedScale = FMath::GetMappedRangeValueClamped(FVector2D(165.0f, 375.0f), FVector2D(0.5f, 1.0f), Speed2D);
+
+	return FVector2D(CalculateRelativeAccelerationAmount().Y * SpeedScale, 0.0f);
+}
+
+/**
+ * The aim offset value: X is the yaw delta and Y is the pitch delta between the aiming rotation and the root
+ * bone's rotation, blended out to zero as the "Disable_AO" curve activates.
+ */
+FVector2D UZomAnimInstanceBase::GetAOValue() const
+{
+	const FRotator RootRotation = RootTransform.Rotator();
+
+	const float YawDelta = FMath::FindDeltaAngleDegrees(RootRotation.Yaw, AimingRotation.Yaw);
+	const float PitchDelta = FMath::FindDeltaAngleDegrees(RootRotation.Pitch, AimingRotation.Pitch);
+
+	const float DisableAOAlpha = GetCurveValue(FName("Disable_AO"));
+	const FVector BlendedAO = FMath::Lerp(FVector(YawDelta, PitchDelta, 0.0f), FVector::ZeroVector, DisableAOAlpha);
+
+	return FVector2D(BlendedAO.X, BlendedAO.Y);
+}
+
+/**
+ * The aim offset yaw: the aim offset value's yaw delta while strafing, otherwise 0 (orienting to movement or
+ * aiming both keep the character facing the aim direction already, so there's no yaw offset left to apply).
+ */
+float UZomAnimInstanceBase::GetAOYaw() const
+{
+	switch (RotationMode)
+	{
+	case ERotationMode::Strafe:
+		return GetAOValue().X;
+
+	case ERotationMode::OrientToMovement:
+	case ERotationMode::Aim:
+	default:
+		return 0.0f;
+	}
+}
+
+/**
+ * Whether aim offset should be enabled: the character is strafing, the aim offset yaw is within the threshold
+ * for the current movement state (tighter while idle than while moving), and no montage is significantly
+ * weighted in on the default slot (aim offset would fight a montage that's driving its own upper body pose).
+ */
+bool UZomAnimInstanceBase::EnableAO() const
+{
+	const float MaxYawThreshold = (MovementState == EMovementState::Idle) ? 115.0f : 180.0f;
+
+	const bool bYawWithinThreshold = FMath::Abs(GetAOValue().X) <= MaxYawThreshold;
+	const bool bIsStrafing = (RotationMode == ERotationMode::Strafe);
+	const bool bSlotWeightLow = Blueprint_GetSlotMontageLocalWeight(FName("DefaultSlot")) < 0.5f;
+
+	return bYawWithinThreshold && bIsStrafing && bSlotWeightLow;
 }
 
 // Whether the character just landed with a vertical land speed below the heavy land threshold
@@ -482,4 +614,64 @@ EPoseSearchInterruptMode UZomAnimInstanceBase::GetMMInterruptMode() const
 
 	// Default to not interrupt if none of the above conditions are met
 	return EPoseSearchInterruptMode::DoNotInterrupt;
+}
+
+/**
+ * The Offset Root Bone node's rotation mode: released while the default slot is playing a montage (so the
+ * montage's own rotation drives the root), otherwise accumulated as normal.
+ */
+EOffsetRootBoneMode UZomAnimInstanceBase::GetOffsetRootRotationMode() const
+{
+	return IsSlotActive(FName("DefaultSlot")) ? EOffsetRootBoneMode::Release : EOffsetRootBoneMode::Accumulate;
+}
+
+/**
+ * The Offset Root Bone node's translation mode: released while the default slot is playing a montage, released
+ * while on the ground and stationary (no motion to offset), interpolated while on the ground and moving so the
+ * translation offset catches up smoothly, and released in every other movement mode.
+ */
+EOffsetRootBoneMode UZomAnimInstanceBase::GetOffsetRootTranslationMode() const
+{
+	if (IsSlotActive(FName("DefaultSlot")))
+	{
+		return EOffsetRootBoneMode::Release;
+	}
+
+	switch (MovementMode)
+	{
+	case ECharacterMovementMode::OnGround:
+		return IsMoving() ? EOffsetRootBoneMode::Interpolate : EOffsetRootBoneMode::Release;
+
+	default:
+		return EOffsetRootBoneMode::Release;
+	}
+}
+
+/**
+ * The Offset Root Bone node's translation half life: shorter while idle so the offset catches up quickly,
+ * longer while moving so it blends out more gradually.
+ */
+float UZomAnimInstanceBase::GetOffsetRootTranslationHalfLife() const
+{
+	switch (MovementState)
+	{
+	case EMovementState::Idle:
+		return 0.1f;
+
+	case EMovementState::Moving:
+	default:
+		return 0.3f;
+	}
+}
+
+// The Foot Placement node's plant settings: the Stops variant while the current database is tagged "Stops", otherwise the Default variant.
+FFootPlacementPlantSettings UZomAnimInstanceBase::GetFootPlacementPlantSettings() const
+{
+	return CurrentDatabaseTags.Contains(FName("Stops")) ? PlantSettings_Stops : PlantSettings_Default;
+}
+
+// The Foot Placement node's interpolation settings: the Stops variant while the current database is tagged "Stops", otherwise the Default variant.
+FFootPlacementInterpolationSettings UZomAnimInstanceBase::GetFootPlacementInterpolationSettings() const
+{
+	return CurrentDatabaseTags.Contains(FName("Stops")) ? InterpolationSettings_Stops : InterpolationSettings_Default;
 }

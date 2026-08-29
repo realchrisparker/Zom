@@ -160,14 +160,6 @@
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
 	{
-		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Camera\\Evaluators\\ZomPlayerCameraDirectorEvaluator.cpp",
-		"arguments": [
-			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
-		],
-		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
-	},
-	{
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Characters\\Animations\\Base\\ZomAnimInstanceBase.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",

@@ -63,9 +63,12 @@ public:
 	// Properties
 	// -------------
 
-	// Current rotation mode, used to drive how the component orients the character while moving
+	// Current rotation mode, used to drive how the component orients the character while moving.
+	// Defaults to Strafe so the character always faces the camera/controller direction rather than turning to
+	// face its movement direction (e.g. Last of Us-style locomotion), independent of whether it's aiming or
+	// melee lock-on strafing - those are distinguished elsewhere, not by switching away from Strafe here.
 	UPROPERTY(BlueprintReadWrite, Category = "Zom|Movement State", meta = (DisplayName = "Rotation Mode"))
-	ERotationMode RotationMode = ERotationMode::OrientToMovement;
+	ERotationMode RotationMode = ERotationMode::Strafe;
 
 	// Max speed while Gait is Walk
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Zom|Movement State", meta = (DisplayName = "Walk Speed"))
