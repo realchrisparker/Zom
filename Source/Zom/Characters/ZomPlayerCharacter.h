@@ -4,8 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "Zom/Characters/Base/ZomPlayerCharacterBase.h"
-#include "Zom/Characters/Enums/ZomCharacterEnums.h"
+#include "Zom/Characters/Base/ZomCharacterBase.h"
 #include "Zom/Misc/ZomGameplayTags.h"
 #include "ZomPlayerCharacter.generated.h"
 
@@ -23,14 +22,13 @@ class UZomInventoryComponent;
  * The player character class for the Zom game.
  */
 UCLASS(Blueprintable, meta = (DisplayName = "Zom Player Character"))
-class ZOM_API AZomPlayerCharacter : public AZomPlayerCharacterBase
+class ZOM_API AZomPlayerCharacter : public AZomCharacterBase
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this character's properties
 	AZomPlayerCharacter(const FObjectInitializer& ObjectInitializer);
-
 
 	// -------------
 	// Functions
@@ -67,21 +65,6 @@ public:
 	// -------------
 	// Properties
 	// -------------
-
-	// Current gait. Walk/Run are set automatically by UZomCharacterMovementComponent based on current speed and
-	// MovementInputAmount; Sprint is set manually (by AZomPlayerController, in response to the sprint input action).
-	UPROPERTY(BlueprintReadWrite, Category = "Zom|Movement State", meta = (DisplayName = "Gait"))
-	EGait Gait = EGait::Walk;
-
-	// Magnitude (0-1) of the last IA_Move input, e.g. how far a gamepad stick is pushed. Always 1.0 for digital
-	// input (keyboard). Set by AZomPlayerController::Input_Move; used by UZomCharacterMovementComponent to keep
-	// a lightly-pressed stick from accelerating the character past walk speed.
-	UPROPERTY(BlueprintReadWrite, Category = "Zom|Movement State", meta = (DisplayName = "Movement Input Amount"))
-	float MovementInputAmount = 0.0f;
-
-	// Current combat state. Unarmed is the default state; other states are set manually (by AZomPlayerController, in response to combat input actions).
-	UPROPERTY(BlueprintReadWrite, Category = "Zom|Combat", meta = (DisplayName = "Combat State"))
-	ECombatState CombatState = ECombatState::Unarmed;
 
 	// Current camera state. Read every RunCameraDirector tick by CDE_Player's Chooser Table (CHT_CurrentCamera)
 	// to pick which entry of its CameraRigsByTag map to activate. Set by whichever gameplay system owns a given

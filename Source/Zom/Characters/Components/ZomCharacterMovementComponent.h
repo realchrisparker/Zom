@@ -10,7 +10,7 @@
 
 // Forward declaration
 
-class AZomPlayerCharacter;
+class AZomCharacterBase;
 
 
 /**
@@ -37,9 +37,6 @@ public:
 
 	// Called before the character's movement is processed each tick
 	virtual void UpdateCharacterStateBeforeMovement(float DeltaSeconds) override;
-
-	// Called after the character's movement is processed each tick
-	virtual void UpdateCharacterStateAfterMovement(float DeltaSeconds) override;
 
 	// Called when the movement mode changes (e.g. walking, falling, custom modes)
 	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
@@ -82,12 +79,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Zom|Movement State", meta = (DisplayName = "Sprint Speed"))
 	float SprintSpeed = 600.0f;
 
-	// Minimum AZomPlayerCharacter::MovementInputAmount (0-1) required to classify Gait as Run instead of Walk.
-	// Keeps a lightly-pressed gamepad stick capped at walk speed instead of accelerating up to run speed.
-	// Always met by digital input (keyboard), which reports a MovementInputAmount of 1.0.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Zom|Movement State", meta = (DisplayName = "Run Input Threshold", ClampMin = "0.0", ClampMax = "1.0"))
-	float RunInputThreshold = 0.5f;
-
 	UPROPERTY(BlueprintReadWrite, Category = "Zom|Movement", meta = (DisplayName = "Just Landed"))
 	bool bJustLanded = false;
 
@@ -102,5 +93,5 @@ private:
 
 	// Owning character of this movement component.
 	UPROPERTY()
-	TObjectPtr<AZomPlayerCharacter> OwningCharacter;
+	TObjectPtr<AZomCharacterBase> OwningCharacter;
 };

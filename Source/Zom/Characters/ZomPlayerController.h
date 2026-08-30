@@ -87,6 +87,9 @@ protected:
 	TObjectPtr<UInputAction> IA_Crouch;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Zom|Input")
+	TObjectPtr<UInputAction> IA_WalkRun;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Zom|Input")
 	TObjectPtr<UInputAction> IA_LightAttack;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Zom|Input")
@@ -135,20 +138,24 @@ private:
 	// -------------
 
 	void Input_Move(const FInputActionValue& Value);
-	void Input_MoveCompleted();
 	void Input_Look(const FInputActionValue& Value);
 	void Input_JumpStarted();
 	void Input_JumpCompleted();
 	void Input_SprintStarted();
 	void Input_SprintCompleted();
 	void Input_CrouchStarted();
-	void Input_CrouchCompleted();
+	void Input_WalkRunStarted();
 
 	void ActivateAbilityByClass(TSubclassOf<UZomGameplayAbility> AbilityClass);
 
 	// -------------
 	// Properties
 	// -------------
+
+	// Whether the player has toggled running on (tap IA_WalkRun to flip, same tap-to-toggle pattern as crouch).
+	// Remembered here (not on the character) purely so Input_SprintCompleted knows which of Walk/Run to restore
+	// Gait to once Sprint - a temporary hold-based override of Gait - ends.
+	bool bWantsToRun = false;
 
 	// Cached reference to the player character possessed by this controller
 	TWeakObjectPtr<AZomPlayerCharacter> CachedPlayerCharacter;

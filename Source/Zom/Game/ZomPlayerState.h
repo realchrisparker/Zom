@@ -16,7 +16,7 @@ class UZomPlayerAttributeSet;
 
 /**
  * Owns the player's UAbilitySystemComponent as a real subobject. Implements IAbilitySystemInterface directly
- * (rather than only through AZomPlayerCharacterBase) since some GAS lookups resolve the ASC by calling the
+ * (rather than only through AZomCharacterBase) since some GAS lookups resolve the ASC by calling the
  * interface on whatever actor they're handed, which is sometimes the PlayerState, not the pawn.
  */
 UCLASS(Blueprintable, meta=(DisplayName="Zom Player State"))

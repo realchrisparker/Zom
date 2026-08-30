@@ -2,7 +2,7 @@
 
 
 #include "Zom/Characters/Components/ZomCharacterMovementComponent.h"
-#include "Zom/Characters/ZomPlayerCharacter.h"
+#include "Zom/Characters/Base/ZomCharacterBase.h"
 
 
 // Sets default values for this component's properties
@@ -34,7 +34,7 @@ void UZomCharacterMovementComponent::OnCharacterPossessed(AController* NewContro
 {
 	if (!OwningCharacter)
 	{
-		OwningCharacter = Cast<AZomPlayerCharacter>(GetOwner());
+		OwningCharacter = Cast<AZomCharacterBase>(GetOwner());
 	}
 }
 
@@ -55,7 +55,7 @@ float UZomCharacterMovementComponent::GetMaxSpeed() const
 			return MaxWalkSpeedCrouched;
 		}
 
-		const AZomPlayerCharacter* ZomCharacterOwner = Cast<AZomPlayerCharacter>(GetCharacterOwner());
+		const AZomCharacterBase* ZomCharacterOwner = Cast<AZomCharacterBase>(GetCharacterOwner());
 
 		if (ZomCharacterOwner)
 		{
@@ -93,31 +93,6 @@ void UZomCharacterMovementComponent::UpdateCharacterStateBeforeMovement(float De
 	}
 }
 
-// Called after the character's movement is processed each tick
-void UZomCharacterMovementComponent::UpdateCharacterStateAfterMovement(float DeltaSeconds)
-{
-	Super::UpdateCharacterStateAfterMovement(DeltaSeconds);
-
-	AZomPlayerCharacter* ZomCharacterOwner = Cast<AZomPlayerCharacter>(GetCharacterOwner());
-
-	if (!ZomCharacterOwner)
-	{
-		return;
-	}
-
-	// Sprint is a manual override (set by AZomPlayerController in response to the sprint input action) and
-	// isn't derived from speed, so leave it alone here; only classify between Walk and Run.
-	if (ZomCharacterOwner->Gait == EGait::Sprint)
-	{
-		return;
-	}
-
-	// A lightly-pressed gamepad stick (MovementInputAmount below the threshold) is held to Walk even once
-	// residual velocity has crept past WalkSpeed, so it never gets to accelerate up toward run speed.
-	const bool bInputWantsRun = ZomCharacterOwner->MovementInputAmount >= RunInputThreshold;
-	ZomCharacterOwner->Gait = (bInputWantsRun && Velocity.Size2D() > WalkSpeed) ? EGait::Run : EGait::Walk;
-}
-
 // Called when the movement mode changes (e.g. walking, falling, custom modes)
 void UZomCharacterMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)
 {
@@ -145,5 +120,16 @@ void UZomCharacterMovementComponent::ProcessLanded(const FHitResult& Hit, float 
 // Returns whether the character can crouch in its current state
 bool UZomCharacterMovementComponent::CanCrouchInCurrentState() const
 {
-	return Super::CanCrouchInCurrentState() && Velocity.Size2D() < 2.9f;
+	if (!Super::CanCrouchInCurrentState())
+	{
+		return false;
+	}
+
+	// The speed check below only gates *entering* crouch: 20 uu/s matches the "stopped" threshold the motion
+	// matching Chooser tables use to select stop animations, so crouch only starts once the character has a
+	// stopped pose to transition from. This same function is also polled every tick by
+	// UpdateCharacterStateBeforeMovement to decide whether to auto-uncrouch, so once already crouched we must
+	// skip the speed check - otherwise crouch-walking above the threshold would immediately force an uncrouch
+	// the tick after crouch starts.
+	return IsCrouching() || Velocity.Size2D() < 20.0f;
 }

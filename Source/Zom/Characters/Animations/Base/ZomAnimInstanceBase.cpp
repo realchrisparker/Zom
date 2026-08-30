@@ -2,7 +2,7 @@
 
 
 #include "Zom/Characters/Animations/Base/ZomAnimInstanceBase.h"
-#include "Zom/Characters/ZomPlayerCharacter.h"
+#include "Zom/Characters/Base/ZomCharacterBase.h"
 #include "Zom/Characters/Components/ZomCharacterMovementComponent.h"
 #include "BlendStack/BlendStackAnimNodeLibrary.h"
 
@@ -47,8 +47,8 @@ void UZomAnimInstanceBase::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
 
-	// Cache the player character reference if the owning actor is a player character
-	CachedPlayerCharacter = Cast<AZomPlayerCharacter>(TryGetPawnOwner());
+	// Cache the character reference if the owning actor is a Zom character
+	CachedPlayerCharacter = Cast<AZomCharacterBase>(TryGetPawnOwner());
 
 	// Cache the character movement component reference if the player character is valid
 	CachedCharacterMovementComponent = CachedPlayerCharacter.IsValid() ? Cast<UZomCharacterMovementComponent>(CachedPlayerCharacter->GetCharacterMovement()) : nullptr;
@@ -92,7 +92,7 @@ void UZomAnimInstanceBase::NativeUpdateAnimation(float DeltaSeconds)
 		return;
 	}
 
-	AZomPlayerCharacter* Character = CachedPlayerCharacter.Get();
+	AZomCharacterBase* Character = CachedPlayerCharacter.Get();
 	UZomCharacterMovementComponent* MovementComponent = CachedCharacterMovementComponent.Get();
 
 	UpdateTrajectory(DeltaSeconds);
@@ -138,7 +138,7 @@ void UZomAnimInstanceBase::NativeUpdateAnimation(float DeltaSeconds)
 	RotationMode = MovementComponent->RotationMode;
 
 	Stance_LastFrame = Stance;
-	Stance = MovementComponent->IsCrouching() ? EStance::Crouch : EStance::Stand;
+	Stance = Character->Stance;
 
 	CachedNativeMovementMode = MovementComponent->MovementMode;
 

@@ -5,7 +5,8 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
 #include "GameFramework/Character.h"
-#include "ZomPlayerCharacterBase.generated.h"
+#include "Zom/Characters/Enums/ZomCharacterEnums.h"
+#include "ZomCharacterBase.generated.h"
 
 
 // Forward declarations
@@ -22,15 +23,15 @@ struct FOnAttributeChangeData;
  * external code (HUD widgets, ability code, GameplayEffect application) always resolves the ASC through
  * GetAbilitySystemComponent() without caring where the component physically lives.
  */
-UCLASS(Blueprintable, meta=(DisplayName="Zom Player Character Base"))
-class ZOM_API AZomPlayerCharacterBase : public ACharacter, public IAbilitySystemInterface
+UCLASS(Blueprintable, meta=(DisplayName="Zom Character Base"))
+class ZOM_API AZomCharacterBase : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
 public:
 
 	// Sets default values for this character's properties
-	AZomPlayerCharacterBase(const FObjectInitializer& ObjectInitializer);
+	AZomCharacterBase(const FObjectInitializer& ObjectInitializer);
 
 	// -------------
 	// Functions
@@ -52,6 +53,24 @@ public:
 	// Properties
 	// -------------
 
+	// Current gait. Shared by every AZomCharacterBase subclass (player, zombies, Boss) so AI-driven
+	// enemies can drive the same locomotion enum the player's input does, without needing their own copy.
+	// For the player: set manually by AZomPlayerController in response to the IA_WalkRun toggle and the
+	// IA_Sprint hold - not inferred from speed, to avoid Gait flickering (and the motion matching Chooser
+	// jumping with it) when velocity hovers near a speed threshold.
+	UPROPERTY(BlueprintReadWrite, Category = "Zom|Movement State", meta = (DisplayName = "Gait"))
+	EGait Gait = EGait::Walk;
+
+	// Current stance. Kept in sync with the movement component's crouched state via OnStartCrouch/OnEndCrouch
+	// below, so it updates only on an actual stance change rather than being recomputed every animation tick.
+	UPROPERTY(BlueprintReadWrite, Category = "Zom|Movement State", meta = (DisplayName = "Stance"))
+	EStance Stance = EStance::Stand;
+
+	// Current combat state. Unarmed is the default state; other states are set manually (by AZomPlayerController,
+	// in response to combat input actions, for the player) or by AI/ability logic for other subclasses.
+	UPROPERTY(BlueprintReadWrite, Category = "Zom|Combat", meta = (DisplayName = "Combat State"))
+	ECombatState CombatState = ECombatState::Unarmed;
+
 protected:
 
 	// Called when the game starts or when spawned
@@ -62,6 +81,12 @@ protected:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	// Called when the character starts crouching; keeps Stance in sync
+	virtual void OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
+
+	// Called when the character stops crouching; keeps Stance in sync
+	virtual void OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
 
 	// -------------
 	// Functions

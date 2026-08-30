@@ -73,7 +73,7 @@ void AZomGameMode::PostLogin(APlayerController* NewPlayer)
 		return;
 	}
 
-	const AZomPlayerCharacterBase* PlayerCharacter = NewPlayer ? Cast<AZomPlayerCharacterBase>(NewPlayer->GetPawn()) : nullptr;
+	const AZomCharacterBase* PlayerCharacter = NewPlayer ? Cast<AZomCharacterBase>(NewPlayer->GetPawn()) : nullptr;
 	UAbilitySystemComponent* ASC = PlayerCharacter ? PlayerCharacter->GetAbilitySystemComponent() : nullptr;
 
 	if (ASC)

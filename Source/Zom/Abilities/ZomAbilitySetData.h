@@ -13,7 +13,7 @@ class UZomGameplayEffect;
 
 /**
  * Grants an ability/effect set to a character on BeginPlay - the extensibility hook for combat
- * (Section 4.4 of the dev doc). Consumed by AZomPlayerCharacterBase::GrantAbilitySet().
+ * (Section 4.4 of the dev doc). Consumed by AZomCharacterBase::GrantAbilitySet().
  */
 UCLASS(BlueprintType)
 class ZOM_API UZomAbilitySetData : public UPrimaryDataAsset

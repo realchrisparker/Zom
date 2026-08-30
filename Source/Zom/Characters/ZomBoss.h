@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Zom/Characters/Base/ZomPlayerCharacterBase.h"
+#include "Zom/Characters/Base/ZomCharacterBase.h"
 #include "ZomBoss.generated.h"
 
 
@@ -23,7 +23,7 @@ struct FZomBossDialogueBark;
  * always-aware fight, not a detection problem). Explicitly not pooled and not difficulty-scaled (Section 6).
  */
 UCLASS(Blueprintable, meta = (DisplayName = "Zom Boss"))
-class ZOM_API AZomBoss : public AZomPlayerCharacterBase
+class ZOM_API AZomBoss : public AZomCharacterBase
 {
 	GENERATED_BODY()
 
@@ -43,7 +43,7 @@ protected:
 	// Components
 	// -------------
 	// The ASC subobject created in the constructor is assigned into the inherited AbilitySystemComponent
-	// pointer (AZomPlayerCharacterBase) - no separate member needed for it.
+	// pointer (AZomCharacterBase) - no separate member needed for it.
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Zom", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UZomZombieAttributeSet> ZombieAttributeSet;

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Zom/Characters/Base/ZomPlayerCharacterBase.h"
+#include "Zom/Characters/Base/ZomCharacterBase.h"
 #include "ZomZombieBase.generated.h"
 
 
@@ -20,7 +20,7 @@ class AZomToxicGasVolume;
  * AIControllerClass below drive possession.
  */
 UCLASS(Blueprintable, meta = (DisplayName = "Zom Zombie Base"))
-class ZOM_API AZomZombieBase : public AZomPlayerCharacterBase
+class ZOM_API AZomZombieBase : public AZomCharacterBase
 {
 	GENERATED_BODY()
 
@@ -56,7 +56,7 @@ protected:
 	// Components
 	// -------------
 	// The ASC subobject created below is assigned into the inherited AbilitySystemComponent pointer
-	// (AZomPlayerCharacterBase) in the constructor - no separate member needed for it.
+	// (AZomCharacterBase) in the constructor - no separate member needed for it.
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Zom", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UZomZombieAttributeSet> ZombieAttributeSet;

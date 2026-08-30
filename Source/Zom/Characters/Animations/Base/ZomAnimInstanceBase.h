@@ -23,7 +23,7 @@
 
 // Forward declarations
 
-class AZomPlayerCharacter;
+class AZomCharacterBase;
 class UZomCharacterMovementComponent;
 
 
@@ -497,8 +497,9 @@ private:
 	// Properties
 	// -------------
 
-	// Cached reference to the player character possessed by this controller
-	TWeakObjectPtr<AZomPlayerCharacter> CachedPlayerCharacter;
+	// Cached reference to the owning character. Typed to the shared base (not AZomPlayerCharacter) so this
+	// anim instance class can eventually be reused by other AZomCharacterBase subclasses (e.g. Boss).
+	TWeakObjectPtr<AZomCharacterBase> CachedPlayerCharacter;
 
 	// Cached reference to the player character's movement component possessed by this controller
 	TWeakObjectPtr<UZomCharacterMovementComponent> CachedCharacterMovementComponent;

@@ -48,8 +48,6 @@ void AZomPlayerController::SetupInputComponent()
     if (IA_Move)
     {
         EnhancedInputComponent->BindAction(IA_Move, ETriggerEvent::Triggered, this, &AZomPlayerController::Input_Move);
-        EnhancedInputComponent->BindAction(IA_Move, ETriggerEvent::Completed, this, &AZomPlayerController::Input_MoveCompleted);
-        EnhancedInputComponent->BindAction(IA_Move, ETriggerEvent::Canceled, this, &AZomPlayerController::Input_MoveCompleted);
     }
     if (IA_Look)
     {
@@ -68,7 +66,10 @@ void AZomPlayerController::SetupInputComponent()
     if (IA_Crouch)
     {
         EnhancedInputComponent->BindAction(IA_Crouch, ETriggerEvent::Started, this, &AZomPlayerController::Input_CrouchStarted);
-        EnhancedInputComponent->BindAction(IA_Crouch, ETriggerEvent::Completed, this, &AZomPlayerController::Input_CrouchCompleted);
+    }
+    if (IA_WalkRun)
+    {
+        EnhancedInputComponent->BindAction(IA_WalkRun, ETriggerEvent::Started, this, &AZomPlayerController::Input_WalkRunStarted);
     }
     if (IA_LightAttack)
     {
@@ -122,10 +123,6 @@ void AZomPlayerController::Input_Move(const FInputActionValue& Value)
 
     const FVector2D MovementVector = Value.Get<FVector2D>();
 
-    // How far the stick is pushed (1.0 for digital/keyboard input); read by UZomCharacterMovementComponent to
-    // keep a lightly-pressed gamepad stick from accelerating the character past walk speed.
-    PlayerCharacter->MovementInputAmount = FMath::Clamp(MovementVector.Size(), 0.0f, 1.0f);
-
     const FRotator ViewRotation = GetControlRotation();
     const FRotator YawRotation(0, ViewRotation.Yaw, 0);
 
@@ -134,14 +131,6 @@ void AZomPlayerController::Input_Move(const FInputActionValue& Value)
 
     PlayerCharacter->AddMovementInput(ForwardDirection, MovementVector.Y);
     PlayerCharacter->AddMovementInput(RightDirection, MovementVector.X);
-}
-
-void AZomPlayerController::Input_MoveCompleted()
-{
-    if (AZomPlayerCharacter* PlayerCharacter = CachedPlayerCharacter.Get())
-    {
-        PlayerCharacter->MovementInputAmount = 0.0f;
-    }
 }
 
 void AZomPlayerController::Input_Look(const FInputActionValue& Value)
@@ -184,27 +173,41 @@ void AZomPlayerController::Input_SprintStarted()
 
 void AZomPlayerController::Input_SprintCompleted()
 {
-    // Not Sprint any more; UZomCharacterMovementComponent::UpdateCharacterStateAfterMovement's Walk/Run
-    // classifier takes over again next tick regardless of which of the two we set here.
+    // Not Sprint any more; restore whichever of Walk/Run the player last toggled with IA_WalkRun.
     if (AZomPlayerCharacter* PlayerCharacter = CachedPlayerCharacter.Get())
     {
-        PlayerCharacter->Gait = EGait::Run;
+        PlayerCharacter->Gait = bWantsToRun ? EGait::Run : EGait::Walk;
     }
 }
 
 void AZomPlayerController::Input_CrouchStarted()
 {
+    // Toggle: tap once to crouch, tap again to stand - not a hold-to-crouch input.
     if (AZomPlayerCharacter* PlayerCharacter = CachedPlayerCharacter.Get())
     {
-        PlayerCharacter->Crouch();
+        if (PlayerCharacter->bIsCrouched)
+        {
+            PlayerCharacter->UnCrouch();
+        }
+        else
+        {
+            PlayerCharacter->Crouch();
+        }
     }
 }
 
-void AZomPlayerController::Input_CrouchCompleted()
+void AZomPlayerController::Input_WalkRunStarted()
 {
+    // Toggle: tap once to switch Gait to Run, tap again to drop back to Walk. Doesn't touch Gait while Sprint
+    // (a separate hold-based override) is active - it just updates what Sprint should restore on release.
+    bWantsToRun = !bWantsToRun;
+
     if (AZomPlayerCharacter* PlayerCharacter = CachedPlayerCharacter.Get())
     {
-        PlayerCharacter->UnCrouch();
+        if (PlayerCharacter->Gait != EGait::Sprint)
+        {
+            PlayerCharacter->Gait = bWantsToRun ? EGait::Run : EGait::Walk;
+        }
     }
 }
 

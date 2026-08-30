@@ -2,7 +2,7 @@
 
 
 #include "Zom/Objectives/ZomObjectiveSubsystem.h"
-#include "Zom/Characters/Base/ZomPlayerCharacterBase.h"
+#include "Zom/Characters/Base/ZomCharacterBase.h"
 #include "Zom/Misc/ZomGameplayTags.h"
 #include "Kismet/GameplayStatics.h"
 #include "AbilitySystemComponent.h"
@@ -23,7 +23,7 @@ FGameplayTag UZomObjectiveSubsystem::GetCompletionTagForStep(EZomObjectiveStep S
 
 void UZomObjectiveSubsystem::MirrorTagForStep(EZomObjectiveStep Step) const
 {
-	AZomPlayerCharacterBase* PlayerCharacter = Cast<AZomPlayerCharacterBase>(UGameplayStatics::GetPlayerCharacter(GetGameInstance(), 0));
+	AZomCharacterBase* PlayerCharacter = Cast<AZomCharacterBase>(UGameplayStatics::GetPlayerCharacter(GetGameInstance(), 0));
 	UAbilitySystemComponent* ASC = PlayerCharacter ? PlayerCharacter->GetAbilitySystemComponent() : nullptr;
 
 	const FGameplayTag CompletionTag = GetCompletionTagForStep(Step);
