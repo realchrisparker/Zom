@@ -36,7 +36,8 @@ public class Zom : ModuleRules
 			"PropertyPath",
 			"DrawDebugLibrary",
 			"CustomizableObject",
-			"UMG"
+			"UMG",
+			"MotionCombatSystem"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

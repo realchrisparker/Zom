@@ -1,9 +1,137 @@
 [
 	{
+		"file": "E:\\Unreal\\Games\\Zom\\Plugins\\MotionCombatSystem_5.8\\Source\\MotionCombatSystemEditor\\Customizations\\MCS_CombatCoreComponentCustomization.cpp",
+		"arguments": [
+			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\MotionCombatSystemEditor.1.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\Unreal\\Games\\Zom\\Plugins\\MotionCombatSystem_5.8\\Source\\MotionCombatSystemEditor\\Customizations\\MCS_CombatHitReactionComponentCustomization.cpp",
+		"arguments": [
+			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\MotionCombatSystemEditor.1.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\Unreal\\Games\\Zom\\Plugins\\MotionCombatSystem_5.8\\Source\\MotionCombatSystemEditor\\Customizations\\MCS_DefenseSetDataCustomization.cpp",
+		"arguments": [
+			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\MotionCombatSystemEditor.1.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\Unreal\\Games\\Zom\\Plugins\\MotionCombatSystem_5.8\\Source\\MotionCombatSystemEditor\\MotionCombatSystemEditor.cpp",
+		"arguments": [
+			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\MotionCombatSystemEditor.1.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\Unreal\\Games\\Zom\\Plugins\\MotionCombatSystem_5.8\\Source\\MotionCombatSystemEditor\\Style\\MotionCombatSystemEditorStyle.cpp",
+		"arguments": [
+			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\MotionCombatSystemEditor.1.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\Unreal\\Games\\Zom\\Plugins\\MotionCombatSystem_5.8\\Source\\MotionCombatSystem\\Choosers\\MCS_AttackChooser.cpp",
+		"arguments": [
+			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\MotionCombatSystem.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\Unreal\\Games\\Zom\\Plugins\\MotionCombatSystem_5.8\\Source\\MotionCombatSystem\\Choosers\\MCS_DefenseChooser.cpp",
+		"arguments": [
+			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\MotionCombatSystem.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\Unreal\\Games\\Zom\\Plugins\\MotionCombatSystem_5.8\\Source\\MotionCombatSystem\\Components\\MCS_CombatCoreComponent.cpp",
+		"arguments": [
+			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\MotionCombatSystem.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\Unreal\\Games\\Zom\\Plugins\\MotionCombatSystem_5.8\\Source\\MotionCombatSystem\\Components\\MCS_CombatDebugComponent.cpp",
+		"arguments": [
+			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\MotionCombatSystem.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\Unreal\\Games\\Zom\\Plugins\\MotionCombatSystem_5.8\\Source\\MotionCombatSystem\\Components\\MCS_CombatDefenseComponent.cpp",
+		"arguments": [
+			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\MotionCombatSystem.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\Unreal\\Games\\Zom\\Plugins\\MotionCombatSystem_5.8\\Source\\MotionCombatSystem\\Components\\MCS_CombatHitReactionComponent.cpp",
+		"arguments": [
+			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\MotionCombatSystem.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\Unreal\\Games\\Zom\\Plugins\\MotionCombatSystem_5.8\\Source\\MotionCombatSystem\\Components\\MCS_CombatHitboxComponent.cpp",
+		"arguments": [
+			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\MotionCombatSystem.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\Unreal\\Games\\Zom\\Plugins\\MotionCombatSystem_5.8\\Source\\MotionCombatSystem\\Events\\MCS_CombatEventBus.cpp",
+		"arguments": [
+			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\MotionCombatSystem.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\Unreal\\Games\\Zom\\Plugins\\MotionCombatSystem_5.8\\Source\\MotionCombatSystem\\Libraries\\MCS_GlobalFunctions.cpp",
+		"arguments": [
+			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\MotionCombatSystem.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\Unreal\\Games\\Zom\\Plugins\\MotionCombatSystem_5.8\\Source\\MotionCombatSystem\\MotionCombatSystem.cpp",
+		"arguments": [
+			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\MotionCombatSystem.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\Unreal\\Games\\Zom\\Plugins\\MotionCombatSystem_5.8\\Source\\MotionCombatSystem\\SubSystems\\MCS_TargetingSubsystem.cpp",
+		"arguments": [
+			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\MotionCombatSystem.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\AI\\Controllers\\ZomZombieAIController.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -11,7 +139,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\AI\\ZomToxicGasVolume.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -19,7 +147,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\AI\\ZomZombiePoolSubsystem.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -27,7 +155,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\AI\\ZomZombieSpawnDirector.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -35,7 +163,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Abilities\\AttributeSets\\ZomAttributeSetBase.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -43,7 +171,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Abilities\\AttributeSets\\ZomPlayerAttributeSet.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -51,7 +179,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Abilities\\AttributeSets\\ZomZombieAttributeSet.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -59,7 +187,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Abilities\\Effects\\ZomGE_Damage.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -67,7 +195,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Abilities\\Effects\\ZomGE_Infection.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -75,7 +203,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Abilities\\Effects\\ZomGE_RestoreFromSave.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -83,7 +211,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Abilities\\Effects\\ZomGE_Stagger.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -91,7 +219,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Abilities\\Effects\\ZomGE_StaminaDrain.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -99,7 +227,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Abilities\\GA\\ZomGA_Dodge.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -107,7 +235,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Abilities\\GA\\ZomGA_HeavyAttack.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -115,7 +243,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Abilities\\GA\\ZomGA_LightAttack.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -123,7 +251,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Abilities\\GA\\ZomGA_RangedShoot.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -131,7 +259,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Abilities\\GA\\ZomGA_Reload.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -139,7 +267,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Abilities\\GA\\ZomGA_Shove.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -147,7 +275,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Abilities\\ZomGameplayAbility.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -155,7 +283,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Accessibility\\ZomAccessibilitySettings.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -163,15 +291,15 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Characters\\Animations\\Base\\ZomAnimInstanceBase.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
 	{
-		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Characters\\Base\\ZomPlayerCharacterBase.cpp",
+		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Characters\\Base\\ZomCharacterBase.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -179,7 +307,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Characters\\Components\\ZomCharacterMovementComponent.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -187,7 +315,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Characters\\Components\\ZomInventoryComponent.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -195,7 +323,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Characters\\ZomBoss.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -203,7 +331,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Characters\\ZomPlayerCharacter.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -211,7 +339,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Characters\\ZomPlayerController.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -219,7 +347,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Characters\\ZomZombieBase.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -227,7 +355,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Game\\ZomCheatManager.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -235,7 +363,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Game\\ZomGameInstance.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -243,7 +371,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Game\\ZomGameMode.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -251,7 +379,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Game\\ZomGameSession.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -259,7 +387,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Game\\ZomGameState.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -267,7 +395,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Game\\ZomHUD.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -275,7 +403,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Game\\ZomPlayerState.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -283,7 +411,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Misc\\ZomGameplayTags.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -291,7 +419,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Misc\\ZomLogChannels.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -299,7 +427,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Objectives\\ZomDefendVolume.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -307,7 +435,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Objectives\\ZomExtractionPoint.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -315,7 +443,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Objectives\\ZomFetchItem.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -323,7 +451,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Objectives\\ZomObjectiveSubsystem.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -331,7 +459,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Objectives\\ZomRepairTarget.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -339,7 +467,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\UI\\ZomAbilityBarWidget.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -347,7 +475,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\UI\\ZomDamageIndicatorWidget.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -355,7 +483,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\UI\\ZomInventoryWidget.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -363,7 +491,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\UI\\ZomObjectiveTrackerWidget.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -371,7 +499,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\UI\\ZomSubtitleWidget.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	},
@@ -379,7 +507,7 @@
 		"file": "E:\\Unreal\\Games\\Zom\\Source\\Zom\\Zom.cpp",
 		"arguments": [
 			"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\cl.exe",
-			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.0.rsp"
+			"@E:\\Unreal\\Games\\Zom\\.vscode\\compileCommands_Default\\Zom.2.rsp"
 		],
 		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
 	}

@@ -15,6 +15,10 @@ class UAbilitySystemComponent;
 class UGameplayEffect;
 class UZomAbilitySetData;
 struct FOnAttributeChangeData;
+class UMCS_CombatCoreComponent;
+class UMCS_CombatHitboxComponent;
+class UMCS_CombatHitReactionComponent;
+class UMCS_CombatDefenseComponent;
 
 
 /**
@@ -114,6 +118,25 @@ protected:
 	// this class never creates one itself.
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+
+	// -------------
+	// Components
+	// -------------
+
+	// Motion Combat System components. Every AZomCharacterBase subclass (player, zombies, Boss) gets the full
+	// combat component set as real subobjects, so both AI and player share the same attack/hitbox/defense pipeline.
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Zom|Combat", meta = (DisplayName = "MCS_CombatCoreComponent"))
+	TObjectPtr<UMCS_CombatCoreComponent> CombatCoreComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Zom|Combat", meta = (DisplayName = "MCS_CombatHitboxComponent"))
+	TObjectPtr<UMCS_CombatHitboxComponent> CombatHitboxComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Zom|Combat", meta = (DisplayName = "MCS_CombatHitReactionComponent"))
+	TObjectPtr<UMCS_CombatHitReactionComponent> CombatHitReactionComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Zom|Combat", meta = (DisplayName = "MCS_CombatDefenseComponent"))
+	TObjectPtr<UMCS_CombatDefenseComponent> CombatDefenseComponent;
 
 private:
 

@@ -8,6 +8,10 @@
 #include "Zom/Abilities/ZomAbilitySetData.h"
 #include "Zom/Abilities/ZomGameplayAbility.h"
 #include "Zom/Abilities/ZomGameplayEffect.h"
+#include "MotionCombatSystem/Components/MCS_CombatCoreComponent.h"
+#include "MotionCombatSystem/Components/MCS_CombatHitboxComponent.h"
+#include "MotionCombatSystem/Components/MCS_CombatHitReactionComponent.h"
+#include "MotionCombatSystem/Components/MCS_CombatDefenseComponent.h"
 
 
 // Sets default values
@@ -18,6 +22,12 @@ AZomCharacterBase::AZomCharacterBase(const FObjectInitializer& ObjectInitializer
 	// have a proven per-frame need (e.g. AZomPlayerCharacter, for its locomotion/anim pipeline).
 	PrimaryActorTick.bCanEverTick = false;
 
+	// Motion Combat System components.
+
+	CombatCoreComponent = CreateDefaultSubobject<UMCS_CombatCoreComponent>(TEXT("CombatCoreComponent"));
+	CombatHitboxComponent = CreateDefaultSubobject<UMCS_CombatHitboxComponent>(TEXT("CombatHitboxComponent"));
+	CombatHitReactionComponent = CreateDefaultSubobject<UMCS_CombatHitReactionComponent>(TEXT("CombatHitReactionComponent"));
+	CombatDefenseComponent = CreateDefaultSubobject<UMCS_CombatDefenseComponent>(TEXT("CombatDefenseComponent"));
 }
 
 // Called when the game starts or when spawned

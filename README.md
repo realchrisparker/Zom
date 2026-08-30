@@ -19,6 +19,7 @@ Progress is checkpointed and mirrored onto the player's ability system as Gamepl
 ## Features
 
 - **Full Gameplay Ability System (GAS) combat** — shared attribute sets (Health, Stamina, MoveSpeed, Damage as a meta-attribute) across player and AI, six core abilities (light/heavy attack, ranged shoot, reload, dodge, shove), and Gameplay Effects for damage, stagger, infection, and stamina drain.
+- **Motion Combat System (MCS)** — a separate, free-to-be-released plugin also being developed and tested in this project. Every character (player, zombies, boss) carries the full MCS component set (attack core, hitbox, hit reaction, defense) alongside GAS, driving DataTable-authored, motion-matching-style attack selection, socket-based hit detection, and block/parry/dodge defense.
 - **Data-driven zombie crowd AI** — `AAIController`-owned perception (sight, hearing, and a damage sense) driving a shared State Tree (`Idle → Patrol → Investigate → Chase → Attack → Staggered → Dead`). New zombie types (Walker, Runner, Auds, Eyes, Bloater) are authored as data assets, not new C++ classes.
 - **Bespoke boss encounter** — separate State Tree, phase transition at a health threshold, dialogue/subtitle playback, not pooled or difficulty-scaled.
 - **Zombie pooling & spawn direction** — pre-spawned/recycled actors with separate crowd and Bloater density budgets, tuned per difficulty tier via data assets.
@@ -31,14 +32,11 @@ Progress is checkpointed and mirrored onto the player's ability system as Gamepl
 
 - **Engine:** Unreal Engine 5.8
 - **Language:** C++ (Blueprints kept thin — wrappers and content-only assets)
-- **Key plugins:** GameplayAbilities, GameplayStateTree / StateTree, Chooser, AnimationWarping, BlendStack, MotionWarping, MotionTrajectory, PoseSearch, SmartObjects, Mutable, CurveExpression
+- **Key plugins:** GameplayAbilities, GameplayStateTree / StateTree, Chooser, AnimationWarping, BlendStack, MotionWarping, MotionTrajectory, PoseSearch, SmartObjects, Mutable, CurveExpression, MotionCombatSystem (in-house, in development)
 
 ## Project Status
 
 This is a work-in-progress solo project, not a finished game. See:
-
-- [`Zom_Development_Document.md`](Zom_Development_Document.md) — class/subsystem architecture and design rationale
-- [`Zom_Build_Checklist.md`](Zom_Build_Checklist.md) — live, section-by-section build status against the architecture doc
 
 The C++ gameplay/combat/AI scaffolding is largely in place; content authoring (State Tree assets, zombie type data, weapon/item data, UI widgets, main/pause menus) is still in progress.
 
