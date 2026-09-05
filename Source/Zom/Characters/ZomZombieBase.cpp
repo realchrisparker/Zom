@@ -4,7 +4,7 @@
 #include "Zom/Characters/ZomZombieBase.h"
 #include "AbilitySystemComponent.h"
 #include "Zom/AI/Controllers/ZomZombieAIController.h"
-#include "Zom/AI/ZombieTypeData.h"
+#include "Zom/Characters/Data/ZombieTypeData.h"
 #include "Zom/AI/ZomZombiePoolSubsystem.h"
 #include "Zom/AI/ZomToxicGasVolume.h"
 #include "Zom/Abilities/AttributeSets/ZomZombieAttributeSet.h"
@@ -55,10 +55,12 @@ void AZomZombieBase::InitializeForType(UZombieTypeData* InTypeData)
 
 	// UZombieTypeData::Health/Speed/AttackDamage are *initial* values only (Section 4.1) - seeded here, the
 	// live attribute is authoritative afterward, until the next InitializeForType (pooled reactivation).
-	ZombieAttributeSet->SetHealth(ZombieTypeData->Health);
-	ZombieAttributeSet->SetMaxHealth(ZombieTypeData->Health);
-	ZombieAttributeSet->SetMoveSpeed(ZombieTypeData->Speed);
-	ZombieAttributeSet->SetMaxMoveSpeed(ZombieTypeData->Speed);
+	// InitX (not SetX) - SetHealth clamps against the current MaxHealth, which is still 0 the first time this
+	// runs, so SetHealth-before-SetMaxHealth was clamping Health straight to 0 and killing the zombie on spawn.
+	ZombieAttributeSet->InitMaxHealth(ZombieTypeData->Health);
+	ZombieAttributeSet->InitHealth(ZombieTypeData->Health);
+	ZombieAttributeSet->InitMaxMoveSpeed(ZombieTypeData->Speed);
+	ZombieAttributeSet->InitMoveSpeed(ZombieTypeData->Speed);
 	ZombieAttributeSet->SetAttackDamage(ZombieTypeData->AttackDamage);
 
 	// The AIController possesses once and is never re-spawned (pooled reactivation just hides/shows the pawn),

@@ -16,6 +16,15 @@ ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Status_Staggered);
 ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Status_Dodging);
 
 // -------------
+// Combat (asset tags on the C++ attack abilities themselves; the MCS attack DataTables' AttackTag column
+// must be authored with these SAME tags so HandleAttackResolved's TryActivateAbilitiesByTag dispatch finds
+// the right granted spec)
+// -------------
+
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Combat_Attack_Light);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Combat_Attack_Heavy);
+
+// -------------
 // Objective (GAS-queryable mirror of EZomObjectiveStep progress; set alongside the enum, never alone)
 // -------------
 

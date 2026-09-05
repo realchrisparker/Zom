@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "GameplayAbilitySpecHandle.h"
+#include "ActiveGameplayEffectHandle.h"
 #include "GameFramework/Character.h"
 #include "Zom/Characters/Enums/ZomCharacterEnums.h"
 #include "ZomCharacterBase.generated.h"
@@ -13,7 +15,8 @@
 
 class UAbilitySystemComponent;
 class UGameplayEffect;
-class UZomAbilitySetData;
+class UZomGameplayAbility;
+class UZomGameplayEffect;
 struct FOnAttributeChangeData;
 class UMCS_CombatCoreComponent;
 class UMCS_CombatHitboxComponent;
@@ -52,6 +55,50 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Zom")
 	float GetMaxHealth() const;
+
+	// Returns the cached combat components.
+	UFUNCTION(BlueprintCallable, Category = "Zom|Combat", meta = (DisplayName = "Get Combat Core Component"))
+	UMCS_CombatCoreComponent* GetCombatCoreComponent() const { return CombatCoreComponent; }
+
+	UFUNCTION(BlueprintCallable, Category = "Zom|Combat", meta = (DisplayName = "Get Combat Hitbox Component"))
+	UMCS_CombatHitboxComponent* GetCombatHitboxComponent() const { return CombatHitboxComponent; }
+
+	UFUNCTION(BlueprintCallable, Category = "Zom|Combat", meta = (DisplayName = "Get Combat Hit Reaction Component"))
+	UMCS_CombatHitReactionComponent* GetCombatHitReactionComponent() const { return CombatHitReactionComponent; }
+
+	UFUNCTION(BlueprintCallable, Category = "Zom|Combat", meta = (DisplayName = "Get Combat Defense Component"))
+	UMCS_CombatDefenseComponent* GetCombatDefenseComponent() const { return CombatDefenseComponent; }
+
+	// Returns the current attack situation, which is used to determine which attacks are valid for the character.
+	UFUNCTION(BlueprintCallable, Category = "Zom|Combat", meta = (DisplayName = "Get Current Attack Situation"))
+	FMCS_AttackSituation GetCurrentAttackSituation() const;
+
+	// Grants a single ability class to the ASC if not already granted (idempotent - re-adding a class already
+	// present is a safe no-op, not a duplicate spec). Server-only (no-op off authority). Returns true if the
+	// ability is granted after the call (whether newly granted or already present).
+	UFUNCTION(BlueprintCallable, Category = "Zom|Abilities")
+	bool AddAbility(TSubclassOf<UZomGameplayAbility> AbilityClass);
+
+	// Revokes a single previously-AddAbility'd ability class. No-op (returns false) if not granted.
+	UFUNCTION(BlueprintCallable, Category = "Zom|Abilities")
+	bool RemoveAbility(TSubclassOf<UZomGameplayAbility> AbilityClass);
+
+	// Applies a single effect class to self if not already active via this API (idempotent w.r.t. this API's
+	// own bookkeeping only - it doesn't prevent other code from independently applying the same effect class).
+	UFUNCTION(BlueprintCallable, Category = "Zom|Abilities")
+	bool AddEffect(TSubclassOf<UZomGameplayEffect> EffectClass, float Level = 1.f);
+
+	// Removes an effect previously applied via AddEffect. No-op/false if not tracked, or if the effect was
+	// Instant (Instant effects have no active handle to remove - that's expected, not an error).
+	UFUNCTION(BlueprintCallable, Category = "Zom|Abilities")
+	bool RemoveEffect(TSubclassOf<UZomGameplayEffect> EffectClass);
+
+	// Fired at the end of InitializeAbilitySystem, once the cached ASC is actually valid - the earliest point
+	// at which AddAbility/AddEffect can succeed. Call them from here, not from BeginPlay/Event Possessed:
+	// those Blueprint events fire from inside Super::BeginPlay()/Super::PossessedBy(), before this class's own
+	// InitializeAbilitySystem call later in the same function has run, so AbilitySystemComponent is still null.
+	UFUNCTION(BlueprintImplementableEvent, Category = "Zom|Abilities", meta = (DisplayName = "On Ability System Initialized"))
+	void OnAbilitySystemInitialized();
 
 	// -------------
 	// Properties
@@ -100,11 +147,10 @@ protected:
 	// For AI, OwnerActor == AvatarActor == self. For the player, OwnerActor is the PlayerState, AvatarActor is the pawn.
 	void InitializeAbilitySystem(AActor* InOwnerActor, AActor* InAvatarActor);
 
-	// Iterates the ability classes and starting effects on AbilitySetData and grants/applies them through the cached ASC.
-	void GrantAbilitySet(const UZomAbilitySetData* AbilitySetData);
-
 	// Small wrapper around the MakeOutgoingSpec/ApplyGameplayEffectSpecToSelf boilerplate for self-applied effects.
-	void ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> EffectClass, float Level = 1.f);
+	// Returns the resulting FActiveGameplayEffectHandle (invalid for Instant effects, which have no ongoing
+	// active instance to hand back - that's expected, not an error).
+	FActiveGameplayEffectHandle ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> EffectClass, float Level = 1.f);
 
 	// Fires once Health reaches zero (bound to the Health attribute-changed delegate in InitializeAbilitySystem).
 	// Empty at this level; each subclass overrides it for actor-level death consequences (Section 4.6).
@@ -118,6 +164,16 @@ protected:
 	// this class never creates one itself.
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+
+	// Handles for every ability currently granted via AddAbility, keyed by class so AddAbility/RemoveAbility can
+	// check "already granted?" in O(1) and so double-adding the same class is a safe no-op rather than a
+	// stacked duplicate spec. Plain members (not UPROPERTY) - the handle structs hold no UObject* for GC to track.
+	TMap<TSubclassOf<UZomGameplayAbility>, FGameplayAbilitySpecHandle> GrantedAbilityHandles;
+
+	// Handles for every effect currently active via AddEffect, keyed by class for the same reason. Instant
+	// effects get an entry with an invalid handle so a second AddEffect(SameClass) call is still recognized as
+	// "already applied via this API" and no-ops instead of re-applying.
+	TMap<TSubclassOf<UZomGameplayEffect>, FActiveGameplayEffectHandle> ActiveEffectHandles;
 
 	// -------------
 	// Components

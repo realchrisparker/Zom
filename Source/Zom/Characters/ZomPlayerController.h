@@ -14,6 +14,7 @@ class UInputMappingContext;
 class UInputAction;
 class UZomGameplayAbility;
 struct FInputActionValue;
+struct FMCS_AttackEntry;
 
 
 /**
@@ -110,8 +111,8 @@ protected:
 	// -------------
 	// Ability Classes
 	// -------------
-	// Which UZomGameplayAbility each ability input activates. Orthogonal to UZomAbilitySetData (that grants
-	// these classes to the ASC on BeginPlay; this just maps input to a class to try-activate).
+	// Which UZomGameplayAbility each ability input activates. Orthogonal to AZomCharacterBase::AddAbility
+	// (that grants these classes to the ASC; this just maps input to a class to try-activate).
 
 	UPROPERTY(EditDefaultsOnly, Category = "Zom|Abilities")
 	TSubclassOf<UZomGameplayAbility> LightAttackAbilityClass;
@@ -146,7 +147,20 @@ private:
 	void Input_CrouchStarted();
 	void Input_WalkRunStarted();
 
+	void Input_LightAttack();
+	void Input_HeavyAttack();
+	// void Input_RangedShoot();
+	// void Input_Reload();
+	// void Input_Dodge();
+	// void Input_Shove();
+
 	void ActivateAbilityByClass(TSubclassOf<UZomGameplayAbility> AbilityClass);
+
+	// Bound to the possessed character's CombatCoreComponent::OnAttackResolved. Handles the GAS hand-off
+	// path documented on that delegate: when the resolved entry carries a valid AttackTag, activates the
+	// matching ability on the ASC so CombatCore's notify-bound montage playback stays in sync with GAS.
+	UFUNCTION()
+	void HandleAttackResolved(const FMCS_AttackEntry& ResolvedAttack);
 
 	// -------------
 	// Properties

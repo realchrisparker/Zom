@@ -32,7 +32,7 @@ public:
 	// -------------
 
 	// Getter so AZomZombieAIController doesn't hold a second reference to the same asset.
-	UFUNCTION(BlueprintCallable, Category = "Zom")
+	UFUNCTION(BlueprintPure, Category = "Zom", meta = (DisplayName = "Get Zombie Type Data"))
 	const UZombieTypeData* GetZombieTypeData() const { return ZombieTypeData; }
 
 	// Seeds Health/MoveSpeed/AttackDamage from InTypeData and tells the possessing AZomZombieAIController to
@@ -42,6 +42,10 @@ public:
 	// separate, explicitly re-callable path (Section 4.1/5.1).
 	UFUNCTION(BlueprintCallable, Category = "Zom")
 	void InitializeForType(UZombieTypeData* InTypeData);
+
+	// -------------
+	// Properties
+	// -------------
 
 protected:
 	virtual void BeginPlay() override;
@@ -63,9 +67,9 @@ protected:
 
 	// -------------
 	// Properties
-	// -------------
+	// -------------	
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Zom")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Zom", meta = (DisplayName = "Zombie Type Data"))
 	TObjectPtr<UZombieTypeData> ZombieTypeData;
 
 	// Spawned on death if ZombieTypeData->Category is Bloater (Section 5.3).

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
-#include "Zom/AI/Enums/ZomAIEnums.h"
+#include "Zom/Characters/Enums/ZomCharacterEnums.h"
 #include "ZomZombiePoolSubsystem.generated.h"
 
 

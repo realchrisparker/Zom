@@ -192,6 +192,10 @@ void UZomAnimInstanceBase::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
 	RelativeAcceleration = CharacterTransform.InverseTransformVectorNoScale(Acceleration);
 	VelocityAcceleration = bHasVelocity ? Acceleration.ProjectOnToNormal(Velocity.GetSafeNormal()) : FVector::ZeroVector;
 
+	// Tracks how long it's been since Speed2D last met SpinSpeedThreshold, so ShouldSpinTransition() can use a
+	// short grace window instead of an instantaneous speed check (see its comment for why).
+	TimeSinceHighSpeed = (Speed2D >= SpinSpeedThreshold) ? 0.0f : (TimeSinceHighSpeed + DeltaSeconds);
+
 	// Directional facing of movement relative to the character's forward direction
 	if (bHasVelocity)
 	{
@@ -345,18 +349,25 @@ bool UZomAnimInstanceBase::IsPivoting() const
 }
 
 /**
- * Whether the character's rotation has diverged enough from the animation root's rotation, at high enough
- * speed, to warrant a spin transition, and the currently selected database isn't already a pivot/transition database.
+ * Whether the character's rotation has diverged enough from the animation root's rotation, having recently been
+ * moving fast enough, to warrant a spin transition, and the currently selected database isn't already a
+ * pivot/transition database.
  */
 bool UZomAnimInstanceBase::ShouldSpinTransition() const
 {
 	constexpr float SpinYawThreshold = 130.0f;
-	constexpr float SpinSpeedThreshold = 150.0f;
+
+	// A sharp turn that's also decelerating to a stop can drop Speed2D below SpinSpeedThreshold before the yaw
+	// delta below climbs past SpinYawThreshold. Without this grace window that race would let the divergence go
+	// uncaught here, growing unnoticed until MovementState finally goes Idle and ShouldTurnInPlace() catches it -
+	// visible as the legs snapping through a near-180 degree turn-in-place well after the character stopped.
+	constexpr float HighSpeedGraceWindow = 0.3f;
 
 	const float YawDelta = FMath::FindDeltaAngleDegrees(RootTransform.Rotator().Yaw, CharacterTransform.Rotator().Yaw);
 	const bool bHasPivotsTag = CurrentDatabaseTags.Contains(FName("Pivots"));
+	const bool bWasRecentlyFastEnough = TimeSinceHighSpeed <= HighSpeedGraceWindow;
 
-	return (FMath::Abs(YawDelta) >= SpinYawThreshold) && (Speed2D >= SpinSpeedThreshold) && !bHasPivotsTag;
+	return (FMath::Abs(YawDelta) >= SpinYawThreshold) && bWasRecentlyFastEnough && !bHasPivotsTag;
 }
 
 /**

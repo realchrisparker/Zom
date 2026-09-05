@@ -3,7 +3,7 @@
 
 #include "Zom/AI/ZomZombieSpawnDirector.h"
 #include "Zom/AI/ZomZombiePoolSubsystem.h"
-#include "Zom/AI/ZombieTypeData.h"
+#include "Zom/Characters/Data/ZombieTypeData.h"
 #include "Zom/AI/ZomDifficultyData.h"
 
 

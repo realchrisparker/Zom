@@ -9,6 +9,12 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
+#include "MotionCombatSystem/Structs/MCS_AttackSituation.h"
+#include "MotionCombatSystem/Structs/MCS_AttackEntry.h"
+#include "MotionCombatSystem/Components/MCS_CombatCoreComponent.h"
+#include "MotionCombatSystem/Components/MCS_CombatHitboxComponent.h"
+#include "MotionCombatSystem/Components/MCS_CombatHitReactionComponent.h"
+#include "MotionCombatSystem/Components/MCS_CombatDefenseComponent.h"
 
 
 AZomPlayerController::AZomPlayerController()
@@ -73,11 +79,11 @@ void AZomPlayerController::SetupInputComponent()
     }
     if (IA_LightAttack)
     {
-        EnhancedInputComponent->BindAction(IA_LightAttack, ETriggerEvent::Started, this, &AZomPlayerController::ActivateAbilityByClass, LightAttackAbilityClass);
+        EnhancedInputComponent->BindAction(IA_LightAttack, ETriggerEvent::Started, this, &AZomPlayerController::Input_LightAttack);
     }
     if (IA_HeavyAttack)
     {
-        EnhancedInputComponent->BindAction(IA_HeavyAttack, ETriggerEvent::Started, this, &AZomPlayerController::ActivateAbilityByClass, HeavyAttackAbilityClass);
+        EnhancedInputComponent->BindAction(IA_HeavyAttack, ETriggerEvent::Started, this, &AZomPlayerController::Input_HeavyAttack);
     }
     if (IA_RangedShoot)
     {
@@ -103,10 +109,28 @@ void AZomPlayerController::OnPossess(APawn* InPawn)
 
     // Cache the player character reference if the possessed pawn is a player character
     CachedPlayerCharacter = Cast<AZomPlayerCharacter>(InPawn);
+
+    if (AZomPlayerCharacter* PlayerCharacter = CachedPlayerCharacter.Get())
+    {
+        if (UMCS_CombatCoreComponent* CombatCore = PlayerCharacter->GetCombatCoreComponent())
+        {
+            // Bind the HandleAttackResolved function to the CombatCore's OnAttackResolved delegate
+            CombatCore->OnAttackResolved.AddDynamic(this, &AZomPlayerController::HandleAttackResolved);
+        }
+    }
 }
 
 void AZomPlayerController::OnUnPossess()
 {
+    if (AZomPlayerCharacter* PlayerCharacter = CachedPlayerCharacter.Get())
+    {
+        if (UMCS_CombatCoreComponent* CombatCore = PlayerCharacter->GetCombatCoreComponent())
+        {
+            // Unbind the HandleAttackResolved function from the CombatCore's OnAttackResolved delegate
+            CombatCore->OnAttackResolved.RemoveDynamic(this, &AZomPlayerController::HandleAttackResolved);
+        }
+    }
+
     Super::OnUnPossess();
 
     // Clear the cached player character reference
@@ -211,6 +235,36 @@ void AZomPlayerController::Input_WalkRunStarted()
     }
 }
 
+void AZomPlayerController::Input_LightAttack()
+{
+    if(CachedPlayerCharacter.Get())
+    {
+        // Get the combat core component from the player character.
+        UMCS_CombatCoreComponent* CombatCore = CachedPlayerCharacter.Get()->GetCombatCoreComponent();
+
+        // Get the current attack situation from the player character.
+        FMCS_AttackSituation CurrentAttackSituation = CachedPlayerCharacter.Get()->GetCurrentAttackSituation();
+
+        // Perform a light attack using the combat core component.
+        CombatCore->PerformAttack(EMCS_AttackType::Light, EMCS_AttackDirection::Forward, CurrentAttackSituation);
+    }
+}
+
+void AZomPlayerController::Input_HeavyAttack()
+{
+    if(CachedPlayerCharacter.Get())
+    {
+        // Get the combat core component from the player character.
+        UMCS_CombatCoreComponent* CombatCore = CachedPlayerCharacter.Get()->GetCombatCoreComponent();
+
+        // Get the current attack situation from the player character.
+        FMCS_AttackSituation CurrentAttackSituation = CachedPlayerCharacter.Get()->GetCurrentAttackSituation();
+
+        // Perform a heavy attack using the combat core component.
+        CombatCore->PerformAttack(EMCS_AttackType::Heavy, EMCS_AttackDirection::Forward, CurrentAttackSituation);
+    }
+}
+
 void AZomPlayerController::ActivateAbilityByClass(TSubclassOf<UZomGameplayAbility> AbilityClass)
 {
     if (!AbilityClass)
@@ -227,5 +281,33 @@ void AZomPlayerController::ActivateAbilityByClass(TSubclassOf<UZomGameplayAbilit
     if (UAbilitySystemComponent* ASC = PlayerCharacter->GetAbilitySystemComponent())
     {
         ASC->TryActivateAbilityByClass(AbilityClass);
+    }
+}
+
+// =========================================
+// MCS Related Functions/Events
+// =========================================
+
+void AZomPlayerController::HandleAttackResolved(const FMCS_AttackEntry& ResolvedAttack)
+{
+    UE_LOG(LogTemp, Log, TEXT("AZomPlayerController::HandleAttackResolved called with AttackTag: %s"), *ResolvedAttack.AttackTag.ToString());
+
+    // Per OnAttackResolved's contract: this only fires on the GAS path (AttackTag valid) or the
+    // Blueprint-only path (bAutoPlayMontage false, AttackTag empty). Nothing to activate in the latter case.
+    if (!ResolvedAttack.AttackTag.IsValid())
+    {
+        return;
+    }
+
+    AZomPlayerCharacter* PlayerCharacter = CachedPlayerCharacter.Get();
+    if (!PlayerCharacter)
+    {
+        return;
+    }
+
+    if (UAbilitySystemComponent* ASC = PlayerCharacter->GetAbilitySystemComponent())
+    {
+        UE_LOG(LogTemp, Log, TEXT("AZomPlayerController::HandleAttackResolved activating ability with AttackTag: %s"), *ResolvedAttack.AttackTag.ToString());
+        ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(ResolvedAttack.AttackTag));
     }
 }

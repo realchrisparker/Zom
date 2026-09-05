@@ -13,7 +13,7 @@
 #include "GameFramework/Character.h"
 #include "StructUtils/StructView.h"
 #include "Zom/Characters/ZomZombieBase.h"
-#include "Zom/AI/ZombieTypeData.h"
+#include "Zom/Characters/Data/ZombieTypeData.h"
 #include "Zom/AI/ZomPerceptionEventPayload.h"
 #include "Zom/Misc/ZomGameplayTags.h"
 

@@ -10,7 +10,10 @@
 /**
  * Melee heavy attack, gated by Stamina cost. CostGameplayEffectClass defaults to the base
  * UZomGE_StaminaDrain (0 magnitude); assign a tuned Blueprint child (e.g. GE_StaminaDrain_HeavyAttack) to
- * this ability's own Blueprint child to set the actual cost.
+ * this ability's own Blueprint child to set the actual cost. Commits, then plays whatever montage the MCS
+ * chooser most recently resolved (GetCurrentAttackEntry()) via UAbilityTask_PlayMontageAndWait. Carries
+ * AssetTags = Zom.Combat.Attack.Heavy so AZomPlayerController::HandleAttackResolved's TryActivateAbilitiesByTag
+ * dispatch finds it for any heavy-attack DataTable row (see ZomGameplayTags.h).
  */
 UCLASS()
 class ZOM_API UZomGA_HeavyAttack : public UZomGameplayAbility
@@ -21,4 +24,16 @@ public:
 	UZomGA_HeavyAttack();
 
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
+
+protected:
+	UFUNCTION()
+	void OnMontageCompleted();
+
+	UFUNCTION()
+	void OnMontageInterruptedOrCancelled();
+
+private:
+	FGameplayAbilitySpecHandle CachedHandle;
+	const FGameplayAbilityActorInfo* CachedActorInfo = nullptr;
+	FGameplayAbilityActivationInfo CachedActivationInfo;
 };

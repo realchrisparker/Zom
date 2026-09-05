@@ -6,6 +6,9 @@ UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Status_Attacking, "Zom.Status.Attacking",
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Status_Staggered, "Zom.Status.Staggered", "Persistent tag on the ASC while staggered; blocks all UZomGameplayAbility activation.")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Status_Dodging, "Zom.Status.Dodging", "Persistent tag on the ASC while UZomGA_Dodge is active.")
 
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Combat_Attack_Light, "Zom.Combat.Attack.Light", "Shared AssetTag on every light-attack UZomGameplayAbility; must match the AttackTag column value on light-attack DataTable rows for TryActivateAbilitiesByTag dispatch.")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Combat_Attack_Heavy, "Zom.Combat.Attack.Heavy", "Shared AssetTag on every heavy-attack UZomGameplayAbility; must match the AttackTag column value on heavy-attack DataTable rows for TryActivateAbilitiesByTag dispatch.")
+
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Objective_Fetch_Complete, "Zom.Objective.Fetch.Complete", "GAS-queryable mirror of EZomObjectiveStep::Fetch completion.")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Objective_Repair_Complete, "Zom.Objective.Repair.Complete", "GAS-queryable mirror of EZomObjectiveStep::Repair completion.")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Objective_Defend_Complete, "Zom.Objective.Defend.Complete", "GAS-queryable mirror of EZomObjectiveStep::Defend completion.")

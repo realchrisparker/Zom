@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "Zom/AI/Enums/ZomAIEnums.h"
+#include "Zom/Characters/Enums/ZomCharacterEnums.h"
 #include "ZombieTypeData.generated.h"
 
 
@@ -24,31 +24,34 @@ class ZOM_API UZombieTypeData : public UPrimaryDataAsset
 public:
 	// Which pool budget this type draws from (UZomZombiePoolSubsystem) and, on death, returns to
 	// (AZomZombieBase::HandleDeath). Boss doesn't use UZombieTypeData at all (Section 5.1/6).
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom|ZombieType")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom", meta = (DisplayName = "Category"))
 	EZomZombieCategory Category = EZomZombieCategory::Crowd;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom|ZombieType")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Zom", meta = (DisplayName = "Type"))
+	EZombieType ZombieType = EZombieType::Walker;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom", meta = (DisplayName = "Health"))
 	float Health = 100.f;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom|ZombieType")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom", meta = (DisplayName = "Speed"))
 	float Speed = 200.f;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom|ZombieType")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom", meta = (DisplayName = "Attack Damage"))
 	float AttackDamage = 10.f;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom|ZombieType")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom", meta = (DisplayName = "Attack Cooldown"))
 	float AttackCooldown = 1.5f;
 
 	// -------------
 	// Perception
 	// -------------
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom|ZombieType|Sight")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom|Perception", meta = (DisplayName = "Sight Radius"))
 	float SightRadius = 800.f;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom|ZombieType|Sight")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom|Perception", meta = (DisplayName = "Sight Angle Degrees"))
 	float SightAngleDegrees = 70.f;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom|ZombieType|Hearing")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom|Perception", meta = (DisplayName = "Hearing Radius"))
 	float HearingRadius = 600.f;
 };

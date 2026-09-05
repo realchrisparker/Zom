@@ -39,8 +39,10 @@ void AZomBoss::BeginPlay()
 
 	if (BossData && ZombieAttributeSet)
 	{
-		ZombieAttributeSet->SetHealth(BossData->Health);
-		ZombieAttributeSet->SetMaxHealth(BossData->Health);
+		// InitX (not SetX) - SetHealth clamps against the current MaxHealth, which is still 0 the first time
+		// this runs, so SetHealth-before-SetMaxHealth was clamping Health straight to 0 on spawn.
+		ZombieAttributeSet->InitMaxHealth(BossData->Health);
+		ZombieAttributeSet->InitHealth(BossData->Health);
 		ZombieAttributeSet->SetAttackDamage(BossData->AttackDamage);
 	}
 

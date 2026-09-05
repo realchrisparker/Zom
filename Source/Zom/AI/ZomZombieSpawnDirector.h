@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Zom/AI/Enums/ZomAIEnums.h"
+#include "Zom/Characters/Enums/ZomCharacterEnums.h"
 #include "ZomZombieSpawnDirector.generated.h"
 
 

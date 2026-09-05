@@ -507,6 +507,15 @@ private:
 	// Native movement mode gathered on the game thread in NativeUpdateAnimation, consumed by NativeThreadSafeUpdateAnimation
 	TEnumAsByte<EMovementMode> CachedNativeMovementMode = MOVE_None;
 
+	// Speed2D threshold ShouldSpinTransition() requires the character to have been moving at recently, shared with
+	// the TimeSinceHighSpeed tracking below so a hard decel mid-turn doesn't fall through the gap between this and
+	// ShouldTurnInPlace() (which only catches divergence once fully Idle).
+	static constexpr float SpinSpeedThreshold = 150.0f;
+
+	// Time since Speed2D last met SpinSpeedThreshold, reset to 0 every frame it does. Lets ShouldSpinTransition()
+	// use "was moving fast enough recently" instead of an instantaneous speed check.
+	float TimeSinceHighSpeed = 1000.0f;
+
 	// Cached pointer to the AnimGraph's Offset Root Bone node, tagged "OffsetRoot", resolved once via FAnimSubsystem_Tag. Used every frame to read its simulated root transform.
 	FAnimNode_OffsetRootBone* CachedOffsetRootBoneNode = nullptr;
 };
