@@ -34,6 +34,12 @@ Progress is checkpointed and mirrored onto the player's ability system as Gamepl
 - **Language:** C++ (Blueprints kept thin — wrappers and content-only assets)
 - **Key plugins:** GameplayAbilities, GameplayStateTree / StateTree, Chooser, AnimationWarping, BlendStack, MotionWarping, MotionTrajectory, PoseSearch, SmartObjects, Mutable, CurveExpression, MotionCombatSystem (in-house, in development)
 
+## Fab Assets Used
+
+- [Game Animation Sample Animations Retargeted to UE5 Mannequin animations only](https://www.fab.com/listings/259f8545-f820-47b3-8fc1-e8ec5458214d) - Free - Used to create unarmed Motion Matching locomotion.
+- [Modular Zombie Mega Bundle](https://www.fab.com/listings/551e8dfe-bb57-4e48-ae71-ed077fbf79a7) - Paid - Used to demostrate Mutable and spawn variation.
+- [Fighting Animset Pro](https://www.fab.com/listings/950a94a9-b25d-4bad-a108-ba190ac91387) - Paid - Used to test Motion Combat System.
+
 ## Project Status
 
 This is a work-in-progress solo project, not a finished game. See:

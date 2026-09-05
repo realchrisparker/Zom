@@ -445,6 +445,8 @@
 /I "C:\Program Files\Epic Games\UE_5.8\Engine\Source\Editor\EditorStyle\Public" 
 /I "C:\Program Files\Epic Games\UE_5.8\Engine\Intermediate\Build\Win64\UnrealEditor\Inc\MessageLog\UHT" 
 /I "C:\Program Files\Epic Games\UE_5.8\Engine\Source\Developer\MessageLog\Public" 
+/I "E:\Unreal\Games\Zom\Plugins\MotionCombatSystem_5.8\Intermediate\Build\Win64\UnrealEditor\Inc\MotionCombatSystem\UHT" 
+/I "E:\Unreal\Games\Zom\Plugins\MotionCombatSystem_5.8\Source" 
 /I "E:\Unreal\Games\Zom\Intermediate\Build\Win64\x64\ZomEditor\Development\UnrealEd" 
 /I "C:\Program Files\Epic Games\UE_5.8\Engine\Source\ThirdParty\GuidelinesSupportLibrary\GSL-1144\include" 
 /I "C:\Program Files\Epic Games\UE_5.8\Engine\Source\ThirdParty\AtomicQueue" 
