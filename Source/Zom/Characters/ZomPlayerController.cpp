@@ -4,13 +4,12 @@
 #include "Zom/Characters/ZomPlayerController.h"
 #include "Zom/Characters/ZomPlayerCharacter.h"
 #include "Zom/Characters/Enums/ZomCharacterEnums.h"
-#include "Zom/Abilities/ZomGameplayAbility.h"
+#include "Zom/Abilities/GA/Base/ZomGameplayAbilityBase.h"
 #include "AbilitySystemComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
 #include "MotionCombatSystem/Structs/MCS_AttackSituation.h"
-#include "MotionCombatSystem/Structs/MCS_AttackEntry.h"
 #include "MotionCombatSystem/Components/MCS_CombatCoreComponent.h"
 #include "MotionCombatSystem/Components/MCS_CombatHitboxComponent.h"
 #include "MotionCombatSystem/Components/MCS_CombatHitReactionComponent.h"
@@ -87,19 +86,19 @@ void AZomPlayerController::SetupInputComponent()
     }
     if (IA_RangedShoot)
     {
-        EnhancedInputComponent->BindAction(IA_RangedShoot, ETriggerEvent::Started, this, &AZomPlayerController::ActivateAbilityByClass, RangedShootAbilityClass);
+        // EnhancedInputComponent->BindAction(IA_RangedShoot, ETriggerEvent::Started, this, &AZomPlayerController::ActivateAbilityByClass, RangedShootAbilityClass);
     }
     if (IA_Reload)
     {
-        EnhancedInputComponent->BindAction(IA_Reload, ETriggerEvent::Started, this, &AZomPlayerController::ActivateAbilityByClass, ReloadAbilityClass);
+        // EnhancedInputComponent->BindAction(IA_Reload, ETriggerEvent::Started, this, &AZomPlayerController::ActivateAbilityByClass, ReloadAbilityClass);
     }
     if (IA_Dodge)
     {
-        EnhancedInputComponent->BindAction(IA_Dodge, ETriggerEvent::Started, this, &AZomPlayerController::ActivateAbilityByClass, DodgeAbilityClass);
+        // EnhancedInputComponent->BindAction(IA_Dodge, ETriggerEvent::Started, this, &AZomPlayerController::ActivateAbilityByClass, DodgeAbilityClass);
     }
     if (IA_Shove)
     {
-        EnhancedInputComponent->BindAction(IA_Shove, ETriggerEvent::Started, this, &AZomPlayerController::ActivateAbilityByClass, ShoveAbilityClass);
+        // EnhancedInputComponent->BindAction(IA_Shove, ETriggerEvent::Started, this, &AZomPlayerController::ActivateAbilityByClass, ShoveAbilityClass);
     }
 }
 
@@ -109,28 +108,10 @@ void AZomPlayerController::OnPossess(APawn* InPawn)
 
     // Cache the player character reference if the possessed pawn is a player character
     CachedPlayerCharacter = Cast<AZomPlayerCharacter>(InPawn);
-
-    if (AZomPlayerCharacter* PlayerCharacter = CachedPlayerCharacter.Get())
-    {
-        if (UMCS_CombatCoreComponent* CombatCore = PlayerCharacter->GetCombatCoreComponent())
-        {
-            // Bind the HandleAttackResolved function to the CombatCore's OnAttackResolved delegate
-            CombatCore->OnAttackResolved.AddDynamic(this, &AZomPlayerController::HandleAttackResolved);
-        }
-    }
 }
 
 void AZomPlayerController::OnUnPossess()
 {
-    if (AZomPlayerCharacter* PlayerCharacter = CachedPlayerCharacter.Get())
-    {
-        if (UMCS_CombatCoreComponent* CombatCore = PlayerCharacter->GetCombatCoreComponent())
-        {
-            // Unbind the HandleAttackResolved function from the CombatCore's OnAttackResolved delegate
-            CombatCore->OnAttackResolved.RemoveDynamic(this, &AZomPlayerController::HandleAttackResolved);
-        }
-    }
-
     Super::OnUnPossess();
 
     // Clear the cached player character reference
@@ -265,49 +246,27 @@ void AZomPlayerController::Input_HeavyAttack()
     }
 }
 
-void AZomPlayerController::ActivateAbilityByClass(TSubclassOf<UZomGameplayAbility> AbilityClass)
-{
-    if (!AbilityClass)
-    {
-        return;
-    }
+// void AZomPlayerController::ActivateAbilityByClass(TSubclassOf<UZomGameplayAbilityBase> AbilityClass)
+// {
+//     if (!AbilityClass)
+//     {
+//         return;
+//     }
 
-    AZomPlayerCharacter* PlayerCharacter = CachedPlayerCharacter.Get();
-    if (!PlayerCharacter)
-    {
-        return;
-    }
+//     AZomPlayerCharacter* PlayerCharacter = CachedPlayerCharacter.Get();
+//     if (!PlayerCharacter)
+//     {
+//         return;
+//     }
 
-    if (UAbilitySystemComponent* ASC = PlayerCharacter->GetAbilitySystemComponent())
-    {
-        ASC->TryActivateAbilityByClass(AbilityClass);
-    }
-}
+//     if (UAbilitySystemComponent* ASC = PlayerCharacter->GetAbilitySystemComponent())
+//     {
+//         ASC->TryActivateAbilityByClass(AbilityClass);
+//     }
+// }
 
 // =========================================
 // MCS Related Functions/Events
 // =========================================
-
-void AZomPlayerController::HandleAttackResolved(const FMCS_AttackEntry& ResolvedAttack)
-{
-    UE_LOG(LogTemp, Log, TEXT("AZomPlayerController::HandleAttackResolved called with AttackTag: %s"), *ResolvedAttack.AttackTag.ToString());
-
-    // Per OnAttackResolved's contract: this only fires on the GAS path (AttackTag valid) or the
-    // Blueprint-only path (bAutoPlayMontage false, AttackTag empty). Nothing to activate in the latter case.
-    if (!ResolvedAttack.AttackTag.IsValid())
-    {
-        return;
-    }
-
-    AZomPlayerCharacter* PlayerCharacter = CachedPlayerCharacter.Get();
-    if (!PlayerCharacter)
-    {
-        return;
-    }
-
-    if (UAbilitySystemComponent* ASC = PlayerCharacter->GetAbilitySystemComponent())
-    {
-        UE_LOG(LogTemp, Log, TEXT("AZomPlayerController::HandleAttackResolved activating ability with AttackTag: %s"), *ResolvedAttack.AttackTag.ToString());
-        ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(ResolvedAttack.AttackTag));
-    }
-}
+// Attack-resolved -> GAS hand-off now lives on AZomCharacterBase::HandleAttackResolved, since it depends only
+// on the pawn's own CombatCoreComponent/ASC and applies identically to AI-possessed pawns (e.g. zombies).

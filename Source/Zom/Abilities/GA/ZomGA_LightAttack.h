@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Zom/Abilities/ZomGameplayAbility.h"
+#include "Zom/Abilities/GA/Base/ZomGameplayAbilityBase.h"
 #include "ZomGA_LightAttack.generated.h"
 
 
@@ -16,7 +16,7 @@
  * TryActivateAbilitiesByTag dispatch finds it for any light-attack DataTable row (see ZomGameplayTags.h).
  */
 UCLASS()
-class ZOM_API UZomGA_LightAttack : public UZomGameplayAbility
+class ZOM_API UZomGA_LightAttack : public UZomGameplayAbilityBase
 {
 	GENERATED_BODY()
 

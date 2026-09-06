@@ -3,17 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Zom/Abilities/ZomGameplayEffect.h"
+#include "Zom/Abilities/Effects/Base/ZomGameplayEffectBase.h"
 #include "ZomGE_Stagger.generated.h"
 
 
 /**
  * Applied by UZomGA_Shove and by heavy player hits. Grants Zom.Status.Staggered to the target for a
- * SetByCaller-supplied duration (Zom.SetByCaller.Duration) - UZomGameplayAbility already blocks activation
+ * SetByCaller-supplied duration (Zom.SetByCaller.Duration) - UZomGameplayAbilityBase already blocks activation
  * while this tag is present, so no per-ability stagger check is needed.
  */
 UCLASS()
-class ZOM_API UZomGE_Stagger : public UZomGameplayEffect
+class ZOM_API UZomGE_Stagger : public UZomGameplayEffectBase
 {
 	GENERATED_BODY()
 

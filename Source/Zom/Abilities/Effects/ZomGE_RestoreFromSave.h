@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Zom/Abilities/ZomGameplayEffect.h"
+#include "Zom/Abilities/Effects/Base/ZomGameplayEffectBase.h"
 #include "ZomGE_RestoreFromSave.generated.h"
 
 
@@ -15,7 +15,7 @@
  * RestoreStamina respectively.
  */
 UCLASS()
-class ZOM_API UZomGE_RestoreFromSave : public UZomGameplayEffect
+class ZOM_API UZomGE_RestoreFromSave : public UZomGameplayEffectBase
 {
 	GENERATED_BODY()
 

@@ -6,13 +6,14 @@
 #include "AbilitySystemComponent.h"
 #include "GameplayEffect.h"
 #include "Zom/Abilities/AttributeSets/ZomAttributeSetBase.h"
-#include "Zom/Abilities/ZomGameplayAbility.h"
-#include "Zom/Abilities/ZomGameplayEffect.h"
+#include "Zom/Abilities/GA/Base/ZomGameplayAbilityBase.h"
+#include "Zom/Abilities/Effects/Base/ZomGameplayEffectBase.h"
 #include "Zom/Misc/ZomLogChannels.h"
 #include "MotionCombatSystem/Components/MCS_CombatCoreComponent.h"
 #include "MotionCombatSystem/Components/MCS_CombatHitboxComponent.h"
 #include "MotionCombatSystem/Components/MCS_CombatHitReactionComponent.h"
 #include "MotionCombatSystem/Components/MCS_CombatDefenseComponent.h"
+#include "MotionCombatSystem/Structs/MCS_AttackEntry.h"
 
 
 // Sets default values
@@ -36,19 +37,13 @@ void AZomCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 
+	CombatState = ECombatState::None;
 }
 
 // Called every frame
 void AZomCharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-}
-
-// Called to bind functionality to input
-void AZomCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 }
 
@@ -95,12 +90,37 @@ void AZomCharacterBase::InitializeAbilitySystem(AActor* InOwnerActor, AActor* In
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UZomAttributeSetBase::GetHealthAttribute()).RemoveAll(this);
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UZomAttributeSetBase::GetHealthAttribute()).AddUObject(this, &AZomCharacterBase::OnHealthAttributeChanged);
 
+		if (CombatCoreComponent)
+		{
+			// RemoveDynamic before AddDynamic for the same re-entrancy reason as the health delegate above.
+			CombatCoreComponent->OnAttackResolved.RemoveDynamic(this, &AZomCharacterBase::HandleAttackResolved);
+			CombatCoreComponent->OnAttackResolved.AddDynamic(this, &AZomCharacterBase::HandleAttackResolved);
+		}
+
+		GrantDefaultAbilitiesAndEffects();
+
 		OnAbilitySystemInitialized();
 	}
 }
 
+// Grants every class in DefaultAbilities and applies every class in DefaultGameplayEffects. Both AddAbility and
+// AddEffect are server-authoritative-only and idempotent, so this is safe to call on clients and safe to call
+// again on a second InitializeAbilitySystem pass for the same ASC.
+void AZomCharacterBase::GrantDefaultAbilitiesAndEffects()
+{
+	for (const TSubclassOf<UZomGameplayAbilityBase>& AbilityClass : DefaultAbilities)
+	{
+		AddAbility(AbilityClass);
+	}
+
+	for (const TSubclassOf<UZomGameplayEffectBase>& EffectClass : DefaultGameplayEffects)
+	{
+		AddEffect(EffectClass);
+	}
+}
+
 // Grants a single ability class if not already tracked as granted. Server-only; idempotent.
-bool AZomCharacterBase::AddAbility(TSubclassOf<UZomGameplayAbility> AbilityClass)
+bool AZomCharacterBase::AddAbility(TSubclassOf<UZomGameplayAbilityBase> AbilityClass)
 {
 	if (!AbilityClass || !AbilitySystemComponent || !AbilitySystemComponent->IsOwnerActorAuthoritative())
 	{
@@ -116,14 +136,14 @@ bool AZomCharacterBase::AddAbility(TSubclassOf<UZomGameplayAbility> AbilityClass
 	// two simultaneously-granted abilities share an AssetTag (e.g. an uncleaned combat-state weapon swap left
 	// both the old and new weapon's attack ability granted), both would activate/play their montage at once.
 #if !UE_BUILD_SHIPPING
-	if (const UZomGameplayAbility* NewAbilityCDO = AbilityClass.GetDefaultObject())
+	if (const UZomGameplayAbilityBase* NewAbilityCDO = AbilityClass.GetDefaultObject())
 	{
 		const FGameplayTagContainer& NewTags = NewAbilityCDO->GetAssetTags();
 		if (NewTags.Num() > 0)
 		{
-			for (const TPair<TSubclassOf<UZomGameplayAbility>, FGameplayAbilitySpecHandle>& Pair : GrantedAbilityHandles)
+			for (const TPair<TSubclassOf<UZomGameplayAbilityBase>, FGameplayAbilitySpecHandle>& Pair : GrantedAbilityHandles)
 			{
-				const UZomGameplayAbility* ExistingCDO = Pair.Key ? Pair.Key.GetDefaultObject() : nullptr;
+				const UZomGameplayAbilityBase* ExistingCDO = Pair.Key ? Pair.Key.GetDefaultObject() : nullptr;
 				if (ExistingCDO && ExistingCDO->GetAssetTags().HasAny(NewTags))
 				{
 					UE_LOG(LogZom, Warning, TEXT("AddAbility: %s shares AssetTag(s) with already-granted %s on %s - TryActivateAbilitiesByTag will activate both. Ensure the old ability is RemoveAbility'd before granting a replacement with an overlapping tag."),
@@ -140,7 +160,7 @@ bool AZomCharacterBase::AddAbility(TSubclassOf<UZomGameplayAbility> AbilityClass
 }
 
 // Revokes a single ability class previously granted via AddAbility. Idempotent.
-bool AZomCharacterBase::RemoveAbility(TSubclassOf<UZomGameplayAbility> AbilityClass)
+bool AZomCharacterBase::RemoveAbility(TSubclassOf<UZomGameplayAbilityBase> AbilityClass)
 {
 	if (!AbilityClass || !AbilitySystemComponent || !AbilitySystemComponent->IsOwnerActorAuthoritative())
 	{
@@ -159,7 +179,7 @@ bool AZomCharacterBase::RemoveAbility(TSubclassOf<UZomGameplayAbility> AbilityCl
 
 // Applies a single effect class to self if not already tracked as active via this API. Idempotent w.r.t. this
 // API's own bookkeeping only.
-bool AZomCharacterBase::AddEffect(TSubclassOf<UZomGameplayEffect> EffectClass, float Level)
+bool AZomCharacterBase::AddEffect(TSubclassOf<UZomGameplayEffectBase> EffectClass, float Level)
 {
 	if (!EffectClass || !AbilitySystemComponent || !AbilitySystemComponent->IsOwnerActorAuthoritative())
 	{
@@ -179,7 +199,7 @@ bool AZomCharacterBase::AddEffect(TSubclassOf<UZomGameplayEffect> EffectClass, f
 
 // Removes an effect previously applied via AddEffect. No-op/false if not tracked or the tracked handle is
 // invalid (e.g. it was an Instant effect - nothing ongoing to remove).
-bool AZomCharacterBase::RemoveEffect(TSubclassOf<UZomGameplayEffect> EffectClass)
+bool AZomCharacterBase::RemoveEffect(TSubclassOf<UZomGameplayEffectBase> EffectClass)
 {
 	if (!EffectClass || !AbilitySystemComponent || !AbilitySystemComponent->IsOwnerActorAuthoritative())
 	{
@@ -235,6 +255,7 @@ float AZomCharacterBase::GetMaxHealth() const
 // Empty at this level; each subclass overrides it for actor-level death consequences (Section 4.6).
 void AZomCharacterBase::HandleDeath()
 {
+	//TODO: Implement actor-level death consequences, such as playing a death animation, disabling input, and notifying the game mode.
 }
 
 void AZomCharacterBase::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
@@ -243,6 +264,18 @@ void AZomCharacterBase::OnHealthAttributeChanged(const FOnAttributeChangeData& D
 	{
 		HandleDeath();
 	}
+}
+
+void AZomCharacterBase::HandleAttackResolved(const FMCS_AttackEntry& ResolvedAttack)
+{
+	// Per OnAttackResolved's contract: this only fires on the GAS path (AttackTag valid) or the
+	// Blueprint-only path (bAutoPlayMontage false, AttackTag empty). Nothing to activate in the latter case.
+	if (!ResolvedAttack.AttackTag.IsValid() || !AbilitySystemComponent)
+	{
+		return;
+	}
+
+	AbilitySystemComponent->TryActivateAbilitiesByTag(FGameplayTagContainer(ResolvedAttack.AttackTag));
 }
 
 // Returns the current attack situation, which is used to determine which attacks are valid for the character.

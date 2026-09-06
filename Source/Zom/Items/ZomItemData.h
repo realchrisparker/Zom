@@ -7,8 +7,8 @@
 #include "ZomItemData.generated.h"
 
 
-class UZomGameplayAbility;
-class UZomGameplayEffect;
+class UZomGameplayAbilityBase;
+class UZomGameplayEffectBase;
 
 
 /**
@@ -53,7 +53,7 @@ public:
 
 	// Which ability slot this weapon maps to (Section 7's weapon list -> Section 4.2 abilities).
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom|Item|Weapon", meta = (EditCondition = "ItemType == EZomItemType::Weapon"))
-	TSubclassOf<UZomGameplayAbility> PrimaryAbilityClass;
+	TSubclassOf<UZomGameplayAbilityBase> PrimaryAbilityClass;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom|Item|Weapon", meta = (EditCondition = "ItemType == EZomItemType::Weapon"))
 	TSoftObjectPtr<USkeletalMesh> WeaponMesh;
@@ -64,10 +64,10 @@ public:
 
 	// Applied to the user's ASC when consumed (e.g. Medicine clears UZomGE_Infection, Bandage restores Health).
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom|Item|Consumable", meta = (EditCondition = "ItemType == EZomItemType::Consumable"))
-	TSubclassOf<UZomGameplayEffect> ConsumeEffectClass;
+	TSubclassOf<UZomGameplayEffectBase> ConsumeEffectClass;
 
 	// If set, consuming this item removes all active instances of this effect class instead of (or in addition
 	// to) applying ConsumeEffectClass - Medicine's "clears UZomGE_Infection" behavior.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom|Item|Consumable", meta = (EditCondition = "ItemType == EZomItemType::Consumable"))
-	TSubclassOf<UZomGameplayEffect> RemoveEffectClass;
+	TSubclassOf<UZomGameplayEffectBase> RemoveEffectClass;
 };

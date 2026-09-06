@@ -3,12 +3,14 @@
 
 #include "Zom/Abilities/GA/ZomGA_LightAttack.h"
 #include "Zom/Misc/ZomGameplayTags.h"
+#include "Zom/Characters/Base/ZomCharacterBase.h"
 #include "MotionCombatSystem/Structs/MCS_AttackEntry.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 
 
 UZomGA_LightAttack::UZomGA_LightAttack()
 {
+	// Set the asset tags for this ability.
 	SetAssetTags(FGameplayTagContainer(TAG_Zom_Combat_Attack_Light.GetTag()));
 }
 
@@ -20,28 +22,33 @@ void UZomGA_LightAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 		return;
 	}
 
-	CachedHandle = Handle;
-	CachedActorInfo = ActorInfo;
-	CachedActivationInfo = ActivationInfo;
+	CachedHandle = Handle; // Cache the ability spec handle for later use in montage callbacks.
+	CachedActorInfo = ActorInfo; // Cache the actor info for later use in montage callbacks.
+	CachedActivationInfo = ActivationInfo; // Cache the activation info for later use in montage callbacks.
 
-	// TODO: an AnimNotify on the resolved montage should drive hit-detection/UZomGE_Damage application once
-	// Section 7's weapon system exists.
+	// Resolve the current attack entry.
 	const FMCS_AttackEntry ResolvedAttack = GetCurrentAttackEntry();
 	if (ResolvedAttack.HasValidMontage())
 	{
+		// Play the resolved attack montage using an ability task.
 		if (UAbilityTask_PlayMontageAndWait* PlayMontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 			this, NAME_None, ResolvedAttack.AttackMontage, 1.f, ResolvedAttack.MontageSection, true))
 		{
+			// Bind montage notifies for the resolved attack montage.
+			BindMontageNotifies(ResolvedAttack.AttackMontage);
+
+			// Bind callbacks for montage completion, interruption, and cancellation.
 			PlayMontageTask->OnCompleted.AddDynamic(this, &UZomGA_LightAttack::OnMontageCompleted);
 			PlayMontageTask->OnInterrupted.AddDynamic(this, &UZomGA_LightAttack::OnMontageInterruptedOrCancelled);
 			PlayMontageTask->OnCancelled.AddDynamic(this, &UZomGA_LightAttack::OnMontageInterruptedOrCancelled);
+
+			// Activate the montage task to start playing the montage.
 			PlayMontageTask->ReadyForActivation();
 			return;
 		}
 	}
 
-	// No montage resolved (no CombatCoreComponent, no current attack, or task creation failed) - end
-	// immediately rather than leave the ability hung.
+	// No valid montage was resolved, so end the ability immediately.
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }
 

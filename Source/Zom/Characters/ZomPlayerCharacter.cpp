@@ -10,6 +10,8 @@
 #include "Zom/Misc/ZomLogChannels.h"
 #include "Zom/Misc/ZomGameplayTags.h"
 #include "Zom/Characters/Components/ZomInventoryComponent.h"
+#include "Zom/Abilities/GA/ZomGA_LightAttack.h"
+#include "Zom/Abilities/GA/ZomGA_HeavyAttack.h"
 
 
 // Sets default values
@@ -30,6 +32,11 @@ AZomPlayerCharacter::AZomPlayerCharacter(const FObjectInitializer& ObjectInitial
 	Inventory = CreateDefaultSubobject<UZomInventoryComponent>(TEXT("Inventory"));
 
 	CurrentCamera = FGameplayTagContainer(TAG_Zom_Camera_State_Default.GetTag());
+
+	// Starting ability - granted via DefaultAbilities (base class, GrantDefaultAbilitiesAndEffects) once the ASC
+	// is initialized. Set here as a C++ default; override per-Blueprint if needed.
+	DefaultAbilities.Add(UZomGA_LightAttack::StaticClass());
+	DefaultAbilities.Add(UZomGA_HeavyAttack::StaticClass());
 }
 
 // Called when the game starts or when spawned
@@ -60,6 +67,7 @@ void AZomPlayerCharacter::PossessedBy(AController* NewController)
 
 	// GetPlayerState(), not NewController->PlayerState: by the time PossessedBy runs server-side, the pawn's
 	// own PlayerState is already valid, avoiding the null-timing window NewController->PlayerState can hit.
+	// Also grants DefaultAbilities/DefaultGameplayEffects (see AZomCharacterBase::GrantDefaultAbilitiesAndEffects).
 	InitializeAbilitySystem(GetPlayerState(), this);
 }
 

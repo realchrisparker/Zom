@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Zom/Abilities/ZomGameplayAbility.h"
+#include "Zom/Abilities/GA/Base/ZomGameplayAbilityBase.h"
 #include "ZomGA_Shove.generated.h"
 
 
@@ -12,7 +12,7 @@
  * applies UZomGE_Stagger to whatever it hits, and launches the avatar backward to create the distance.
  */
 UCLASS()
-class ZOM_API UZomGA_Shove : public UZomGameplayAbility
+class ZOM_API UZomGA_Shove : public UZomGameplayAbilityBase
 {
 	GENERATED_BODY()
 

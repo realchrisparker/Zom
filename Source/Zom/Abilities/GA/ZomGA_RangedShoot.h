@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Zom/Abilities/ZomGameplayAbility.h"
+#include "Zom/Abilities/GA/Base/ZomGameplayAbilityBase.h"
 #include "ZomGA_RangedShoot.generated.h"
 
 
@@ -13,7 +13,7 @@
  * class establishes the activation shape (commit, no Stamina cost per the dev doc).
  */
 UCLASS()
-class ZOM_API UZomGA_RangedShoot : public UZomGameplayAbility
+class ZOM_API UZomGA_RangedShoot : public UZomGameplayAbilityBase
 {
 	GENERATED_BODY()
 

@@ -91,6 +91,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Zom|Combat", meta = (DisplayName = "Combat State"))
 	ECombatState CombatState = ECombatState::Unarmed;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Zom|Combat", meta = (DisplayName = "Combat State (Last Frame)"))
+	ECombatState CombatState_LastFrame = ECombatState::Unarmed;
+
 	// -------------
 	// Locomotion
 	// -------------

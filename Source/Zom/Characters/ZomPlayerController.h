@@ -12,9 +12,8 @@
 class AZomPlayerCharacter;
 class UInputMappingContext;
 class UInputAction;
-class UZomGameplayAbility;
+class UZomGameplayAbilityBase;
 struct FInputActionValue;
-struct FMCS_AttackEntry;
 
 
 /**
@@ -108,29 +107,29 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Zom|Input")
 	TObjectPtr<UInputAction> IA_Shove;
 
-	// -------------
-	// Ability Classes
-	// -------------
-	// Which UZomGameplayAbility each ability input activates. Orthogonal to AZomCharacterBase::AddAbility
-	// (that grants these classes to the ASC; this just maps input to a class to try-activate).
+	// // -------------
+	// // Ability Classes
+	// // -------------
+	// // Which UZomGameplayAbilityBase each ability input activates. Orthogonal to AZomCharacterBase::AddAbility
+	// // (that grants these classes to the ASC; this just maps input to a class to try-activate).
 
-	UPROPERTY(EditDefaultsOnly, Category = "Zom|Abilities")
-	TSubclassOf<UZomGameplayAbility> LightAttackAbilityClass;
+	// UPROPERTY(EditDefaultsOnly, Category = "Zom|Abilities")
+	// TSubclassOf<UZomGameplayAbilityBase> LightAttackAbilityClass;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Zom|Abilities")
-	TSubclassOf<UZomGameplayAbility> HeavyAttackAbilityClass;
+	// UPROPERTY(EditDefaultsOnly, Category = "Zom|Abilities")
+	// TSubclassOf<UZomGameplayAbilityBase> HeavyAttackAbilityClass;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Zom|Abilities")
-	TSubclassOf<UZomGameplayAbility> RangedShootAbilityClass;
+	// UPROPERTY(EditDefaultsOnly, Category = "Zom|Abilities")
+	// TSubclassOf<UZomGameplayAbilityBase> RangedShootAbilityClass;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Zom|Abilities")
-	TSubclassOf<UZomGameplayAbility> ReloadAbilityClass;
+	// UPROPERTY(EditDefaultsOnly, Category = "Zom|Abilities")
+	// TSubclassOf<UZomGameplayAbilityBase> ReloadAbilityClass;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Zom|Abilities")
-	TSubclassOf<UZomGameplayAbility> DodgeAbilityClass;
+	// UPROPERTY(EditDefaultsOnly, Category = "Zom|Abilities")
+	// TSubclassOf<UZomGameplayAbilityBase> DodgeAbilityClass;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Zom|Abilities")
-	TSubclassOf<UZomGameplayAbility> ShoveAbilityClass;
+	// UPROPERTY(EditDefaultsOnly, Category = "Zom|Abilities")
+	// TSubclassOf<UZomGameplayAbilityBase> ShoveAbilityClass;
 
 private:
 
@@ -154,13 +153,7 @@ private:
 	// void Input_Dodge();
 	// void Input_Shove();
 
-	void ActivateAbilityByClass(TSubclassOf<UZomGameplayAbility> AbilityClass);
-
-	// Bound to the possessed character's CombatCoreComponent::OnAttackResolved. Handles the GAS hand-off
-	// path documented on that delegate: when the resolved entry carries a valid AttackTag, activates the
-	// matching ability on the ASC so CombatCore's notify-bound montage playback stays in sync with GAS.
-	UFUNCTION()
-	void HandleAttackResolved(const FMCS_AttackEntry& ResolvedAttack);
+	// void ActivateAbilityByClass(TSubclassOf<UZomGameplayAbilityBase> AbilityClass);
 
 	// -------------
 	// Properties

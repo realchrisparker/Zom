@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Zom/Abilities/ZomGameplayAbility.h"
+#include "Zom/Abilities/GA/Base/ZomGameplayAbilityBase.h"
 #include "ZomGA_HeavyAttack.generated.h"
 
 
@@ -16,7 +16,7 @@
  * dispatch finds it for any heavy-attack DataTable row (see ZomGameplayTags.h).
  */
 UCLASS()
-class ZOM_API UZomGA_HeavyAttack : public UZomGameplayAbility
+class ZOM_API UZomGA_HeavyAttack : public UZomGameplayAbilityBase
 {
 	GENERATED_BODY()
 

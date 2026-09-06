@@ -44,7 +44,7 @@ ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Perception_Hearing_NoiseHeard);
 ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Perception_Damage_Taken);
 
 // -------------
-// SetByCaller (consistent scheme every UZomGameplayEffect uses for its runtime-supplied magnitude/duration,
+// SetByCaller (consistent scheme every UZomGameplayEffectBase uses for its runtime-supplied magnitude/duration,
 // per Section 4.3 of the dev doc, so effect tuning comes from ability/spawn code rather than being hardcoded)
 // -------------
 

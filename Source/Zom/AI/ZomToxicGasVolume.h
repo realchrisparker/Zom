@@ -7,8 +7,10 @@
 #include "ZomToxicGasVolume.generated.h"
 
 
+// Forward declarations
+
 class USphereComponent;
-class UZomGameplayEffect;
+class UZomGameplayEffectBase;
 
 
 /**
@@ -44,7 +46,7 @@ protected:
 	// The infection effect applied on overlap - assign a Blueprint child of UZomGE_Infection configured with
 	// DurationPolicy = HasDuration (the gas case extends rather than stacks; see UZomGE_Infection's header).
 	UPROPERTY(EditDefaultsOnly, Category = "Zom|ToxicGas")
-	TSubclassOf<UZomGameplayEffect> InfectionEffectClass;
+	TSubclassOf<UZomGameplayEffectBase> InfectionEffectClass;
 
 	// Value supplied for UZomGE_Infection's Zom.SetByCaller.Duration.
 	UPROPERTY(EditDefaultsOnly, Category = "Zom|ToxicGas")

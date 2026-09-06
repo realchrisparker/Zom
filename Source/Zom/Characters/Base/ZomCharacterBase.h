@@ -15,13 +15,14 @@
 
 class UAbilitySystemComponent;
 class UGameplayEffect;
-class UZomGameplayAbility;
-class UZomGameplayEffect;
-struct FOnAttributeChangeData;
+class UZomGameplayAbilityBase;
+class UZomGameplayEffectBase;
 class UMCS_CombatCoreComponent;
 class UMCS_CombatHitboxComponent;
 class UMCS_CombatHitReactionComponent;
 class UMCS_CombatDefenseComponent;
+struct FOnAttributeChangeData;
+struct FMCS_AttackEntry;
 
 
 /**
@@ -77,21 +78,21 @@ public:
 	// present is a safe no-op, not a duplicate spec). Server-only (no-op off authority). Returns true if the
 	// ability is granted after the call (whether newly granted or already present).
 	UFUNCTION(BlueprintCallable, Category = "Zom|Abilities")
-	bool AddAbility(TSubclassOf<UZomGameplayAbility> AbilityClass);
+	bool AddAbility(TSubclassOf<UZomGameplayAbilityBase> AbilityClass);
 
 	// Revokes a single previously-AddAbility'd ability class. No-op (returns false) if not granted.
 	UFUNCTION(BlueprintCallable, Category = "Zom|Abilities")
-	bool RemoveAbility(TSubclassOf<UZomGameplayAbility> AbilityClass);
+	bool RemoveAbility(TSubclassOf<UZomGameplayAbilityBase> AbilityClass);
 
 	// Applies a single effect class to self if not already active via this API (idempotent w.r.t. this API's
 	// own bookkeeping only - it doesn't prevent other code from independently applying the same effect class).
 	UFUNCTION(BlueprintCallable, Category = "Zom|Abilities")
-	bool AddEffect(TSubclassOf<UZomGameplayEffect> EffectClass, float Level = 1.f);
+	bool AddEffect(TSubclassOf<UZomGameplayEffectBase> EffectClass, float Level = 1.f);
 
 	// Removes an effect previously applied via AddEffect. No-op/false if not tracked, or if the effect was
 	// Instant (Instant effects have no active handle to remove - that's expected, not an error).
 	UFUNCTION(BlueprintCallable, Category = "Zom|Abilities")
-	bool RemoveEffect(TSubclassOf<UZomGameplayEffect> EffectClass);
+	bool RemoveEffect(TSubclassOf<UZomGameplayEffectBase> EffectClass);
 
 	// Fired at the end of InitializeAbilitySystem, once the cached ASC is actually valid - the earliest point
 	// at which AddAbility/AddEffect can succeed. Call them from here, not from BeginPlay/Event Possessed:
@@ -120,7 +121,18 @@ public:
 	// Current combat state. Unarmed is the default state; other states are set manually (by AZomPlayerController,
 	// in response to combat input actions, for the player) or by AI/ability logic for other subclasses.
 	UPROPERTY(BlueprintReadWrite, Category = "Zom|Combat", meta = (DisplayName = "Combat State"))
-	ECombatState CombatState = ECombatState::Unarmed;
+	ECombatState CombatState = ECombatState::None;
+
+	// Default abilities granted via AddAbility as soon as InitializeAbilitySystem resolves a valid ASC (see
+	// GrantDefaultAbilitiesAndEffects). Shared across every AZomCharacterBase subclass - set from a leaf class's
+	// constructor for a hardcoded default, or override per-Blueprint.
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Zom|Abilities", meta = (DisplayName = "Default Abilities"))
+	TArray<TSubclassOf<UZomGameplayAbilityBase>> DefaultAbilities;
+
+	// Default gameplay effects applied via AddEffect as soon as InitializeAbilitySystem resolves a valid ASC (see
+	// GrantDefaultAbilitiesAndEffects).
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Zom|Abilities", meta = (DisplayName = "Default Gameplay Effects"))
+	TArray<TSubclassOf<UZomGameplayEffectBase>> DefaultGameplayEffects;
 
 protected:
 
@@ -129,9 +141,6 @@ protected:
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	// Called when the character starts crouching; keeps Stance in sync
 	virtual void OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
@@ -146,6 +155,19 @@ protected:
 	// Caches the AbilitySystemComponent resolved off OwnerActor and calls InitAbilityActorInfo(OwnerActor, AvatarActor).
 	// For AI, OwnerActor == AvatarActor == self. For the player, OwnerActor is the PlayerState, AvatarActor is the pawn.
 	void InitializeAbilitySystem(AActor* InOwnerActor, AActor* InAvatarActor);
+
+	// Bound to CombatCoreComponent->OnAttackResolved once InitializeAbilitySystem resolves a valid ASC. Handles
+	// the GAS hand-off path documented on that delegate: when the resolved entry carries a valid AttackTag,
+	// activates the matching ability on the ASC so CombatCore's notify-bound montage playback stays in sync
+	// with GAS. Lives here (not on a controller) since it depends only on this pawn's own components and so
+	// applies identically whether the pawn is player- or AI-possessed.
+	UFUNCTION()
+	void HandleAttackResolved(const FMCS_AttackEntry& ResolvedAttack);
+
+	// Grants every class in DefaultAbilities and applies every class in DefaultGameplayEffects via AddAbility/
+	// AddEffect. Called from InitializeAbilitySystem, once per call - safe to invoke more than once (e.g. the
+	// player's PossessedBy + OnRep_PlayerState both calling InitializeAbilitySystem) since both are idempotent.
+	void GrantDefaultAbilitiesAndEffects();
 
 	// Small wrapper around the MakeOutgoingSpec/ApplyGameplayEffectSpecToSelf boilerplate for self-applied effects.
 	// Returns the resulting FActiveGameplayEffectHandle (invalid for Instant effects, which have no ongoing
@@ -168,12 +190,12 @@ protected:
 	// Handles for every ability currently granted via AddAbility, keyed by class so AddAbility/RemoveAbility can
 	// check "already granted?" in O(1) and so double-adding the same class is a safe no-op rather than a
 	// stacked duplicate spec. Plain members (not UPROPERTY) - the handle structs hold no UObject* for GC to track.
-	TMap<TSubclassOf<UZomGameplayAbility>, FGameplayAbilitySpecHandle> GrantedAbilityHandles;
+	TMap<TSubclassOf<UZomGameplayAbilityBase>, FGameplayAbilitySpecHandle> GrantedAbilityHandles;
 
 	// Handles for every effect currently active via AddEffect, keyed by class for the same reason. Instant
 	// effects get an entry with an invalid handle so a second AddEffect(SameClass) call is still recognized as
 	// "already applied via this API" and no-ops instead of re-applying.
-	TMap<TSubclassOf<UZomGameplayEffect>, FActiveGameplayEffectHandle> ActiveEffectHandles;
+	TMap<TSubclassOf<UZomGameplayEffectBase>, FActiveGameplayEffectHandle> ActiveEffectHandles;
 
 	// -------------
 	// Components

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Zom/Abilities/ZomGameplayEffect.h"
+#include "Zom/Abilities/Effects/Base/ZomGameplayEffectBase.h"
 #include "ZomGE_Damage.generated.h"
 
 
@@ -13,7 +13,7 @@
  * hardcoded value here.
  */
 UCLASS()
-class ZOM_API UZomGE_Damage : public UZomGameplayEffect
+class ZOM_API UZomGE_Damage : public UZomGameplayEffectBase
 {
 	GENERATED_BODY()
 

@@ -82,6 +82,7 @@ enum class EStance : uint8
 UENUM(BlueprintType, meta = (DisplayName = "Zom Character Combat State"))
 enum class ECombatState : uint8
 {
+	None	UMETA(DisplayName = "None"),
 	Unarmed	UMETA(DisplayName = "Unarmed"),
 	Machete	UMETA(DisplayName = "Machete"),
 	Pistol	UMETA(DisplayName = "Pistol"),

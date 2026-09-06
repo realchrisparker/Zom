@@ -3,7 +3,7 @@
 
 #include "Zom/Characters/Components/ZomInventoryComponent.h"
 #include "Zom/Items/ZomItemData.h"
-#include "Zom/Abilities/ZomGameplayEffect.h"
+#include "Zom/Abilities/Effects/Base/ZomGameplayEffectBase.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 

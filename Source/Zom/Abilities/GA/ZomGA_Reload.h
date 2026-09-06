@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Zom/Abilities/ZomGameplayAbility.h"
+#include "Zom/Abilities/GA/Base/ZomGameplayAbilityBase.h"
 #include "ZomGA_Reload.generated.h"
 
 
@@ -12,7 +12,7 @@
  * UZomInventoryComponent, not yet built - this class establishes the activation shape.
  */
 UCLASS()
-class ZOM_API UZomGA_Reload : public UZomGameplayAbility
+class ZOM_API UZomGA_Reload : public UZomGameplayAbilityBase
 {
 	GENERATED_BODY()
 

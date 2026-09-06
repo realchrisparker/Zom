@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Zom/Abilities/ZomGameplayEffect.h"
+#include "Zom/Abilities/Effects/Base/ZomGameplayEffectBase.h"
 #include "ZomGE_Infection.generated.h"
 
 
@@ -20,7 +20,7 @@
  * duration-extend helper is needed; that assumption predates this engine version having a built-in option.
  */
 UCLASS()
-class ZOM_API UZomGE_Infection : public UZomGameplayEffect
+class ZOM_API UZomGE_Infection : public UZomGameplayEffectBase
 {
 	GENERATED_BODY()
 

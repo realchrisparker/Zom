@@ -49,6 +49,7 @@ void UZomAnimInstanceBase::NativeInitializeAnimation()
 
 	// Cache the character reference if the owning actor is a Zom character
 	CachedPlayerCharacter = Cast<AZomCharacterBase>(TryGetPawnOwner());
+	CombatState = ECombatState::None;
 
 	// Cache the character movement component reference if the player character is valid
 	CachedCharacterMovementComponent = CachedPlayerCharacter.IsValid() ? Cast<UZomCharacterMovementComponent>(CachedPlayerCharacter->GetCharacterMovement()) : nullptr;
@@ -132,6 +133,7 @@ void UZomAnimInstanceBase::NativeUpdateAnimation(float DeltaSeconds)
 	Gait_LastFrame = Gait;
 	Gait = Character->Gait;
 
+	CombatState_LastFrame = CombatState;
 	CombatState = Character->CombatState;
 
 	RotationMode_LastFrame = RotationMode;
@@ -281,20 +283,20 @@ ECharacterMovementMode UZomAnimInstanceBase::MapNativeMovementMode(TEnumAsByte<E
 {
 	switch (NativeMode)
 	{
-	case MOVE_None:
-	case MOVE_Walking:
-	case MOVE_NavWalking:
-	case MOVE_Flying:
-		return ECharacterMovementMode::OnGround;
+		case MOVE_None:
+		case MOVE_Walking:
+		case MOVE_NavWalking:
+		case MOVE_Flying:
+			return ECharacterMovementMode::OnGround;
 
-	case MOVE_Falling:
-	case MOVE_Swimming:
-		return ECharacterMovementMode::InAir;
+		case MOVE_Falling:
+		case MOVE_Swimming:
+			return ECharacterMovementMode::InAir;
 
-	case MOVE_Custom:
-	default:
-		// Sliding, Traversing and Ragdoll are driven by custom movement modes that aren't implemented yet, so leave the current value unchanged
-		return MovementMode;
+		case MOVE_Custom:
+		default:
+			// Sliding, Traversing and Ragdoll are driven by custom movement modes that aren't implemented yet, so leave the current value unchanged
+			return MovementMode;
 	}
 }
 
@@ -328,16 +330,16 @@ bool UZomAnimInstanceBase::IsPivoting() const
 
 	switch (RotationMode)
 	{
-	case ERotationMode::Strafe:
-		PivotTurnAngleThreshold = 30.0f;
-		break;
-	case ERotationMode::Aim:
-		PivotTurnAngleThreshold = 0.0f;
-		break;
-	case ERotationMode::OrientToMovement:
-	default:
-		PivotTurnAngleThreshold = 45.0f;
-		break;
+		case ERotationMode::Strafe:
+			PivotTurnAngleThreshold = 30.0f;
+			break;
+		case ERotationMode::Aim:
+			PivotTurnAngleThreshold = 0.0f;
+			break;
+		case ERotationMode::OrientToMovement:
+		default:
+			PivotTurnAngleThreshold = 45.0f;
+			break;
 	}
 
 	// GetTrajectoryTurnAngle() compares Velocity against InputAcceleration; with no input, InputAcceleration is
@@ -446,13 +448,13 @@ float UZomAnimInstanceBase::GetAOYaw() const
 {
 	switch (RotationMode)
 	{
-	case ERotationMode::Strafe:
-		return GetAOValue().X;
+		case ERotationMode::Strafe:
+			return GetAOValue().X;
 
-	case ERotationMode::OrientToMovement:
-	case ERotationMode::Aim:
-	default:
-		return 0.0f;
+		case ERotationMode::OrientToMovement:
+		case ERotationMode::Aim:
+		default:
+			return 0.0f;
 	}
 }
 
@@ -536,25 +538,25 @@ float UZomAnimInstanceBase::GetMMBlendTime() const
 {
 	switch (MovementMode)
 	{
-	case ECharacterMovementMode::OnGround:
-		switch (MovementMode_LastFrame)
-		{
 		case ECharacterMovementMode::OnGround:
-			return 0.5f;
+			switch (MovementMode_LastFrame)
+			{
+				case ECharacterMovementMode::OnGround:
+					return 0.5f;
+				case ECharacterMovementMode::InAir:
+					// Just landed: blend the land animation in faster
+					return 0.2f;
+				default:
+					break;
+			}
+			break;
+
 		case ECharacterMovementMode::InAir:
-			// Just landed: blend the land animation in faster
-			return 0.2f;
+			// Moving up quickly means we just jumped: blend the jump animation in very fast
+			return (Velocity.Z > 100.0f) ? 0.15f : 0.5f;
+
 		default:
 			break;
-		}
-		break;
-
-	case ECharacterMovementMode::InAir:
-		// Moving up quickly means we just jumped: blend the jump animation in very fast
-		return (Velocity.Z > 100.0f) ? 0.15f : 0.5f;
-
-	default:
-		break;
 	}
 
 	return 0.2f;
@@ -568,12 +570,12 @@ float UZomAnimInstanceBase::GetMMNotifyRecencyTimeOut() const
 {
 	switch (Gait)
 	{
-	case EGait::Walk:
-		return 0.2f;
-	case EGait::Run:
-		return 0.2f;
-	case EGait::Sprint:
-		return 0.16f;
+		case EGait::Walk:
+			return 0.2f;
+		case EGait::Run:
+			return 0.2f;
+		case EGait::Sprint:
+			return 0.16f;
 	}
 
 	return 0.2f;
@@ -590,6 +592,12 @@ EPoseSearchInterruptMode UZomAnimInstanceBase::GetMMInterruptMode() const
 	if (bMovementModeChanged)
 	{
 		return EPoseSearchInterruptMode::InterruptOnDatabaseChange; //Quick out if the movement mode changed.
+	}
+
+	// Always interrupt if the combat state has changed, since that usually means the character is entering or exiting combat.
+	if (CombatState_LastFrame != CombatState)
+	{
+		return EPoseSearchInterruptMode::InterruptOnDatabaseChange;
 	}
 
 	// ------
@@ -650,11 +658,11 @@ EOffsetRootBoneMode UZomAnimInstanceBase::GetOffsetRootTranslationMode() const
 
 	switch (MovementMode)
 	{
-	case ECharacterMovementMode::OnGround:
-		return IsMoving() ? EOffsetRootBoneMode::Interpolate : EOffsetRootBoneMode::Release;
+		case ECharacterMovementMode::OnGround:
+			return IsMoving() ? EOffsetRootBoneMode::Interpolate : EOffsetRootBoneMode::Release;
 
-	default:
-		return EOffsetRootBoneMode::Release;
+		default:
+			return EOffsetRootBoneMode::Release;
 	}
 }
 
@@ -666,12 +674,12 @@ float UZomAnimInstanceBase::GetOffsetRootTranslationHalfLife() const
 {
 	switch (MovementState)
 	{
-	case EMovementState::Idle:
-		return 0.1f;
+		case EMovementState::Idle:
+			return 0.1f;
 
-	case EMovementState::Moving:
-	default:
-		return 0.3f;
+		case EMovementState::Moving:
+		default:
+			return 0.3f;
 	}
 }
 

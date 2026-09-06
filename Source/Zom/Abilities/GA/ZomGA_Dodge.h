@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Zom/Abilities/ZomGameplayAbility.h"
+#include "Zom/Abilities/GA/Base/ZomGameplayAbilityBase.h"
 #include "ZomGA_Dodge.generated.h"
 
 
@@ -14,7 +14,7 @@
  * swap this for an AbilityTask_PlayMontageAndWait once one is authored.
  */
 UCLASS()
-class ZOM_API UZomGA_Dodge : public UZomGameplayAbility
+class ZOM_API UZomGA_Dodge : public UZomGameplayAbilityBase
 {
 	GENERATED_BODY()
 

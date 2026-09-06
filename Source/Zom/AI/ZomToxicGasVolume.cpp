@@ -5,7 +5,7 @@
 #include "Components/SphereComponent.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
-#include "Zom/Abilities/ZomGameplayEffect.h"
+#include "Zom/Abilities/Effects/Base/ZomGameplayEffectBase.h"
 #include "Zom/Misc/ZomGameplayTags.h"
 
 
