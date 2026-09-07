@@ -16,6 +16,14 @@ ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Status_Staggered);
 ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Status_Dodging);
 
 // -------------
+// Character identification
+// -------------
+
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Character_Player);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Character_Enemy);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Character_NPC);
+
+// -------------
 // Combat (asset tags on the C++ attack abilities themselves; the MCS attack DataTables' AttackTag column
 // must be authored with these SAME tags so HandleAttackResolved's TryActivateAbilitiesByTag dispatch finds
 // the right granted spec)

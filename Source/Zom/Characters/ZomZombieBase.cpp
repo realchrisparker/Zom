@@ -93,3 +93,8 @@ void AZomZombieBase::HandleDeath()
 		UE_LOG(LogZomCharacter, Warning, TEXT("%s died but no UZomZombiePoolSubsystem was found - not returned to a pool."), *GetName());
 	}
 }
+
+FGameplayTag AZomZombieBase::GetFactionTag_Implementation() const
+{
+	return TAG_Zom_Character_Enemy.GetTag();
+}

@@ -7,7 +7,9 @@
 #include "GameplayAbilitySpecHandle.h"
 #include "ActiveGameplayEffectHandle.h"
 #include "GameFramework/Character.h"
+#include "Zom/Misc/ZomGameplayTags.h"
 #include "Zom/Characters/Enums/ZomCharacterEnums.h"
+#include "MotionCombatSystem/Interfaces/MCS_CombatTargetInterface.h"
 #include "ZomCharacterBase.generated.h"
 
 
@@ -32,7 +34,7 @@ struct FMCS_AttackEntry;
  * GetAbilitySystemComponent() without caring where the component physically lives.
  */
 UCLASS(Blueprintable, meta=(DisplayName="Zom Character Base"))
-class ZOM_API AZomCharacterBase : public ACharacter, public IAbilitySystemInterface
+class ZOM_API AZomCharacterBase : public ACharacter, public IAbilitySystemInterface, public IMCS_CombatCharacterInterface
 {
 	GENERATED_BODY()
 
@@ -133,6 +135,18 @@ public:
 	// GrantDefaultAbilitiesAndEffects).
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Zom|Abilities", meta = (DisplayName = "Default Gameplay Effects"))
 	TArray<TSubclassOf<UZomGameplayEffectBase>> DefaultGameplayEffects;
+
+	// -------------
+	// IMCS_CombatCharacterInterface
+	// -------------
+
+	// Whether this actor can currently be targeted (true = valid target).
+	virtual bool CanBeTargeted_Implementation() const;
+
+	// IMCS_CombatCharacterInterface: applies incoming combat damage via UZomGE_Damage (SetByCaller magnitude),
+	// so every humanoid routes hits through the same GAS Damage-meta-attribute pipeline as GrantDefaultAbilitiesAndEffects'
+	// other effects. No default implementation is provided by the interface itself - every combat character must supply one.
+	// virtual bool TakeCombatDamage_Implementation(float Damage, const FHitResult& Hit, const FMCS_AttackEntry& AttackEntry) const override;
 
 protected:
 

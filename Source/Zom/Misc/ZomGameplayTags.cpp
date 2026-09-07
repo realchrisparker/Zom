@@ -6,6 +6,10 @@ UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Status_Attacking, "Zom.Status.Attacking",
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Status_Staggered, "Zom.Status.Staggered", "Persistent tag on the ASC while staggered; blocks all UZomGameplayAbilityBase activation.")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Status_Dodging, "Zom.Status.Dodging", "Persistent tag on the ASC while UZomGA_Dodge is active.")
 
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Character_Player, "Zom.Character.Player", "Tag identifying the player character.")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Character_Enemy, "Zom.Character.Enemy", "Tag identifying enemy characters.")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Character_NPC, "Zom.Character.NPC", "Tag identifying non-player characters (NPCs).")
+
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Combat_Attack_Light, "Zom.Combat.Attack.Light", "Shared AssetTag on every light-attack UZomGameplayAbilityBase; must match the AttackTag column value on light-attack DataTable rows for TryActivateAbilitiesByTag dispatch.")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Combat_Attack_Heavy, "Zom.Combat.Attack.Heavy", "Shared AssetTag on every heavy-attack UZomGameplayAbilityBase; must match the AttackTag column value on heavy-attack DataTable rows for TryActivateAbilitiesByTag dispatch.")
 

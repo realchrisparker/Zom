@@ -234,3 +234,8 @@ void AZomPlayerCharacter::HandleCombatDefenseWindowEnd(AActor* Defender)
 {
 	OnDefenseWindowEnd(Defender); // Forward the combat core defense window end event to the Blueprint event
 }
+
+FGameplayTag AZomPlayerCharacter::GetFactionTag_Implementation() const
+{
+	return TAG_Zom_Character_Player.GetTag();
+}

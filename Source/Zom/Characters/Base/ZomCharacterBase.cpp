@@ -8,6 +8,8 @@
 #include "Zom/Abilities/AttributeSets/ZomAttributeSetBase.h"
 #include "Zom/Abilities/GA/Base/ZomGameplayAbilityBase.h"
 #include "Zom/Abilities/Effects/Base/ZomGameplayEffectBase.h"
+#include "Zom/Abilities/Effects/ZomGE_Damage.h"
+#include "Zom/Misc/ZomGameplayTags.h"
 #include "Zom/Misc/ZomLogChannels.h"
 #include "MotionCombatSystem/Components/MCS_CombatCoreComponent.h"
 #include "MotionCombatSystem/Components/MCS_CombatHitboxComponent.h"
@@ -313,3 +315,35 @@ FMCS_AttackSituation AZomCharacterBase::GetCurrentAttackSituation() const
 
 	return AttackSituation;
 }
+
+// Whether this actor can currently be targeted (true = valid target).
+bool AZomCharacterBase::CanBeTargeted_Implementation() const
+{
+	return true;
+}
+
+// IMCS_CombatCharacterInterface: routes incoming damage through UZomGE_Damage the same way every other GE is
+// applied (see ApplyGameplayEffectToSelf) - Damage's SetByCaller magnitude carries the hit-specific amount,
+// while the Damage->Health conversion and clamping stays centralized in UZomAttributeSetBase::PostGameplayEffectExecute.
+// bool AZomCharacterBase::TakeCombatDamage_Implementation(float Damage, const FHitResult& Hit, const FMCS_AttackEntry& AttackEntry) const
+// {
+// 	if (!AbilitySystemComponent || Damage <= 0.f)
+// 	{
+// 		return false;
+// 	}
+
+// 	FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
+// 	EffectContext.AddSourceObject(const_cast<AZomCharacterBase*>(this));
+// 	EffectContext.AddHitResult(Hit);
+
+// 	const FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(UZomGE_Damage::StaticClass(), 1.f, EffectContext);
+// 	if (!SpecHandle.IsValid())
+// 	{
+// 		return false;
+// 	}
+
+// 	SpecHandle.Data->SetSetByCallerMagnitude(TAG_Zom_SetByCaller_Magnitude.GetTag(), Damage);
+
+// 	const FActiveGameplayEffectHandle ActiveHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+// 	return ActiveHandle.WasSuccessfullyApplied();
+// }

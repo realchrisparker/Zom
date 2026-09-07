@@ -47,6 +47,13 @@ public:
 	// Properties
 	// -------------
 
+	// -------------
+	// IMCS_CombatCharacterInterface
+	// -------------
+
+	// This actor's faction/team affiliation, used by targeting/perception queries to tell friend from foe.
+	virtual FGameplayTag GetFactionTag_Implementation() const;
+
 protected:
 	virtual void BeginPlay() override;
 

@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Zom/Characters/Base/ZomCharacterBase.h"
-#include "Zom/Misc/ZomGameplayTags.h"
 #include "MotionCombatSystem/Structs/MCS_AttackEntry.h"
 #include "MotionCombatSystem/Structs/MCS_AttackHitbox.h"
 #include "ZomPlayerCharacter.generated.h"
@@ -122,6 +121,13 @@ public:
 	// bind to FGameplayTagContainer properties - see https://forums.unrealengine.com/t/2668708 (UE-324898).
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Zom|Camera State", meta = (DisplayName = "Current Camera"))
 	FGameplayTagContainer CurrentCamera = FGameplayTagContainer(TAG_Zom_Camera_State_Default.GetTag());
+
+	// -------------
+	// IMCS_CombatCharacterInterface
+	// -------------
+
+	// This actor's faction/team affiliation, used by targeting/perception queries to tell friend from foe.
+	virtual FGameplayTag GetFactionTag_Implementation() const;
 
 protected:
 
