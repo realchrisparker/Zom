@@ -109,6 +109,126 @@
 		{
 			"Name": "GameplayBehaviorSmartObjects",
 			"Enabled": true
+		},
+		{
+			"Name": "MovieSceneAnimMixer",
+			"Enabled": true
+		},
+		{
+			"Name": "MovieSceneMixedControlRig",
+			"Enabled": true
+		},
+		{
+			"Name": "MovieScenePoseSearchTracks",
+			"Enabled": true
+		},
+		{
+			"Name": "MCPClientToolset",
+			"Enabled": true
+		},
+		{
+			"Name": "AllToolsets",
+			"Enabled": true
+		},
+		{
+			"Name": "WorldConditionsToolset",
+			"Enabled": true
+		},
+		{
+			"Name": "UMGToolSet",
+			"Enabled": true
+		},
+		{
+			"Name": "StateTreeToolset",
+			"Enabled": true
+		},
+		{
+			"Name": "SlateInspectorToolset",
+			"Enabled": true
+		},
+		{
+			"Name": "SequencerAnimMixerToolset",
+			"Enabled": true
+		},
+		{
+			"Name": "SemanticSearchToolset",
+			"Enabled": true
+		},
+		{
+			"Name": "PluginToolset",
+			"Enabled": true
+		},
+		{
+			"Name": "PhysicsToolsets",
+			"Enabled": true
+		},
+		{
+			"Name": "PCGToolset",
+			"Enabled": true
+		},
+		{
+			"Name": "NiagaraToolsets",
+			"Enabled": true
+		},
+		{
+			"Name": "MetaHumanGenerator",
+			"Enabled": true
+		},
+		{
+			"Name": "LiveCodingToolset",
+			"Enabled": true
+		},
+		{
+			"Name": "HairModelingToolset",
+			"Enabled": true
+		},
+		{
+			"Name": "GASToolsets",
+			"Enabled": true
+		},
+		{
+			"Name": "GameplayTagsToolset",
+			"Enabled": true
+		},
+		{
+			"Name": "GameFeaturesToolset",
+			"Enabled": true
+		},
+		{
+			"Name": "EditorToolset",
+			"Enabled": true
+		},
+		{
+			"Name": "DataRegistryToolset",
+			"Enabled": true
+		},
+		{
+			"Name": "DataflowAgent",
+			"Enabled": true
+		},
+		{
+			"Name": "ConversationToolset",
+			"Enabled": true
+		},
+		{
+			"Name": "ConfigSettingsToolset",
+			"Enabled": true
+		},
+		{
+			"Name": "ChaosClothAssetToolset",
+			"Enabled": true
+		},
+		{
+			"Name": "AutomationTestToolset",
+			"Enabled": true
+		},
+		{
+			"Name": "AnimationAssistantToolset",
+			"Enabled": true
+		},
+		{
+			"Name": "AIModuleToolset",
+			"Enabled": true
 		}
 	]
 }

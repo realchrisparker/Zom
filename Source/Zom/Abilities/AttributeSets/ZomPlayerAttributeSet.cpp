@@ -7,6 +7,12 @@
 
 UZomPlayerAttributeSet::UZomPlayerAttributeSet()
 {
+	// Sensible starting point so Stamina drain (UZomGE_StaminaDrain) has something to actually drain -
+	// nothing else currently initializes this attribute for the player (unlike zombies/Boss, whose
+	// MaxHealth is seeded per-instance from ZombieTypeData/BossData, the player has no equivalent varying
+	// source, so a flat compile-time default here is enough). Retune directly if game balance needs differ.
+	InitMaxStamina(100.f);
+	InitStamina(100.f);
 }
 
 void UZomPlayerAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -48,3 +54,4 @@ void UZomPlayerAttributeSet::OnRep_MaxStamina(const FGameplayAttributeData& OldM
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UZomPlayerAttributeSet, MaxStamina, OldMaxStamina);
 }
+

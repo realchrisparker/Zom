@@ -2,7 +2,6 @@
 
 
 #include "Zom/Abilities/GA/ZomGA_HeavyAttack.h"
-#include "Zom/Abilities/Effects/ZomGE_StaminaDrain.h"
 #include "Zom/Misc/ZomGameplayTags.h"
 #include "MotionCombatSystem/Structs/MCS_AttackEntry.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
@@ -10,12 +9,22 @@
 
 UZomGA_HeavyAttack::UZomGA_HeavyAttack()
 {
-	CostGameplayEffectClass = UZomGE_StaminaDrain::StaticClass();
+	// Stamina cost is no longer paid through CostGameplayEffectClass + CommitAbility - see
+	// ApplyStaminaCostForAttack's comment. It's applied manually in ActivateAbility from
+	// GetCurrentAttackEntry().StaminaCost instead, since the cost varies per resolved attack, not per ability.
 	SetAssetTags(FGameplayTagContainer(TAG_Zom_Combat_Attack_Heavy.GetTag()));
+
+	// See UZomGA_LightAttack's constructor comment - same attack-lockup fix, mirrored so a combo hand-off in
+	// either direction (Light->Heavy or Heavy->Light) properly cancels the ability being left behind instead
+	// of orphaning it in a permanently-active state.
+	CancelAbilitiesWithTag.AddTag(TAG_Zom_Combat_Attack_Light.GetTag());
 }
 
 void UZomGA_HeavyAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
+	// TEMP DIAGNOSTIC (attack-lockup investigation): remove once the lockup is diagnosed.
+	UE_LOG(LogTemp, Warning, TEXT("[AttackDiag] HeavyAttack::ActivateAbility Handle=%s"), *Handle.ToString());
+
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -26,17 +35,25 @@ void UZomGA_HeavyAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 	CachedActorInfo = ActorInfo;
 	CachedActivationInfo = ActivationInfo;
 
-	// TODO: an AnimNotify on the resolved montage should drive hit-detection/UZomGE_Damage application once
-	// Section 7's weapon system exists.
+	// Resolve the current attack entry.
 	const FMCS_AttackEntry ResolvedAttack = GetCurrentAttackEntry();
+	ApplyStaminaCostForAttack(ResolvedAttack);
+
 	if (ResolvedAttack.HasValidMontage())
 	{
+		// Bind montage notifies for the resolved attack montage.
 		if (UAbilityTask_PlayMontageAndWait* PlayMontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 			this, NAME_None, ResolvedAttack.AttackMontage, 1.f, ResolvedAttack.MontageSection, true))
 		{
+			// Play the resolved attack montage using an ability task.
+			BindMontageNotifies(ResolvedAttack.AttackMontage);
+
+			// Bind callbacks for montage completion, interruption, and cancellation.
 			PlayMontageTask->OnCompleted.AddDynamic(this, &UZomGA_HeavyAttack::OnMontageCompleted);
 			PlayMontageTask->OnInterrupted.AddDynamic(this, &UZomGA_HeavyAttack::OnMontageInterruptedOrCancelled);
 			PlayMontageTask->OnCancelled.AddDynamic(this, &UZomGA_HeavyAttack::OnMontageInterruptedOrCancelled);
+
+			// Activate the montage task to start playing the montage.
 			PlayMontageTask->ReadyForActivation();
 			return;
 		}
@@ -49,12 +66,17 @@ void UZomGA_HeavyAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 
 void UZomGA_HeavyAttack::OnMontageCompleted()
 {
+	// TEMP DIAGNOSTIC (attack-lockup investigation): remove once the lockup is diagnosed.
+	UE_LOG(LogTemp, Warning, TEXT("[AttackDiag] HeavyAttack::OnMontageCompleted using CachedHandle=%s"), *CachedHandle.ToString());
+
 	NotifyAttackMontageEnded();
 	EndAbility(CachedHandle, CachedActorInfo, CachedActivationInfo, true, false);
 }
 
 void UZomGA_HeavyAttack::OnMontageInterruptedOrCancelled()
 {
+	UE_LOG(LogTemp, Warning, TEXT("[AttackDiag] HeavyAttack::OnMontageInterruptedOrCancelled using CachedHandle=%s"), *CachedHandle.ToString());
+
 	NotifyAttackMontageEnded();
 	EndAbility(CachedHandle, CachedActorInfo, CachedActivationInfo, true, true);
 }

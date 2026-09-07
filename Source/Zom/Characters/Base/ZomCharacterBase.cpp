@@ -275,7 +275,13 @@ void AZomCharacterBase::HandleAttackResolved(const FMCS_AttackEntry& ResolvedAtt
 		return;
 	}
 
-	AbilitySystemComponent->TryActivateAbilitiesByTag(FGameplayTagContainer(ResolvedAttack.AttackTag));
+	// TEMP DIAGNOSTIC (attack-lockup investigation): log whether GAS actually accepted the activation.
+	// InstancedPerActor abilities silently return false here (only a Verbose engine log, easy to miss) if the
+	// same ability is already active - e.g. a combo continuation re-resolving an AttackTag while the ability
+	// from the swing that opened the combo window hasn't ended yet. Remove once the lockup is diagnosed.
+	const bool bActivated = AbilitySystemComponent->TryActivateAbilitiesByTag(FGameplayTagContainer(ResolvedAttack.AttackTag));
+	UE_LOG(LogTemp, Warning, TEXT("[AttackDiag] HandleAttackResolved: Tag=%s Montage=%s -> TryActivateAbilitiesByTag returned %s"),
+		*ResolvedAttack.AttackTag.ToString(), *GetNameSafe(ResolvedAttack.AttackMontage), bActivated ? TEXT("true") : TEXT("FALSE"));
 }
 
 // Returns the current attack situation, which is used to determine which attacks are valid for the character.

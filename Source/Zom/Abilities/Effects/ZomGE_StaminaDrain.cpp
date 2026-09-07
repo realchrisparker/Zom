@@ -5,6 +5,8 @@
 #include "Zom/Abilities/AttributeSets/ZomPlayerAttributeSet.h"
 
 
+const FName UZomGE_StaminaDrain::StaminaCostSetByCallerName(TEXT("Penalty"));
+
 UZomGE_StaminaDrain::UZomGE_StaminaDrain()
 {
 	DurationPolicy = EGameplayEffectDurationType::Instant;
@@ -12,8 +14,10 @@ UZomGE_StaminaDrain::UZomGE_StaminaDrain()
 	FGameplayModifierInfo StaminaModifier;
 	StaminaModifier.Attribute = UZomPlayerAttributeSet::GetStaminaAttribute();
 	StaminaModifier.ModifierOp = EGameplayModOp::Additive;
-	// ModifierMagnitude left at its ScalableFloat default (0) - each Blueprint child (per-ability cost) sets
-	// its own negative magnitude.
+
+	FSetByCallerFloat SetByCallerMagnitude;
+	SetByCallerMagnitude.DataName = StaminaCostSetByCallerName;
+	StaminaModifier.ModifierMagnitude = FGameplayEffectModifierMagnitude(SetByCallerMagnitude);
 
 	Modifiers.Add(StaminaModifier);
 }

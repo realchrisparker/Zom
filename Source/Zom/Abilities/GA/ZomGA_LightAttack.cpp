@@ -12,10 +12,22 @@ UZomGA_LightAttack::UZomGA_LightAttack()
 {
 	// Set the asset tags for this ability.
 	SetAssetTags(FGameplayTagContainer(TAG_Zom_Combat_Attack_Light.GetTag()));
+
+	// Fixes an attack-lockup: MCS's combo system can hand off from this attack to a Heavy attack (or vice
+	// versa) via a DataTable row's AllowedNextAttacks, resolving a different AttackTag while THIS ability is
+	// still active waiting on its own PlayMontageAndWait task. Since that task's montage gets silently
+	// replaced on the AnimInstance rather than going through GAS cancellation, its OnCompleted/OnInterrupted
+	// never fires and the spec is stuck IsActive()==true forever, permanently blocking future activation of
+	// whichever attack got orphaned. CancelAbilitiesWithTag is GAS's built-in fix: PreActivate cancels any
+	// matching active ability (properly calling its EndAbility) before this one runs.
+	CancelAbilitiesWithTag.AddTag(TAG_Zom_Combat_Attack_Heavy.GetTag());
 }
 
 void UZomGA_LightAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
+	// TEMP DIAGNOSTIC (attack-lockup investigation): remove once the lockup is diagnosed.
+	UE_LOG(LogTemp, Warning, TEXT("[AttackDiag] LightAttack::ActivateAbility Handle=%s"), *Handle.ToString());
+
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -28,6 +40,8 @@ void UZomGA_LightAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 
 	// Resolve the current attack entry.
 	const FMCS_AttackEntry ResolvedAttack = GetCurrentAttackEntry();
+	ApplyStaminaCostForAttack(ResolvedAttack);
+
 	if (ResolvedAttack.HasValidMontage())
 	{
 		// Play the resolved attack montage using an ability task.
@@ -54,12 +68,19 @@ void UZomGA_LightAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 
 void UZomGA_LightAttack::OnMontageCompleted()
 {
+	// TEMP DIAGNOSTIC (attack-lockup investigation): CachedHandle is a plain member, not per-activation - if
+	// two activations ever overlap on this InstancedPerActor instance, this logs which handle the SECOND
+	// activation clobbered it with, ending the wrong one. Remove once the lockup is diagnosed.
+	UE_LOG(LogTemp, Warning, TEXT("[AttackDiag] LightAttack::OnMontageCompleted using CachedHandle=%s"), *CachedHandle.ToString());
+
 	NotifyAttackMontageEnded();
 	EndAbility(CachedHandle, CachedActorInfo, CachedActivationInfo, true, false);
 }
 
 void UZomGA_LightAttack::OnMontageInterruptedOrCancelled()
 {
+	UE_LOG(LogTemp, Warning, TEXT("[AttackDiag] LightAttack::OnMontageInterruptedOrCancelled using CachedHandle=%s"), *CachedHandle.ToString());
+
 	NotifyAttackMontageEnded();
 	EndAbility(CachedHandle, CachedActorInfo, CachedActivationInfo, true, true);
 }

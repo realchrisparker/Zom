@@ -54,6 +54,12 @@ protected:
 	// off this - see UMCS_CombatCoreComponent::GetCurrentAttack()'s own doc comment on this exact usage.
 	FMCS_AttackEntry GetCurrentAttackEntry() const;
 
+	// Applies ResolvedAttack.StaminaCost as a UZomGE_StaminaDrain instant effect to the owning character's ASC.
+	// No-ops if the entry costs no Stamina (the default - e.g. every Light Attack row per the dev doc) or if
+	// there's no owning character/ASC. Call once per activation, after CommitAbility, with whatever
+	// FMCS_AttackEntry the caller already resolved via GetCurrentAttackEntry().
+	void ApplyStaminaCostForAttack(const FMCS_AttackEntry& ResolvedAttack) const;
+
 	// Call once this ability's own montage task ends (completed, blended out, interrupted, or cancelled), if
 	// it played a montage sourced from GetCurrentAttackEntry(). UMCS_CombatCoreComponent's own redundant
 	// "belt-and-suspenders" end signal (bound via Montage_SetEndDelegate in PlayCurrentAttack, guarding against

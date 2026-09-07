@@ -8,12 +8,13 @@
 
 
 /**
- * Sprint and heavy-action Stamina cost. Unlike UZomGE_Damage/Stagger (applied by many sources with widely
- * varying per-hit magnitudes, hence SetByCaller), a cost is fundamentally "this specific ability costs X" -
- * so the modifier magnitude here is a plain content-editable ScalableFloat (left at engine default in C++),
- * tuned per ability via a Blueprint child (e.g. GE_StaminaDrain_HeavyAttack, GE_StaminaDrain_Dodge each with
- * their own negative magnitude) and consumed through UZomGameplayAbilityBase's standard CostGameplayEffectClass
- * + CommitAbility() pipeline rather than manual SetByCaller injection.
+ * Stamina cost for MCS-driven attacks. The modifier magnitude is SetByCaller, keyed by StaminaCostSetByCallerName
+ * (see .cpp) - unlike Health/MaxHealth-style "this ability costs a fixed X", one GAS ability here (e.g.
+ * UZomGA_HeavyAttack) plays many different resolved FMCS_AttackEntry rows via the MCS chooser, each able to
+ * carry its own FMCS_AttackEntry::StaminaCost. Applied manually via UZomGameplayAbilityBase::
+ * ApplyStaminaCostForCurrentAttack() rather than through CostGameplayEffectClass + CommitAbility(), since the
+ * automatic cost pipeline has no hook for injecting a per-activation SetByCaller value before it builds its
+ * own spec.
  */
 UCLASS()
 class ZOM_API UZomGE_StaminaDrain : public UZomGameplayEffectBase
@@ -22,4 +23,8 @@ class ZOM_API UZomGE_StaminaDrain : public UZomGameplayEffectBase
 
 public:
 	UZomGE_StaminaDrain();
+
+	// SetByCaller key for this effect's Stamina modifier magnitude. Shared with
+	// UZomGameplayAbilityBase::ApplyStaminaCostForCurrentAttack, which is the only intended caller.
+	static const FName StaminaCostSetByCallerName;
 };

@@ -6,6 +6,8 @@
 #include "GameplayTagContainer.h"
 #include "Zom/Characters/Base/ZomCharacterBase.h"
 #include "Zom/Misc/ZomGameplayTags.h"
+#include "MotionCombatSystem/Structs/MCS_AttackEntry.h"
+#include "MotionCombatSystem/Structs/MCS_AttackHitbox.h"
 #include "ZomPlayerCharacter.generated.h"
 
 
@@ -15,6 +17,7 @@ class AZomPlayerController;
 class UMotionWarpingComponent;
 class UGameplayCameraComponent;
 class UZomInventoryComponent;
+class UMCS_CombatHitboxComponent;
 
 
 /**
@@ -62,6 +65,52 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Zom", meta = (DisplayName = "Get Current Camera"))
 	FGameplayTagContainer GetCurrentCamera() const { return CurrentCamera; }
 
+	// Mirrors AZomCharacterBase::GetHealth/GetMaxHealth, but for Stamina - which lives on UZomPlayerAttributeSet
+	// (player-only, per Section 4.1 of the dev doc) rather than the shared UZomAttributeSetBase, so these can't
+	// live on the base class alongside Health/MaxHealth.
+	UFUNCTION(BlueprintCallable, Category = "Zom")
+	float GetStamina() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Zom")
+	float GetMaxStamina() const;
+
+	// -------------
+	// Combat Events
+	// -------------
+	// Forwarded from the CombatCoreComponent delegates bound in BeginPlay (see BindCombatCoreEvents). Pure
+	// Blueprint hooks - no C++ gameplay logic yet - so designers can wire up VFX/SFX/reactions per event.
+	// OnCameraControl isn't here: it's handled directly in C++ (HandleCombatCameraControl updates CurrentCamera).
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Zom|Combat", meta = (DisplayName = "On Attack Start"))
+	void OnAttackStart();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Zom|Combat", meta = (DisplayName = "On Attack End"))
+	void OnAttackEnd();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Zom|Combat", meta = (DisplayName = "On Hitbox Window Begin"))
+	void OnHitboxWindowBegin(AActor* Attacker, const FMCS_AttackEntry& Attack, const TArray<FMCS_AttackHitbox>& Hitboxes);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Zom|Combat", meta = (DisplayName = "On Hitbox Window End"))
+	void OnHitboxWindowEnd(AActor* Attacker);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Zom|Combat", meta = (DisplayName = "On Combo Window Begin"))
+	void OnComboWindowBegin();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Zom|Combat", meta = (DisplayName = "On Combo Window End"))
+	void OnComboWindowEnd();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Zom|Combat", meta = (DisplayName = "On Parry Window Begin"))
+	void OnParryWindowBegin(AActor* Attacker);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Zom|Combat", meta = (DisplayName = "On Parry Window End"))
+	void OnParryWindowEnd(AActor* Attacker);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Zom|Combat", meta = (DisplayName = "On Defense Window Begin"))
+	void OnDefenseWindowBegin(AActor* Defender);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Zom|Combat", meta = (DisplayName = "On Defense Window End"))
+	void OnDefenseWindowEnd(AActor* Defender);
+
 	// -------------
 	// Properties
 	// -------------
@@ -100,6 +149,11 @@ protected:
 	// save system; don't fabricate it early.
 	virtual void HandleDeath() override;
 
+	// Binds the Handle* functions below to GetCombatCoreComponent()'s delegates. Called from BeginPlay, not
+	// PossessedBy/InitializeAbilitySystem - unlike OnAttackResolved (AZomCharacterBase), none of these events
+	// need the ASC, only the CombatCoreComponent subobject, which is already valid by BeginPlay.
+	void BindCombatCoreEvents();
+
 	// -------------
 	// Components
 	// -------------
@@ -117,6 +171,46 @@ protected:
 	TObjectPtr<UZomInventoryComponent> Inventory;
 
 private:
+
+	// -------------
+	// Functions
+	// -------------
+	// Bound to GetCombatCoreComponent()'s delegates by BindCombatCoreEvents. Each just forwards to the matching
+	// OnXxx BlueprintImplementableEvent above, except HandleCombatCameraControl, which updates CurrentCamera
+	// directly - see that property's comment for why the game already treats CameraTag as camera-state input.
+
+	UFUNCTION()
+	void HandleCombatAttackStart();
+
+	UFUNCTION()
+	void HandleCombatAttackEnd();
+
+	UFUNCTION()
+	void HandleCombatHitboxWindowBegin(AActor* Attacker, const FMCS_AttackEntry& Attack, const TArray<FMCS_AttackHitbox>& Hitboxes);
+
+	UFUNCTION()
+	void HandleCombatHitboxWindowEnd(AActor* Attacker);
+
+	UFUNCTION()
+	void HandleCombatCameraControl(FGameplayTag CameraTag);
+
+	UFUNCTION()
+	void HandleCombatComboWindowBegin();
+
+	UFUNCTION()
+	void HandleCombatComboWindowEnd();
+
+	UFUNCTION()
+	void HandleCombatParryWindowBegin(AActor* Attacker);
+
+	UFUNCTION()
+	void HandleCombatParryWindowEnd(AActor* Attacker);
+
+	UFUNCTION()
+	void HandleCombatDefenseWindowBegin(AActor* Defender);
+
+	UFUNCTION()
+	void HandleCombatDefenseWindowEnd(AActor* Defender);
 
 	// -------------
 	// Properties

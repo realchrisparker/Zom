@@ -2,14 +2,17 @@
 
 
 #include "Zom/Abilities/GA/ZomGA_Dodge.h"
-#include "Zom/Abilities/Effects/ZomGE_StaminaDrain.h"
 #include "Zom/Misc/ZomGameplayTags.h"
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
 
 
 UZomGA_Dodge::UZomGA_Dodge()
 {
-	CostGameplayEffectClass = UZomGE_StaminaDrain::StaticClass();
+	// TODO: Dodge's own Stamina cost isn't set up yet. It previously pointed CostGameplayEffectClass at
+	// UZomGE_StaminaDrain, but that effect's modifier is now SetByCaller (see UZomGameplayAbilityBase::
+	// ApplyStaminaCostForAttack) - Dodge doesn't resolve an FMCS_AttackEntry to source a cost from, since it
+	// isn't an MCS-driven attack, so CommitAbility would never set that SetByCaller value and would just warn.
+	// Give Dodge its own cost mechanism (e.g. a fixed EditDefaultsOnly float) when this is prioritized.
 	ActivationOwnedTags.AddTag(TAG_Zom_Status_Dodging.GetTag());
 }
 

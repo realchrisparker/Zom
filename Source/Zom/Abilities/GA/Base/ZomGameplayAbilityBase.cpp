@@ -4,6 +4,8 @@
 #include "Zom/Abilities/GA/Base/ZomGameplayAbilityBase.h"
 #include "Zom/Misc/ZomGameplayTags.h"
 #include "Zom/Characters/Base/ZomCharacterBase.h"
+#include "Zom/Abilities/Effects/ZomGE_StaminaDrain.h"
+#include "AbilitySystemComponent.h"
 #include "MotionCombatSystem/Components/MCS_CombatCoreComponent.h"
 #include "MotionCombatSystem/Components/MCS_CombatHitboxComponent.h"
 #include "MotionCombatSystem/Structs/MCS_AttackEntry.h"
@@ -21,6 +23,15 @@ UZomGameplayAbilityBase::UZomGameplayAbilityBase()
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 
 	ActivationBlockedTags.AddTag(TAG_Zom_Status_Staggered.GetTag());
+}
+
+// Always unbinds regardless of which path ended the ability so a subclass that called BindMontageNotifies
+// never has to remember to clean up itself.
+void UZomGameplayAbilityBase::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
+{
+	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+
+	UnbindMontageNotifies();
 }
 
 TObjectPtr<AZomCharacterBase> UZomGameplayAbilityBase::GetOwningCharacter() const
@@ -41,6 +52,32 @@ FMCS_AttackEntry UZomGameplayAbilityBase::GetCurrentAttackEntry() const
 	return CombatCore ? CombatCore->GetCurrentAttack() : FMCS_AttackEntry();
 }
 
+void UZomGameplayAbilityBase::ApplyStaminaCostForAttack(const FMCS_AttackEntry& ResolvedAttack) const
+{
+	if (ResolvedAttack.Penalty <= 0.f)
+	{
+		return;
+	}
+
+	AZomCharacterBase* OwningCharacter = GetOwningCharacter();
+	UAbilitySystemComponent* ASC = OwningCharacter ? OwningCharacter->GetAbilitySystemComponent() : nullptr;
+	if (!ASC)
+	{
+		return;
+	}
+
+	FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
+	EffectContext.AddSourceObject(OwningCharacter);
+
+	const FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(UZomGE_StaminaDrain::StaticClass(), 1.f, EffectContext);
+	if (SpecHandle.IsValid())
+	{
+		// Additive modifier subtracts from Stamina, so the SetByCaller value must be negative.
+		SpecHandle.Data->SetSetByCallerMagnitude(UZomGE_StaminaDrain::StaminaCostSetByCallerName, -ResolvedAttack.Penalty);
+		ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+	}
+}
+
 void UZomGameplayAbilityBase::NotifyAttackMontageEnded() const
 {
 	if (const AZomCharacterBase* OwningCharacter = GetOwningCharacter())
@@ -50,15 +87,6 @@ void UZomGameplayAbilityBase::NotifyAttackMontageEnded() const
 			CombatCore->OnAttackEnd.Broadcast();
 		}
 	}
-}
-
-// Always unbinds - regardless of which path ended the ability - so a subclass that called BindMontageNotifies
-// never has to remember to clean up itself.
-void UZomGameplayAbilityBase::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
-{
-	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
-
-	UnbindMontageNotifies();
 }
 
 // Mirrors UMCS_CombatCoreComponent::BindNotifiesForMontage.
@@ -206,28 +234,24 @@ void UZomGameplayAbilityBase::HandleMCSNotifyBegin(EMCS_AnimEventType EventType,
 
 		switch (EventType)
 		{
-		case EMCS_AnimEventType::HitboxWindow:
-			if (UMCS_CombatHitboxComponent* HitboxComponent = OwningCharacter->GetCombatHitboxComponent())
-			{
-				HitboxComponent->ResetAlreadyHit();
-				HitboxComponent->StartMultiHitDetection(CombatCore->GetCurrentAttack(), NotifyInstance->Hitboxes);
-			}
-			break;
+			case EMCS_AnimEventType::HitboxWindow:
+				CombatCore->OnHitboxWindowBegin.Broadcast(OwningCharacter, CombatCore->GetCurrentAttack(), NotifyInstance->Hitboxes);
+				break;
 
-		case EMCS_AnimEventType::ComboWindow:
-			CombatCore->OnComboWindowBegin.Broadcast();
-			break;
+			case EMCS_AnimEventType::ComboWindow:
+				CombatCore->OnComboWindowBegin.Broadcast();
+				break;
 
-		case EMCS_AnimEventType::ParryWindow:
-			CombatCore->OnParryWindowBegin.Broadcast(OwningCharacter);
-			break;
+			case EMCS_AnimEventType::ParryWindow:
+				CombatCore->OnParryWindowBegin.Broadcast(OwningCharacter);
+				break;
 
-		case EMCS_AnimEventType::DefenseWindow:
-			CombatCore->OnDefenseWindowBegin.Broadcast(OwningCharacter);
-			break;
+			case EMCS_AnimEventType::DefenseWindow:
+				CombatCore->OnDefenseWindowBegin.Broadcast(OwningCharacter);
+				break;
 
-		default:
-			break;
+			default:
+				break;
 		}
 	}
 }
@@ -246,27 +270,24 @@ void UZomGameplayAbilityBase::HandleMCSNotifyEnd(EMCS_AnimEventType EventType, U
 
 		switch (EventType)
 		{
-		case EMCS_AnimEventType::HitboxWindow:
-			if (UMCS_CombatHitboxComponent* HitboxComponent = OwningCharacter->GetCombatHitboxComponent())
-			{
-				HitboxComponent->StopHitDetection();
-			}
-			break;
+			case EMCS_AnimEventType::HitboxWindow:
+				CombatCore->OnHitboxWindowEnd.Broadcast(OwningCharacter);
+				break;
 
-		case EMCS_AnimEventType::ComboWindow:
-			CombatCore->OnComboWindowEnd.Broadcast();
-			break;
+			case EMCS_AnimEventType::ComboWindow:
+				CombatCore->OnComboWindowEnd.Broadcast();
+				break;
 
-		case EMCS_AnimEventType::ParryWindow:
-			CombatCore->OnParryWindowEnd.Broadcast(OwningCharacter);
-			break;
+			case EMCS_AnimEventType::ParryWindow:
+				CombatCore->OnParryWindowEnd.Broadcast(OwningCharacter);
+				break;
 
-		case EMCS_AnimEventType::DefenseWindow:
-			CombatCore->OnDefenseWindowEnd.Broadcast(OwningCharacter);
-			break;
+			case EMCS_AnimEventType::DefenseWindow:
+				CombatCore->OnDefenseWindowEnd.Broadcast(OwningCharacter);
+				break;
 
-		default:
-			break;
+			default:
+				break;
 		}
 	}
 }
