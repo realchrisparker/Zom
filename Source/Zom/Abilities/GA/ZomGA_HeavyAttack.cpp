@@ -22,9 +22,6 @@ UZomGA_HeavyAttack::UZomGA_HeavyAttack()
 
 void UZomGA_HeavyAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	// TEMP DIAGNOSTIC (attack-lockup investigation): remove once the lockup is diagnosed.
-	UE_LOG(LogTemp, Warning, TEXT("[AttackDiag] HeavyAttack::ActivateAbility Handle=%s"), *Handle.ToString());
-
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -66,17 +63,12 @@ void UZomGA_HeavyAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 
 void UZomGA_HeavyAttack::OnMontageCompleted()
 {
-	// TEMP DIAGNOSTIC (attack-lockup investigation): remove once the lockup is diagnosed.
-	UE_LOG(LogTemp, Warning, TEXT("[AttackDiag] HeavyAttack::OnMontageCompleted using CachedHandle=%s"), *CachedHandle.ToString());
-
 	NotifyAttackMontageEnded();
 	EndAbility(CachedHandle, CachedActorInfo, CachedActivationInfo, true, false);
 }
 
 void UZomGA_HeavyAttack::OnMontageInterruptedOrCancelled()
 {
-	UE_LOG(LogTemp, Warning, TEXT("[AttackDiag] HeavyAttack::OnMontageInterruptedOrCancelled using CachedHandle=%s"), *CachedHandle.ToString());
-
 	NotifyAttackMontageEnded();
 	EndAbility(CachedHandle, CachedActorInfo, CachedActivationInfo, true, true);
 }

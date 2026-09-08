@@ -14,6 +14,7 @@
 #include "Zom/Misc/ZomLogChannels.h"
 
 
+
 AZomBoss::AZomBoss(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
@@ -58,6 +59,11 @@ void AZomBoss::BeginPlay()
 		bEncounterStartBarkPlayed = true;
 		PlayBark(BossData->EncounterStartBark);
 	}
+}
+
+FGameplayTag AZomBoss::GetFactionTag_Implementation() const
+{
+	return TAG_Zom_Character_Enemy.GetTag();
 }
 
 void AZomBoss::HandleHealthAttributeChanged(const FOnAttributeChangeData& Data)

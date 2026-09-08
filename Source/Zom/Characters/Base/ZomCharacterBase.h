@@ -146,7 +146,7 @@ public:
 	// IMCS_CombatCharacterInterface: applies incoming combat damage via UZomGE_Damage (SetByCaller magnitude),
 	// so every humanoid routes hits through the same GAS Damage-meta-attribute pipeline as GrantDefaultAbilitiesAndEffects'
 	// other effects. No default implementation is provided by the interface itself - every combat character must supply one.
-	// virtual bool TakeCombatDamage_Implementation(float Damage, const FHitResult& Hit, const FMCS_AttackEntry& AttackEntry) const override;
+	virtual bool TakeCombatDamage_Implementation(float Damage, const FHitResult& Hit, const FMCS_AttackEntry& AttackEntry) const override;
 
 protected:
 
@@ -177,6 +177,16 @@ protected:
 	// applies identically whether the pawn is player- or AI-possessed.
 	UFUNCTION()
 	void HandleAttackResolved(const FMCS_AttackEntry& ResolvedAttack);
+
+	// Bound to CombatHitboxComponent->OnHitboxHit once InitializeAbilitySystem resolves a valid ASC (same
+	// binding pattern as HandleAttackResolved above). Fires on the ATTACKER when their own hitbox sweep lands
+	// on someone else; routes the hit into the struck actor's own IMCS_CombatCharacterInterface::TakeCombatDamage
+	// using AttackEntry.Damage as the base amount straight off the resolved attack entry. A future
+	// damage-modifier pass (weapon upgrades, difficulty scaling, headshot multipliers, etc.) belongs here -
+	// adjusting the value before it's handed to TakeCombatDamage - not inside TakeCombatDamage_Implementation
+	// itself, which has no attacker context to make that kind of decision with.
+	UFUNCTION()
+	void HandleHitboxHit(AActor* HitActor, const FHitResult& HitResult, FMCS_AttackEntry AttackEntry);
 
 	// Grants every class in DefaultAbilities and applies every class in DefaultGameplayEffects via AddAbility/
 	// AddEffect. Called from InitializeAbilitySystem, once per call - safe to invoke more than once (e.g. the

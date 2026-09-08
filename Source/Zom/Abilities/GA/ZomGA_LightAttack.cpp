@@ -25,9 +25,6 @@ UZomGA_LightAttack::UZomGA_LightAttack()
 
 void UZomGA_LightAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	// TEMP DIAGNOSTIC (attack-lockup investigation): remove once the lockup is diagnosed.
-	UE_LOG(LogTemp, Warning, TEXT("[AttackDiag] LightAttack::ActivateAbility Handle=%s"), *Handle.ToString());
-
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -68,19 +65,12 @@ void UZomGA_LightAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 
 void UZomGA_LightAttack::OnMontageCompleted()
 {
-	// TEMP DIAGNOSTIC (attack-lockup investigation): CachedHandle is a plain member, not per-activation - if
-	// two activations ever overlap on this InstancedPerActor instance, this logs which handle the SECOND
-	// activation clobbered it with, ending the wrong one. Remove once the lockup is diagnosed.
-	UE_LOG(LogTemp, Warning, TEXT("[AttackDiag] LightAttack::OnMontageCompleted using CachedHandle=%s"), *CachedHandle.ToString());
-
 	NotifyAttackMontageEnded();
 	EndAbility(CachedHandle, CachedActorInfo, CachedActivationInfo, true, false);
 }
 
 void UZomGA_LightAttack::OnMontageInterruptedOrCancelled()
 {
-	UE_LOG(LogTemp, Warning, TEXT("[AttackDiag] LightAttack::OnMontageInterruptedOrCancelled using CachedHandle=%s"), *CachedHandle.ToString());
-
 	NotifyAttackMontageEnded();
 	EndAbility(CachedHandle, CachedActorInfo, CachedActivationInfo, true, true);
 }

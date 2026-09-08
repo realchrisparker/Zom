@@ -30,6 +30,14 @@ class ZOM_API AZomBoss : public AZomCharacterBase
 public:
 	AZomBoss(const FObjectInitializer& ObjectInitializer);
 
+	// -------------
+	// IMCS_CombatCharacterInterface
+	// -------------
+
+	// This actor's faction/team affiliation, used by targeting/perception queries to tell friend from foe.
+	// Same faction as AZomZombieBase - the Boss is still an enemy for targeting purposes.
+	virtual FGameplayTag GetFactionTag_Implementation() const;
+
 protected:
 	virtual void BeginPlay() override;
 
