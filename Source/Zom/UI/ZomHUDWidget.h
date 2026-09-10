@@ -9,7 +9,6 @@
 
 class UZomObjectiveTrackerWidget;
 class UZomAbilityBarWidget;
-class UZomInventoryWidget;
 class UZomDamageIndicatorWidget;
 
 
@@ -28,9 +27,6 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<UZomAbilityBarWidget> AbilityBar;
-
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
-	TObjectPtr<UZomInventoryWidget> InventoryWidget;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<UZomDamageIndicatorWidget> DamageIndicator;

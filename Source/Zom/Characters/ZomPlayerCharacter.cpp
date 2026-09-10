@@ -9,7 +9,6 @@
 #include "ZomPlayerController.h"
 #include "Zom/Misc/ZomLogChannels.h"
 #include "Zom/Misc/ZomGameplayTags.h"
-#include "Zom/Characters/Components/ZomInventoryComponent.h"
 #include "Zom/Abilities/GA/ZomGA_LightAttack.h"
 #include "Zom/Abilities/GA/ZomGA_HeavyAttack.h"
 #include "Zom/Abilities/Effects/ZomGE_StaminaRegen.h"
@@ -32,9 +31,6 @@ AZomPlayerCharacter::AZomPlayerCharacter(const FObjectInitializer& ObjectInitial
 	// Create the gameplay camera component and attach it to the character's mesh
 	GameplayCamera = CreateDefaultSubobject<UGameplayCameraComponent>(TEXT("GameplayCamera"));
 	GameplayCamera->SetupAttachment(GetMesh());
-
-	// Create the inventory component
-	Inventory = CreateDefaultSubobject<UZomInventoryComponent>(TEXT("Inventory"));
 
 	CurrentCamera = FGameplayTagContainer(TAG_Zom_Camera_State_Default.GetTag());
 

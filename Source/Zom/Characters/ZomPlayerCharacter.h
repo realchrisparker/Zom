@@ -15,7 +15,6 @@
 class AZomPlayerController;
 class UMotionWarpingComponent;
 class UGameplayCameraComponent;
-class UZomInventoryComponent;
 class UMCS_CombatHitboxComponent;
 
 
@@ -171,10 +170,6 @@ protected:
 	// Gameplay camera component, attached to the character's mesh
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Zom", meta = (DisplayName = "GameplayCamera", AllowPrivateAccess = "true"))
 	TObjectPtr<UGameplayCameraComponent> GameplayCamera;
-
-	// Inventory component (Section 7 of the dev doc)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Zom", meta = (DisplayName = "Inventory", AllowPrivateAccess = "true"))
-	TObjectPtr<UZomInventoryComponent> Inventory;
 
 private:
 

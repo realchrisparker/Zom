@@ -16,6 +16,6 @@ void UZomGA_Reload::ActivateAbility(const FGameplayAbilitySpecHandle Handle, con
 		return;
 	}
 
-	// TODO: transfer ammo from reserve to the equipped weapon's magazine once Section 7's UZomInventoryComponent exists.
+	// TODO: transfer ammo from reserve to the equipped weapon's magazine once the GameplayInventorySystem plugin exists.
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }

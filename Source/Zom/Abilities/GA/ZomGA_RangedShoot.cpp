@@ -16,6 +16,6 @@ void UZomGA_RangedShoot::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 		return;
 	}
 
-	// TODO: line-trace/fire the equipped weapon and consume ammo once Section 7's UZomInventoryComponent exists.
+	// TODO: line-trace/fire the equipped weapon and consume ammo once the GameplayInventorySystem plugin exists.
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }

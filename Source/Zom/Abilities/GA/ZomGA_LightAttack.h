@@ -11,8 +11,8 @@
  * Melee light attack (cooldown only, no Stamina cost per the dev doc). Commits, then plays whatever montage
  * the MCS chooser most recently resolved (GetCurrentAttackEntry()) via UAbilityTask_PlayMontageAndWait - the
  * real hit-detection/damage-application flow is driven by an AnimNotify on that montage (content, not yet
- * authored), which is expected to call into UZomInventoryComponent/UZomGE_Damage once Section 7's weapon
- * system exists. Carries AssetTags = Zom.Combat.Attack.Light so AZomPlayerController::HandleAttackResolved's
+ * authored), which is expected to call into the GameplayInventorySystem plugin/UZomGE_Damage once Section 7's
+ * weapon system exists. Carries AssetTags = Zom.Combat.Attack.Light so AZomPlayerController::HandleAttackResolved's
  * TryActivateAbilitiesByTag dispatch finds it for any light-attack DataTable row (see ZomGameplayTags.h).
  */
 UCLASS()

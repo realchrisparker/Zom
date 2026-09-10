@@ -8,8 +8,8 @@
 
 
 /**
- * [Design] Reloads the equipped ranged weapon. Actual ammo-transfer logic depends on Section 7's
- * UZomInventoryComponent, not yet built - this class establishes the activation shape.
+ * [Design] Reloads the equipped ranged weapon. Actual ammo-transfer logic depends on the
+ * GameplayInventorySystem plugin (Section 7), not yet built - this class establishes the activation shape.
  */
 UCLASS()
 class ZOM_API UZomGA_Reload : public UZomGameplayAbilityBase
