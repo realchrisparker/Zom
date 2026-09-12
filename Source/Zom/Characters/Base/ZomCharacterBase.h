@@ -188,6 +188,14 @@ protected:
 	UFUNCTION()
 	void HandleHitboxHit(AActor* HitActor, const FHitResult& HitResult, FMCS_AttackEntry AttackEntry);
 
+	// Bound to the CombatDefenseComponent->OnDefenseResolved once InitializeAbilitySystem resolves a valid ASC. Handles
+	// the GAS hand-off path documented on that delegate: when the resolved entry carries a valid DefenseTag,
+	// activates the matching ability on the ASC so CombatDefense's notify-bound montage playback stays in sync
+	// with GAS. Lives here (not on a controller) since it depends only on this pawn's own components and so
+	// applies identically whether the pawn is player- or AI-possessed.
+	UFUNCTION()
+	void HandleDefenseResolved(const FMCS_DefenseEntry& ResolvedDefense);
+
 	// Grants every class in DefaultAbilities and applies every class in DefaultGameplayEffects via AddAbility/
 	// AddEffect. Called from InitializeAbilitySystem, once per call - safe to invoke more than once (e.g. the
 	// player's PossessedBy + OnRep_PlayerState both calling InitializeAbilitySystem) since both are idempotent.

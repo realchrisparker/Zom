@@ -31,6 +31,8 @@ ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Character_NPC);
 
 ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Combat_Attack_Light);
 ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Combat_Attack_Heavy);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Combat_Defense_Dodge);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Combat_Defense_Parry);
 
 // -------------
 // Objective (GAS-queryable mirror of EZomObjectiveStep progress; set alongside the enum, never alone)

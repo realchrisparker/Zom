@@ -148,12 +148,10 @@ private:
 
 	void Input_LightAttack();
 	void Input_HeavyAttack();
+	void Input_Dodge();
 	// void Input_RangedShoot();
 	// void Input_Reload();
-	// void Input_Dodge();
 	// void Input_Shove();
-
-	// void ActivateAbilityByClass(TSubclassOf<UZomGameplayAbilityBase> AbilityClass);
 
 	// -------------
 	// Properties

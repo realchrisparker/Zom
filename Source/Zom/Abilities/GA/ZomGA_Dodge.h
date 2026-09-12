@@ -24,12 +24,11 @@ public:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 
 protected:
-	// How long the dodge (and its Zom.Status.Dodging tag) stays active.
-	UPROPERTY(EditDefaultsOnly, Category = "Zom|Dodge")
-	float DodgeDuration = 0.5f;
+	UFUNCTION()
+	void OnMontageCompleted();
 
 	UFUNCTION()
-	void OnDodgeFinished();
+	void OnMontageInterruptedOrCancelled();
 
 private:
 	FGameplayAbilitySpecHandle CachedHandle;

@@ -28,6 +28,22 @@ void AZomPlayerController::BeginPlay()
 
 }
 
+void AZomPlayerController::OnPossess(APawn* InPawn)
+{
+    Super::OnPossess(InPawn);
+
+    // Cache the player character reference if the possessed pawn is a player character
+    CachedPlayerCharacter = Cast<AZomPlayerCharacter>(InPawn);
+}
+
+void AZomPlayerController::OnUnPossess()
+{
+    Super::OnUnPossess();
+
+    // Clear the cached player character reference
+    CachedPlayerCharacter = nullptr;
+}
+
 // Called to bind functionality to input
 void AZomPlayerController::SetupInputComponent()
 {
@@ -84,6 +100,10 @@ void AZomPlayerController::SetupInputComponent()
     {
         EnhancedInputComponent->BindAction(IA_HeavyAttack, ETriggerEvent::Started, this, &AZomPlayerController::Input_HeavyAttack);
     }
+    if (IA_Dodge)
+    {
+        EnhancedInputComponent->BindAction(IA_Dodge, ETriggerEvent::Started, this, &AZomPlayerController::Input_Dodge);
+    }
     if (IA_RangedShoot)
     {
         // EnhancedInputComponent->BindAction(IA_RangedShoot, ETriggerEvent::Started, this, &AZomPlayerController::ActivateAbilityByClass, RangedShootAbilityClass);
@@ -92,30 +112,10 @@ void AZomPlayerController::SetupInputComponent()
     {
         // EnhancedInputComponent->BindAction(IA_Reload, ETriggerEvent::Started, this, &AZomPlayerController::ActivateAbilityByClass, ReloadAbilityClass);
     }
-    if (IA_Dodge)
-    {
-        // EnhancedInputComponent->BindAction(IA_Dodge, ETriggerEvent::Started, this, &AZomPlayerController::ActivateAbilityByClass, DodgeAbilityClass);
-    }
     if (IA_Shove)
     {
         // EnhancedInputComponent->BindAction(IA_Shove, ETriggerEvent::Started, this, &AZomPlayerController::ActivateAbilityByClass, ShoveAbilityClass);
     }
-}
-
-void AZomPlayerController::OnPossess(APawn* InPawn)
-{
-    Super::OnPossess(InPawn);
-
-    // Cache the player character reference if the possessed pawn is a player character
-    CachedPlayerCharacter = Cast<AZomPlayerCharacter>(InPawn);
-}
-
-void AZomPlayerController::OnUnPossess()
-{
-    Super::OnUnPossess();
-
-    // Clear the cached player character reference
-    CachedPlayerCharacter = nullptr;
 }
 
 void AZomPlayerController::Input_Move(const FInputActionValue& Value)
@@ -218,7 +218,7 @@ void AZomPlayerController::Input_WalkRunStarted()
 
 void AZomPlayerController::Input_LightAttack()
 {
-    if(CachedPlayerCharacter.Get())
+    if (CachedPlayerCharacter.Get())
     {
         // Get the combat core component from the player character.
         UMCS_CombatCoreComponent* CombatCore = CachedPlayerCharacter.Get()->GetCombatCoreComponent();
@@ -233,7 +233,7 @@ void AZomPlayerController::Input_LightAttack()
 
 void AZomPlayerController::Input_HeavyAttack()
 {
-    if(CachedPlayerCharacter.Get())
+    if (CachedPlayerCharacter.Get())
     {
         // Get the combat core component from the player character.
         UMCS_CombatCoreComponent* CombatCore = CachedPlayerCharacter.Get()->GetCombatCoreComponent();
@@ -243,6 +243,33 @@ void AZomPlayerController::Input_HeavyAttack()
 
         // Perform a heavy attack using the combat core component.
         CombatCore->PerformAttack(EMCS_AttackType::Heavy, EMCS_AttackDirection::Forward, CurrentAttackSituation);
+    }
+}
+
+void AZomPlayerController::Input_Dodge()
+{
+    if (CachedPlayerCharacter.Get())
+    {
+        // Get the combat core component (for nearby-target lookup) and the combat
+        // defense component (which owns PerformDefense) from the player character.
+        UMCS_CombatCoreComponent* CombatCore = CachedPlayerCharacter.Get()->GetCombatCoreComponent();
+        UMCS_CombatDefenseComponent* CombatDefense = CachedPlayerCharacter.Get()->GetCombatDefenseComponent();
+
+        // Use the closest nearby actor as a heuristic Attacker so the Defense Chooser
+        // can score dodge entries by distance/facing instead of always falling back
+        // to the default entry; may be null if nothing is in range.
+        AActor* Attacker = CombatCore ? CombatCore->GetCurrentAttacker() : nullptr;
+        if (Attacker == nullptr)
+        {
+            // No nearby attacker found, fallback to default behavior.
+            Attacker = CombatCore ? CombatCore->GetClosestTarget() : nullptr;
+        }
+
+        // Perform a dodge using the combat defense component.
+        if (CombatDefense)
+        {
+            CombatDefense->PerformDefense(EMCS_DefenseIntent::Defense, Attacker);
+        }
     }
 }
 

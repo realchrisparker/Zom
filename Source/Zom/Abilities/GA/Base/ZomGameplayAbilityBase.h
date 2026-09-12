@@ -17,7 +17,9 @@ class UAnimNotify_AttackStart;
 class UAnimNotify_AttackEnd;
 class UAnimNotify_CameraControl;
 class UMCS_CombatCoreComponent;
+class UMCS_CombatDefenseComponent;
 struct FMCS_AttackEntry;
+struct FMCS_DefenseEntry;
 
 
 /**
@@ -48,17 +50,32 @@ protected:
 	// Returns the owning character's MCS CombatCoreComponent, or nullptr if there's no owning character or no CombatCoreComponent.
 	TObjectPtr<UMCS_CombatCoreComponent> GetOwningCharacterCombatCoreComponent() const;
 
+	// Returns the owning character's MCS CombatDefenseComponent, or nullptr if there's no owning character or no CombatDefenseComponent.
+	TObjectPtr<UMCS_CombatDefenseComponent> GetOwningCharacterCombatDefenseComponent() const;
+
 	// Returns the attack entry the owning character's MCS CombatCoreComponent most recently resolved (a
 	// default-constructed FMCS_AttackEntry if there's no owning character or no CombatCoreComponent). Attack
 	// abilities (LightAttack, HeavyAttack, future weapon-specific variants) read AttackMontage/MontageSection
 	// off this - see UMCS_CombatCoreComponent::GetCurrentAttack()'s own doc comment on this exact usage.
 	FMCS_AttackEntry GetCurrentAttackEntry() const;
 
+	// Returns the defense entry the owning character's MCS CombatCoreComponent most recently resolved (a
+	// default-constructed FMCS_DefenseEntry if there's no owning character or no CombatCoreComponent). Defense
+	// abilities (Dodge, Block, future weapon-specific variants) read DefenseMontage/MontageSection
+	// off this - see UMCS_CombatCoreComponent::GetCurrentDefense()'s own doc comment on this exact usage.
+	FMCS_DefenseEntry GetCurrentDefenseEntry() const;
+
 	// Applies ResolvedAttack.StaminaCost as a UZomGE_StaminaDrain instant effect to the owning character's ASC.
 	// No-ops if the entry costs no Stamina (the default - e.g. every Light Attack row per the dev doc) or if
 	// there's no owning character/ASC. Call once per activation, after CommitAbility, with whatever
 	// FMCS_AttackEntry the caller already resolved via GetCurrentAttackEntry().
 	void ApplyStaminaCostForAttack(const FMCS_AttackEntry& ResolvedAttack) const;
+
+	// Applies ResolvedDefense.StaminaCost as a UZomGE_StaminaDrain instant effect to the owning character's ASC.
+	// No-ops if the entry costs no Stamina (the default - e.g. every Light Attack row per the dev doc) or if
+	// there's no owning character/ASC. Call once per activation, after CommitAbility, with whatever
+	// FMCS_DefenseEntry the caller already resolved via GetCurrentDefenseEntry().
+	void ApplyStaminaCostForDefense(const FMCS_DefenseEntry& ResolvedDefense) const;
 
 	// Call once this ability's own montage task ends (completed, blended out, interrupted, or cancelled), if
 	// it played a montage sourced from GetCurrentAttackEntry(). UMCS_CombatCoreComponent's own redundant

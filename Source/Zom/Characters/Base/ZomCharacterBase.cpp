@@ -105,6 +105,12 @@ void AZomCharacterBase::InitializeAbilitySystem(AActor* InOwnerActor, AActor* In
 			CombatHitboxComponent->OnHitboxHit.AddDynamic(this, &AZomCharacterBase::HandleHitboxHit);
 		}
 
+		if (CombatDefenseComponent)
+		{
+			CombatDefenseComponent->OnDefenseResolved.RemoveDynamic(this, &AZomCharacterBase::HandleDefenseResolved);
+			CombatDefenseComponent->OnDefenseResolved.AddDynamic(this, &AZomCharacterBase::HandleDefenseResolved);
+		}
+
 		GrantDefaultAbilitiesAndEffects();
 
 		OnAbilitySystemInitialized();
@@ -288,6 +294,22 @@ void AZomCharacterBase::HandleAttackResolved(const FMCS_AttackEntry& ResolvedAtt
 	// from the swing that opened the combo window hasn't ended yet. UZomGA_LightAttack/HeavyAttack's mirrored
 	// CancelAbilitiesWithTag handles this by cancelling the orphaned ability before the new one activates.
 	AbilitySystemComponent->TryActivateAbilitiesByTag(FGameplayTagContainer(ResolvedAttack.AttackTag));
+}
+
+void AZomCharacterBase::HandleDefenseResolved(const FMCS_DefenseEntry& ResolvedDefense)
+{
+	// Per OnDefenseResolved's contract: this only fires on the GAS path (DefenseTag valid) or the
+	// Blueprint-only path (bAutoPlayMontage false, DefenseTag empty). Nothing to activate in the latter case.
+	if (!ResolvedDefense.DefenseTag.IsValid() || !AbilitySystemComponent)
+	{
+		return;
+	}
+
+	// InstancedPerActor abilities silently return false here (only a Verbose engine log, easy to miss) if the
+	// same ability is already active - e.g. a combo continuation re-resolving a DefenseTag while the ability
+	// from the previous defense hasn't ended yet. UZomGA_Block/Parry's mirrored
+	// CancelAbilitiesWithTag handles this by cancelling the orphaned ability before the new one activates.
+	AbilitySystemComponent->TryActivateAbilitiesByTag(FGameplayTagContainer(ResolvedDefense.DefenseTag));
 }
 
 // Returns the current attack situation, which is used to determine which attacks are valid for the character.

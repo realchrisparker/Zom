@@ -12,6 +12,8 @@ UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Character_NPC, "Zom.Character.NPC", "Tag 
 
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Combat_Attack_Light, "Zom.Combat.Attack.Light", "Shared AssetTag on every light-attack UZomGameplayAbilityBase; must match the AttackTag column value on light-attack DataTable rows for TryActivateAbilitiesByTag dispatch.")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Combat_Attack_Heavy, "Zom.Combat.Attack.Heavy", "Shared AssetTag on every heavy-attack UZomGameplayAbilityBase; must match the AttackTag column value on heavy-attack DataTable rows for TryActivateAbilitiesByTag dispatch.")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Combat_Defense_Dodge, "Zom.Combat.Defense.Dodge", "Shared AssetTag on every dodge-defense UZomGameplayAbilityBase; must match the DefenseTag column value on dodge-defense DataTable rows for TryActivateAbilitiesByTag dispatch.")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Combat_Defense_Parry, "Zom.Combat.Defense.Parry", "Shared AssetTag on every parry-defense UZomGameplayAbilityBase; must match the DefenseTag column value on parry-defense DataTable rows for TryActivateAbilitiesByTag dispatch.")  
 
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Objective_Fetch_Complete, "Zom.Objective.Fetch.Complete", "GAS-queryable mirror of EZomObjectiveStep::Fetch completion.")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Objective_Repair_Complete, "Zom.Objective.Repair.Complete", "GAS-queryable mirror of EZomObjectiveStep::Repair completion.")

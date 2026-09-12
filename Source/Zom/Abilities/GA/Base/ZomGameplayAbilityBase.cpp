@@ -8,10 +8,12 @@
 #include "AbilitySystemComponent.h"
 #include "MotionCombatSystem/Components/MCS_CombatCoreComponent.h"
 #include "MotionCombatSystem/Components/MCS_CombatHitboxComponent.h"
+#include "MotionCombatSystem/Components/MCS_CombatDefenseComponent.h"
 #include "MotionCombatSystem/Structs/MCS_AttackEntry.h"
 #include "MotionCombatSystem/AnimNotifies/AnimNotify_AttackStart.h"
 #include "MotionCombatSystem/AnimNotifies/AnimNotify_AttackEnd.h"
 #include "MotionCombatSystem/AnimNotifies/AnimNotify_CameraControl.h"
+#include "MotionCombatSystem/Structs/MCS_DefenseEntry.h"
 #include "Animation/AnimMontage.h"
 #include "Animation/AnimInstance.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -44,12 +46,24 @@ TObjectPtr<UMCS_CombatCoreComponent> UZomGameplayAbilityBase::GetOwningCharacter
 	const AZomCharacterBase* OwningCharacter = GetOwningCharacter();
 	return OwningCharacter ? OwningCharacter->GetCombatCoreComponent() : nullptr;
 }
+TObjectPtr<UMCS_CombatDefenseComponent> UZomGameplayAbilityBase::GetOwningCharacterCombatDefenseComponent() const
+{
+	const AZomCharacterBase* OwningCharacter = GetOwningCharacter();
+	return OwningCharacter ? OwningCharacter->GetCombatDefenseComponent() : nullptr;
+}
 
 FMCS_AttackEntry UZomGameplayAbilityBase::GetCurrentAttackEntry() const
 {
 	const AZomCharacterBase* OwningCharacter = GetOwningCharacter();
 	const UMCS_CombatCoreComponent* CombatCore = GetOwningCharacterCombatCoreComponent();
 	return CombatCore ? CombatCore->GetCurrentAttack() : FMCS_AttackEntry();
+}
+
+FMCS_DefenseEntry UZomGameplayAbilityBase::GetCurrentDefenseEntry() const
+{
+	const AZomCharacterBase* OwningCharacter = GetOwningCharacter();
+	const UMCS_CombatDefenseComponent* CombatDefense = GetOwningCharacterCombatDefenseComponent();
+	return CombatDefense ? CombatDefense->GetCurrentDefense() : FMCS_DefenseEntry();
 }
 
 void UZomGameplayAbilityBase::ApplyStaminaCostForAttack(const FMCS_AttackEntry& ResolvedAttack) const
@@ -74,6 +88,32 @@ void UZomGameplayAbilityBase::ApplyStaminaCostForAttack(const FMCS_AttackEntry& 
 	{
 		// Additive modifier subtracts from Stamina, so the SetByCaller value must be negative.
 		SpecHandle.Data->SetSetByCallerMagnitude(UZomGE_StaminaDrain::StaminaCostSetByCallerName, -ResolvedAttack.Penalty);
+		ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+	}
+}
+
+void UZomGameplayAbilityBase::ApplyStaminaCostForDefense(const FMCS_DefenseEntry& ResolvedDefense) const
+{
+	if (ResolvedDefense.Penalty <= 0.f)
+	{
+		return;
+	}
+
+	AZomCharacterBase* OwningCharacter = GetOwningCharacter();
+	UAbilitySystemComponent* ASC = OwningCharacter ? OwningCharacter->GetAbilitySystemComponent() : nullptr;
+	if (!ASC)
+	{
+		return;
+	}
+
+	FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
+	EffectContext.AddSourceObject(OwningCharacter);
+
+	const FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(UZomGE_StaminaDrain::StaticClass(), 1.f, EffectContext);
+	if (SpecHandle.IsValid())
+	{
+		// Additive modifier subtracts from Stamina, so the SetByCaller value must be negative.
+		SpecHandle.Data->SetSetByCallerMagnitude(UZomGE_StaminaDrain::StaminaCostSetByCallerName, -ResolvedDefense.Penalty);
 		ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 	}
 }
