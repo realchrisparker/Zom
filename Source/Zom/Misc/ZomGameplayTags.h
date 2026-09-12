@@ -14,6 +14,7 @@
 ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Status_Attacking);
 ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Status_Staggered);
 ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Status_Dodging);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Status_Parrying);
 
 // -------------
 // Character identification

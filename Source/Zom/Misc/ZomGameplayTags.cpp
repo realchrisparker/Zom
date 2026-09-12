@@ -5,6 +5,7 @@
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Status_Attacking, "Zom.Status.Attacking", "Persistent tag on the ASC while an attack ability is active.")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Status_Staggered, "Zom.Status.Staggered", "Persistent tag on the ASC while staggered; blocks all UZomGameplayAbilityBase activation.")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Status_Dodging, "Zom.Status.Dodging", "Persistent tag on the ASC while UZomGA_Dodge is active.")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Status_Parrying, "Zom.Status.Parrying", "Persistent tag on the ASC while UZomGA_Parry is active.")
 
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Character_Player, "Zom.Character.Player", "Tag identifying the player character.")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Character_Enemy, "Zom.Character.Enemy", "Tag identifying enemy characters.")

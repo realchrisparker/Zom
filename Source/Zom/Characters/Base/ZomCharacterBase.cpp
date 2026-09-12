@@ -394,6 +394,44 @@ void AZomCharacterBase::HandleHitboxHit(AActor* HitActor, const FHitResult& HitR
 		return;
 	}
 
+	// Give the struck actor's own CombatDefenseComponent a chance to negate this hit before any damage is
+	// calculated.
+	//
+	// Parry is checked via ConsumeSuccessfulParry(this), NOT TryParry(): parry is a skill-timed player input
+	// now (see AZomPlayerController::Input_Parry), so success/fail is decided the instant the player presses
+	// the button, not whenever a hit happens to land afterward. This just asks "did the player already win
+	// the parry roll against this specific attacker" and consumes that result so it can't be reused.
+	//
+	// Defense/Block is still checked reactively here, gated behind its bool flag first: TryDefense()
+	// unconditionally broadcasts OnDefenseFail when called, and most hits land on an actor who isn't
+	// blocking at all, so calling it unconditionally would spam that event (and the plugin's own warning
+	// logs) for every ordinary unguarded hit. bIsInDefenseWindow is the self-driven "currently guarding"
+	// state (set only while this actor's own montage is playing a DefenseWindow notify) - there's no
+	// separate "block" input yet, so it stays automatic.
+	if (UMCS_CombatDefenseComponent* DefenderDefense = HitActor->FindComponentByClass<UMCS_CombatDefenseComponent>())
+	{
+		if (DefenderDefense->ConsumeSuccessfulParry(this))
+		{
+			return; // Parried - attack negated, no damage applied.
+		}
+
+		if (DefenderDefense->bIsInDefenseWindow && DefenderDefense->TryDefense())
+		{
+			// A successful block doesn't necessarily zero the damage out - GetCurrentDefense().
+			// DamageMitigationPercent (authored per-row, defaults to 1.0/full negation) decides how much
+			// gets through as "chip damage." AttackEntry is a by-value parameter here (a per-hit copy),
+			// so mutating it doesn't touch the shared FMCS_AttackEntry data the attack was resolved from.
+			const float MitigationPercent = FMath::Clamp(DefenderDefense->GetCurrentDefense().DamageMitigationPercent, 0.f, 1.f);
+			AttackEntry.Damage *= (1.f - MitigationPercent);
+
+			if (AttackEntry.Damage <= KINDA_SMALL_NUMBER)
+			{
+				return; // Fully blocked - no damage applied.
+			}
+			// Otherwise fall through to TakeCombatDamage below with the reduced Damage.
+		}
+	}
+
 	// Route the hit to the struck actor's TakeCombatDamage implementation.
 	IMCS_CombatCharacterInterface::Execute_TakeCombatDamage(HitActor, AttackEntry.Damage, HitResult, AttackEntry);
 }

@@ -180,11 +180,17 @@ protected:
 
 	// Bound to CombatHitboxComponent->OnHitboxHit once InitializeAbilitySystem resolves a valid ASC (same
 	// binding pattern as HandleAttackResolved above). Fires on the ATTACKER when their own hitbox sweep lands
-	// on someone else; routes the hit into the struck actor's own IMCS_CombatCharacterInterface::TakeCombatDamage
-	// using AttackEntry.Damage as the base amount straight off the resolved attack entry. A future
-	// damage-modifier pass (weapon upgrades, difficulty scaling, headshot multipliers, etc.) belongs here -
-	// adjusting the value before it's handed to TakeCombatDamage - not inside TakeCombatDamage_Implementation
-	// itself, which has no attacker context to make that kind of decision with.
+	// on someone else. First gives the struck actor's own CombatDefenseComponent a chance to negate/reduce the
+	// hit: ConsumeSuccessfulParry(this) checks whether the player already won a skill-timed parry attempt
+	// against this specific attacker (see AZomPlayerController::Input_Parry) and, if so, fully negates the hit;
+	// TryDefense() checks the reactive block state (gated behind bIsInDefenseWindow first - see the .cpp) and,
+	// on success, scales AttackEntry.Damage by (1 - GetCurrentDefense().DamageMitigationPercent) rather than
+	// necessarily zeroing it - a block can let "chip damage" through depending on the resolved defense entry's
+	// authored mitigation. Either way, whatever's left of AttackEntry.Damage is routed into the struck actor's
+	// own IMCS_CombatCharacterInterface::TakeCombatDamage. A future damage-modifier pass (weapon upgrades,
+	// difficulty scaling, headshot multipliers, etc.) belongs here - adjusting the value before it's handed to
+	// TakeCombatDamage - not inside TakeCombatDamage_Implementation itself, which has no attacker context to
+	// make that kind of decision with.
 	UFUNCTION()
 	void HandleHitboxHit(AActor* HitActor, const FHitResult& HitResult, FMCS_AttackEntry AttackEntry);
 

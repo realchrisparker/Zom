@@ -105,6 +105,9 @@ protected:
 	TObjectPtr<UInputAction> IA_Dodge;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Zom|Input")
+	TObjectPtr<UInputAction> IA_Parry;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Zom|Input")
 	TObjectPtr<UInputAction> IA_Shove;
 
 	// // -------------
@@ -149,6 +152,7 @@ private:
 	void Input_LightAttack();
 	void Input_HeavyAttack();
 	void Input_Dodge();
+	void Input_Parry();
 	// void Input_RangedShoot();
 	// void Input_Reload();
 	// void Input_Shove();

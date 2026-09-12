@@ -104,6 +104,10 @@ void AZomPlayerController::SetupInputComponent()
     {
         EnhancedInputComponent->BindAction(IA_Dodge, ETriggerEvent::Started, this, &AZomPlayerController::Input_Dodge);
     }
+    if (IA_Parry)
+    {
+        EnhancedInputComponent->BindAction(IA_Parry, ETriggerEvent::Started, this, &AZomPlayerController::Input_Parry);
+    }
     if (IA_RangedShoot)
     {
         // EnhancedInputComponent->BindAction(IA_RangedShoot, ETriggerEvent::Started, this, &AZomPlayerController::ActivateAbilityByClass, RangedShootAbilityClass);
@@ -269,6 +273,36 @@ void AZomPlayerController::Input_Dodge()
         if (CombatDefense)
         {
             CombatDefense->PerformDefense(EMCS_DefenseIntent::Defense, Attacker);
+        }
+    }
+}
+
+void AZomPlayerController::Input_Parry()
+{
+    if (CachedPlayerCharacter.Get())
+    {
+        // Get the combat core component (for nearby-target lookup) and the combat
+        // defense component (which owns PerformDefense/TryParry) from the player character.
+        UMCS_CombatCoreComponent* CombatCore = CachedPlayerCharacter.Get()->GetCombatCoreComponent();
+        UMCS_CombatDefenseComponent* CombatDefense = CachedPlayerCharacter.Get()->GetCombatDefenseComponent();
+
+        // Same Attacker-resolution heuristic as Input_Dodge, so the Defense Chooser can score parry entries
+        // by distance/facing even without a currently-tracked attacker.
+        AActor* Attacker = CombatCore ? CombatCore->GetCurrentAttacker() : nullptr;
+        if (Attacker == nullptr)
+        {
+            Attacker = CombatCore ? CombatCore->GetClosestTarget() : nullptr;
+        }
+
+        if (CombatDefense)
+        {
+            // PerformDefense always resolves and plays a parry montage - a mistimed press is a committed,
+            // punishable whiff, not a silent no-op. TryParry() is the separate, immediate check of whether
+            // this press actually landed inside (or within the grace period of) an open parry window; its
+            // result is what AZomCharacterBase::HandleHitboxHit later consumes via ConsumeSuccessfulParry to
+            // decide whether the matching incoming hit is negated.
+            CombatDefense->PerformDefense(EMCS_DefenseIntent::Parry, Attacker);
+            CombatDefense->TryParry();
         }
     }
 }
