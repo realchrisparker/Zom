@@ -9,6 +9,8 @@
 #include "MotionCombatSystem/Components/MCS_CombatCoreComponent.h"
 #include "MotionCombatSystem/Components/MCS_CombatHitboxComponent.h"
 #include "MotionCombatSystem/Components/MCS_CombatDefenseComponent.h"
+#include "MotionCombatSystem/Components/MCS_CombatHitReactionComponent.h"
+#include "MotionCombatSystem/Events/MCS_CombatEventBus.h"
 #include "MotionCombatSystem/Structs/MCS_AttackEntry.h"
 #include "MotionCombatSystem/AnimNotifies/AnimNotify_AttackStart.h"
 #include "MotionCombatSystem/AnimNotifies/AnimNotify_AttackEnd.h"
@@ -64,6 +66,18 @@ FMCS_DefenseEntry UZomGameplayAbilityBase::GetCurrentDefenseEntry() const
 	const AZomCharacterBase* OwningCharacter = GetOwningCharacter();
 	const UMCS_CombatDefenseComponent* CombatDefense = GetOwningCharacterCombatDefenseComponent();
 	return CombatDefense ? CombatDefense->GetCurrentDefense() : FMCS_DefenseEntry();
+}
+
+TObjectPtr<UMCS_CombatHitReactionComponent> UZomGameplayAbilityBase::GetOwningCharacterCombatHitReactionComponent() const
+{
+	const AZomCharacterBase* OwningCharacter = GetOwningCharacter();
+	return OwningCharacter ? OwningCharacter->GetCombatHitReactionComponent() : nullptr;
+}
+
+FMCS_HitReaction UZomGameplayAbilityBase::GetCurrentHitReactionEntry() const
+{
+	const UMCS_CombatHitReactionComponent* CombatHitReaction = GetOwningCharacterCombatHitReactionComponent();
+	return CombatHitReaction ? CombatHitReaction->GetCurrentHitReaction() : FMCS_HitReaction();
 }
 
 void UZomGameplayAbilityBase::ApplyStaminaCostForAttack(const FMCS_AttackEntry& ResolvedAttack) const
@@ -284,10 +298,30 @@ void UZomGameplayAbilityBase::HandleMCSNotifyBegin(EMCS_AnimEventType EventType,
 
 			case EMCS_AnimEventType::ParryWindow:
 				CombatCore->OnParryWindowBegin.Broadcast(OwningCharacter);
+
+				// Also broadcast to the global event bus - mirrors MCS_CombatCoreComponent's own non-GAS path
+				// (see HandleMCSNotifyBegin there). Without this, an attack with a GAS AttackTag would never
+				// open a bus-visible parry window, silently breaking parry for every GAS-driven attack.
+				if (UWorld* World = GetWorld())
+				{
+					if (UMCS_CombatEventBus* Bus = UMCS_CombatEventBus::Get(World))
+					{
+						Bus->OnParryWindowOpened.Broadcast(OwningCharacter, NotifyInstance->WindowLength);
+					}
+				}
 				break;
 
 			case EMCS_AnimEventType::DefenseWindow:
 				CombatCore->OnDefenseWindowBegin.Broadcast(OwningCharacter);
+
+				// Same reasoning as ParryWindow above - keep the bus signal alive for GAS-driven attacks too.
+				if (UWorld* World = GetWorld())
+				{
+					if (UMCS_CombatEventBus* Bus = UMCS_CombatEventBus::Get(World))
+					{
+						Bus->OnDefenseWindowOpened.Broadcast(OwningCharacter, NotifyInstance->WindowLength);
+					}
+				}
 				break;
 
 			default:
@@ -324,6 +358,14 @@ void UZomGameplayAbilityBase::HandleMCSNotifyEnd(EMCS_AnimEventType EventType, U
 
 			case EMCS_AnimEventType::DefenseWindow:
 				CombatCore->OnDefenseWindowEnd.Broadcast(OwningCharacter);
+
+				if (UWorld* World = GetWorld())
+				{
+					if (UMCS_CombatEventBus* Bus = UMCS_CombatEventBus::Get(World))
+					{
+						Bus->OnDefenseWindowClosed.Broadcast(OwningCharacter);
+					}
+				}
 				break;
 
 			default:

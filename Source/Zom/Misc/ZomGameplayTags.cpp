@@ -6,6 +6,7 @@ UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Status_Attacking, "Zom.Status.Attacking",
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Status_Staggered, "Zom.Status.Staggered", "Persistent tag on the ASC while staggered; blocks all UZomGameplayAbilityBase activation.")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Status_Dodging, "Zom.Status.Dodging", "Persistent tag on the ASC while UZomGA_Dodge is active.")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Status_Parrying, "Zom.Status.Parrying", "Persistent tag on the ASC while UZomGA_Parry is active.")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Status_HitReacting, "Zom.Status.HitReacting", "Persistent tag on the ASC while UZomGA_HitReaction is active.")
 
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Character_Player, "Zom.Character.Player", "Tag identifying the player character.")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Character_Enemy, "Zom.Character.Enemy", "Tag identifying enemy characters.")
@@ -14,6 +15,7 @@ UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Character_NPC, "Zom.Character.NPC", "Tag 
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Combat_Attack_Light, "Zom.Combat.Attack.Light", "Shared AssetTag on every light-attack UZomGameplayAbilityBase; must match the AttackTag column value on light-attack DataTable rows for TryActivateAbilitiesByTag dispatch.")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Combat_Attack_Heavy, "Zom.Combat.Attack.Heavy", "Shared AssetTag on every heavy-attack UZomGameplayAbilityBase; must match the AttackTag column value on heavy-attack DataTable rows for TryActivateAbilitiesByTag dispatch.")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Combat_Defense_Dodge, "Zom.Combat.Defense.Dodge", "Shared AssetTag on every dodge-defense UZomGameplayAbilityBase; must match the DefenseTag column value on dodge-defense DataTable rows for TryActivateAbilitiesByTag dispatch.")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Combat_HitReaction, "Zom.Combat.HitReaction", "Shared AssetTag on UZomGA_HitReaction; must match the HitReactionTag column value on hit reaction DataTable rows for TryActivateAbilitiesByTag dispatch.")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Combat_Defense_Parry, "Zom.Combat.Defense.Parry", "Shared AssetTag on every parry-defense UZomGameplayAbilityBase; must match the DefenseTag column value on parry-defense DataTable rows for TryActivateAbilitiesByTag dispatch.")  
 
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Objective_Fetch_Complete, "Zom.Objective.Fetch.Complete", "GAS-queryable mirror of EZomObjectiveStep::Fetch completion.")
@@ -26,6 +28,11 @@ UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Perception_Sight_TargetSeen, "Zom.Percept
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Perception_Sight_TargetLost, "Zom.Perception.Sight.TargetLost", "Raised by AZomZombieAIController when the sight sense loses the player.")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Perception_Hearing_NoiseHeard, "Zom.Perception.Hearing.NoiseHeard", "Raised by AZomZombieAIController when the hearing sense registers a stimulus.")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Perception_Damage_Taken, "Zom.Perception.Damage.Taken", "Raised by AZomZombieAIController when the zombie takes damage, regardless of whether the instigator is in sight/hearing range.")
+
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Combat_Event_DefenseWindowOpened, "Zom.Combat.Event.DefenseWindowOpened", "Raised by AZomZombieAIController (relaying UMCS_CombatEventBus::OnDefenseWindowOpened) when its current target is currently guarding.")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Combat_Event_DefenseWindowClosed, "Zom.Combat.Event.DefenseWindowClosed", "Raised by AZomZombieAIController (relaying UMCS_CombatEventBus::OnDefenseWindowClosed) when its current target stops guarding.")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Combat_Event_ParrySuccess, "Zom.Combat.Event.ParrySuccess", "Raised by AZomZombieAIController (relaying UMCS_CombatEventBus::OnParrySuccess) when this zombie's own attack was just parried.")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Combat_Event_DefenseSuccess, "Zom.Combat.Event.DefenseSuccess", "Raised by AZomZombieAIController (relaying UMCS_CombatEventBus::OnDefenseSuccess) when this zombie's own attack was just blocked.")
 
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_SetByCaller_Magnitude, "Zom.SetByCaller.Magnitude", "Runtime-supplied modifier magnitude for UZomGameplayEffectBase subclasses (e.g. damage amount, stamina cost).")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_SetByCaller_Duration, "Zom.SetByCaller.Duration", "Runtime-supplied duration for UZomGameplayEffectBase subclasses that need one set dynamically (e.g. infection extension).")

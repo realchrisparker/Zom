@@ -10,6 +10,7 @@
 #include "Zom/Misc/ZomGameplayTags.h"
 #include "Zom/Characters/Enums/ZomCharacterEnums.h"
 #include "MotionCombatSystem/Interfaces/MCS_CombatTargetInterface.h"
+#include "MotionCombatSystem/Structs/MCS_HitReaction.h"
 #include "ZomCharacterBase.generated.h"
 
 
@@ -146,7 +147,7 @@ public:
 	// IMCS_CombatCharacterInterface: applies incoming combat damage via UZomGE_Damage (SetByCaller magnitude),
 	// so every humanoid routes hits through the same GAS Damage-meta-attribute pipeline as GrantDefaultAbilitiesAndEffects'
 	// other effects. No default implementation is provided by the interface itself - every combat character must supply one.
-	virtual bool TakeCombatDamage_Implementation(float Damage, const FHitResult& Hit, const FMCS_AttackEntry& AttackEntry) const override;
+	virtual bool TakeCombatDamage_Implementation(float Damage, const FHitResult& Hit, const FMCS_AttackEntry& AttackEntry, AActor* Attacker) const override;
 
 protected:
 
@@ -187,10 +188,10 @@ protected:
 	// on success, scales AttackEntry.Damage by (1 - GetCurrentDefense().DamageMitigationPercent) rather than
 	// necessarily zeroing it - a block can let "chip damage" through depending on the resolved defense entry's
 	// authored mitigation. Either way, whatever's left of AttackEntry.Damage is routed into the struck actor's
-	// own IMCS_CombatCharacterInterface::TakeCombatDamage. A future damage-modifier pass (weapon upgrades,
-	// difficulty scaling, headshot multipliers, etc.) belongs here - adjusting the value before it's handed to
-	// TakeCombatDamage - not inside TakeCombatDamage_Implementation itself, which has no attacker context to
-	// make that kind of decision with.
+	// own IMCS_CombatCharacterInterface::TakeCombatDamage, with this character as the Attacker. A future
+	// damage-modifier pass (weapon upgrades, difficulty scaling, headshot multipliers, etc.) belongs here -
+	// adjusting the value before it's handed to TakeCombatDamage - not inside TakeCombatDamage_Implementation
+	// itself, which runs on the struck actor and only receives the attacker as a reference.
 	UFUNCTION()
 	void HandleHitboxHit(AActor* HitActor, const FHitResult& HitResult, FMCS_AttackEntry AttackEntry);
 
@@ -201,6 +202,12 @@ protected:
 	// applies identically whether the pawn is player- or AI-possessed.
 	UFUNCTION()
 	void HandleDefenseResolved(const FMCS_DefenseEntry& ResolvedDefense);
+
+	// Bound to CombatHitReactionComponent->OnHitReactionResolved once InitializeAbilitySystem resolves a valid ASC.
+	// Same GAS hand-off as HandleAttackResolved/HandleDefenseResolved: when the resolved reaction carries a valid
+	// HitReactionTag, activates the matching ability (UZomGA_HitReaction) so it owns the reaction montage.
+	UFUNCTION()
+	void HandleHitReactionResolved(const FMCS_HitReaction& ResolvedReaction);
 
 	// Grants every class in DefaultAbilities and applies every class in DefaultGameplayEffects via AddAbility/
 	// AddEffect. Called from InitializeAbilitySystem, once per call - safe to invoke more than once (e.g. the

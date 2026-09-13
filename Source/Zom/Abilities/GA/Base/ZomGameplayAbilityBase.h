@@ -18,8 +18,10 @@ class UAnimNotify_AttackEnd;
 class UAnimNotify_CameraControl;
 class UMCS_CombatCoreComponent;
 class UMCS_CombatDefenseComponent;
+class UMCS_CombatHitReactionComponent;
 struct FMCS_AttackEntry;
 struct FMCS_DefenseEntry;
+struct FMCS_HitReaction;
 
 
 /**
@@ -64,6 +66,14 @@ protected:
 	// abilities (Dodge, Block, future weapon-specific variants) read DefenseMontage/MontageSection
 	// off this - see UMCS_CombatCoreComponent::GetCurrentDefense()'s own doc comment on this exact usage.
 	FMCS_DefenseEntry GetCurrentDefenseEntry() const;
+
+	// Returns the owning character's MCS CombatHitReactionComponent, or nullptr if there's no owning character or no CombatHitReactionComponent.
+	TObjectPtr<UMCS_CombatHitReactionComponent> GetOwningCharacterCombatHitReactionComponent() const;
+
+	// Returns the hit reaction the owning character's MCS CombatHitReactionComponent most recently resolved (a
+	// default-constructed FMCS_HitReaction if there's no owning character or no CombatHitReactionComponent).
+	// UZomGA_HitReaction reads Montage/PlayRate off this.
+	FMCS_HitReaction GetCurrentHitReactionEntry() const;
 
 	// Applies ResolvedAttack.StaminaCost as a UZomGE_StaminaDrain instant effect to the owning character's ASC.
 	// No-ops if the entry costs no Stamina (the default - e.g. every Light Attack row per the dev doc) or if

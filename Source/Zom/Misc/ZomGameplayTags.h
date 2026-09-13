@@ -15,6 +15,7 @@ ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Status_Attacking);
 ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Status_Staggered);
 ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Status_Dodging);
 ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Status_Parrying);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Status_HitReacting);
 
 // -------------
 // Character identification
@@ -34,6 +35,7 @@ ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Combat_Attack_Light);
 ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Combat_Attack_Heavy);
 ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Combat_Defense_Dodge);
 ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Combat_Defense_Parry);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Combat_HitReaction);
 
 // -------------
 // Objective (GAS-queryable mirror of EZomObjectiveStep progress; set alongside the enum, never alone)
@@ -53,6 +55,17 @@ ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Perception_Sight_TargetSeen);
 ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Perception_Sight_TargetLost);
 ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Perception_Hearing_NoiseHeard);
 ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Perception_Damage_Taken);
+
+// -------------
+// Combat Events (transient; passed once through FStateTreeEvent via SendStateTreeEvent, never touch a tag
+// container - same convention as Perception above. Distinct from the Combat section further up, which holds
+// persistent asset tags matched against MCS DataTable AttackTag/DefenseTag columns, not events.)
+// -------------
+
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Combat_Event_DefenseWindowOpened);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Combat_Event_DefenseWindowClosed);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Combat_Event_ParrySuccess);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Combat_Event_DefenseSuccess);
 
 // -------------
 // SetByCaller (consistent scheme every UZomGameplayEffectBase uses for its runtime-supplied magnitude/duration,

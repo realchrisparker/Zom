@@ -43,6 +43,10 @@ public:
 
 	virtual void OnPossess(APawn* InPawn) override;
 
+	// Unbinds this controller from UMCS_CombatEventBus (bound in OnPossess) so a stale callback can't fire
+	// into a StateTreeComponent that's about to go away.
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 	// Configures the perception senses off TypeData's radii/angle. Called from OnPossess for the zombie's
 	// initial type, and again by UZomZombiePoolSubsystem whenever a pooled instance is reactivated as a
 	// (possibly different) type - the concrete implementation behind Section 5.2's "Auds/Eyes are the same
@@ -69,6 +73,26 @@ public:
 protected:
 	UFUNCTION()
 	void HandleTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+
+	// Bound to UMCS_CombatEventBus in OnPossess (see ZomZombieAIController.cpp) so combat state can drive
+	// this zombie's own State Tree the same way perception does - each relays into a Zom.Combat.Event.* tagged
+	// SendStateTreeEvent, but only once filtered down to what's actually relevant to this controller.
+
+	// Relayed only if Defender is this controller's own CurrentTarget - "the actor I'm pursuing is currently
+	// guarding" is the actionable signal (e.g. hold back / bait instead of attacking).
+	UFUNCTION()
+	void HandleDefenseWindowOpened(AActor* Defender, float Duration);
+
+	UFUNCTION()
+	void HandleDefenseWindowClosed(AActor* Defender);
+
+	// Relayed only if Attacker is this controller's own possessed pawn - "MY attack just got parried/blocked"
+	// is the actionable signal (e.g. disengage/reposition), not just "someone got parried somewhere."
+	UFUNCTION()
+	void HandleParrySuccess(AActor* Defender, AActor* Attacker);
+
+	UFUNCTION()
+	void HandleBlockSuccess(AActor* Defender, AActor* Attacker);
 
 	// -------------
 	// Components

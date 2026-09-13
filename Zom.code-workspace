@@ -19,7 +19,9 @@
 			"DOTNET_MULTILEVEL_LOOKUP": "0",
 			"DOTNET_ROLL_FORWARD": "LatestMajor"
 		},
-		"sarif-viewer.connectToGithubCodeScanning": "off"
+		"sarif-viewer.connectToGithubCodeScanning": "off",
+		"workbench.browser.newTabPlacement": "sideGroup",
+		"editor.tabCompletion": "on"
 	},
 	"extensions": {
 		"recommendations": [

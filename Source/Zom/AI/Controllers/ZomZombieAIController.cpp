@@ -15,7 +15,9 @@
 #include "Zom/Characters/ZomZombieBase.h"
 #include "Zom/Characters/Data/ZombieTypeData.h"
 #include "Zom/AI/ZomPerceptionEventPayload.h"
+#include "Zom/AI/ZomCombatEventPayload.h"
 #include "Zom/Misc/ZomGameplayTags.h"
+#include "MotionCombatSystem/Events/MCS_CombatEventBus.h"
 
 
 AZomZombieAIController::AZomZombieAIController()
@@ -60,6 +62,43 @@ void AZomZombieAIController::OnPossess(APawn* InPawn)
 
 	const AZomZombieBase* OwningZombie = Cast<AZomZombieBase>(InPawn);
 	ConfigureForType(OwningZombie ? OwningZombie->GetZombieTypeData() : nullptr);
+
+	// Bind to the global combat event bus so this zombie's State Tree can react to defense/parry/block state -
+	// RemoveDynamic before AddDynamic guards against a double-bind if OnPossess is ever called again for this
+	// controller (same idempotency pattern used elsewhere in this codebase, e.g. AZomPlayerCharacter).
+	if (UWorld* World = GetWorld())
+	{
+		if (UMCS_CombatEventBus* Bus = UMCS_CombatEventBus::Get(World))
+		{
+			Bus->OnDefenseWindowOpened.RemoveDynamic(this, &AZomZombieAIController::HandleDefenseWindowOpened);
+			Bus->OnDefenseWindowOpened.AddDynamic(this, &AZomZombieAIController::HandleDefenseWindowOpened);
+
+			Bus->OnDefenseWindowClosed.RemoveDynamic(this, &AZomZombieAIController::HandleDefenseWindowClosed);
+			Bus->OnDefenseWindowClosed.AddDynamic(this, &AZomZombieAIController::HandleDefenseWindowClosed);
+
+			Bus->OnParrySuccess.RemoveDynamic(this, &AZomZombieAIController::HandleParrySuccess);
+			Bus->OnParrySuccess.AddDynamic(this, &AZomZombieAIController::HandleParrySuccess);
+
+			Bus->OnDefenseSuccess.RemoveDynamic(this, &AZomZombieAIController::HandleBlockSuccess);
+			Bus->OnDefenseSuccess.AddDynamic(this, &AZomZombieAIController::HandleBlockSuccess);
+		}
+	}
+}
+
+void AZomZombieAIController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (UWorld* World = GetWorld())
+	{
+		if (UMCS_CombatEventBus* Bus = UMCS_CombatEventBus::Get(World))
+		{
+			Bus->OnDefenseWindowOpened.RemoveDynamic(this, &AZomZombieAIController::HandleDefenseWindowOpened);
+			Bus->OnDefenseWindowClosed.RemoveDynamic(this, &AZomZombieAIController::HandleDefenseWindowClosed);
+			Bus->OnParrySuccess.RemoveDynamic(this, &AZomZombieAIController::HandleParrySuccess);
+			Bus->OnDefenseSuccess.RemoveDynamic(this, &AZomZombieAIController::HandleBlockSuccess);
+		}
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void AZomZombieAIController::ConfigureForType(const UZombieTypeData* TypeData)
@@ -144,6 +183,59 @@ void AZomZombieAIController::HandleTargetPerceptionUpdated(AActor* Actor, FAISti
 		LastKnownTargetLocation = Stimulus.StimulusLocation;
 		StateTreeComponent->SendStateTreeEvent(TAG_Zom_Perception_Damage_Taken.GetTag(), FConstStructView::Make(Payload));
 	}
+}
+
+void AZomZombieAIController::HandleDefenseWindowOpened(AActor* Defender, float Duration)
+{
+	// Only relevant if it's the actor we're actually pursuing - not every guarding actor in the world.
+	if (!StateTreeComponent || Defender != GetCurrentTarget())
+	{
+		return;
+	}
+
+	FZomCombatEventPayload Payload;
+	Payload.Defender = Defender;
+	Payload.Duration = Duration;
+	StateTreeComponent->SendStateTreeEvent(TAG_Zom_Combat_Event_DefenseWindowOpened.GetTag(), FConstStructView::Make(Payload));
+}
+
+void AZomZombieAIController::HandleDefenseWindowClosed(AActor* Defender)
+{
+	if (!StateTreeComponent || Defender != GetCurrentTarget())
+	{
+		return;
+	}
+
+	FZomCombatEventPayload Payload;
+	Payload.Defender = Defender;
+	StateTreeComponent->SendStateTreeEvent(TAG_Zom_Combat_Event_DefenseWindowClosed.GetTag(), FConstStructView::Make(Payload));
+}
+
+void AZomZombieAIController::HandleParrySuccess(AActor* Defender, AActor* Attacker)
+{
+	// Only relevant if THIS zombie's own attack is what got parried - not any parry happening anywhere.
+	if (!StateTreeComponent || Attacker != GetPawn())
+	{
+		return;
+	}
+
+	FZomCombatEventPayload Payload;
+	Payload.Defender = Defender;
+	Payload.Attacker = Attacker;
+	StateTreeComponent->SendStateTreeEvent(TAG_Zom_Combat_Event_ParrySuccess.GetTag(), FConstStructView::Make(Payload));
+}
+
+void AZomZombieAIController::HandleBlockSuccess(AActor* Defender, AActor* Attacker)
+{
+	if (!StateTreeComponent || Attacker != GetPawn())
+	{
+		return;
+	}
+
+	FZomCombatEventPayload Payload;
+	Payload.Defender = Defender;
+	Payload.Attacker = Attacker;
+	StateTreeComponent->SendStateTreeEvent(TAG_Zom_Combat_Event_DefenseSuccess.GetTag(), FConstStructView::Make(Payload));
 }
 
 bool AZomZombieAIController::HasValidTarget() const

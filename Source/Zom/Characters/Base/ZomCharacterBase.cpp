@@ -111,6 +111,12 @@ void AZomCharacterBase::InitializeAbilitySystem(AActor* InOwnerActor, AActor* In
 			CombatDefenseComponent->OnDefenseResolved.AddDynamic(this, &AZomCharacterBase::HandleDefenseResolved);
 		}
 
+		if (CombatHitReactionComponent)
+		{
+			CombatHitReactionComponent->OnHitReactionResolved.RemoveDynamic(this, &AZomCharacterBase::HandleHitReactionResolved);
+			CombatHitReactionComponent->OnHitReactionResolved.AddDynamic(this, &AZomCharacterBase::HandleHitReactionResolved);
+		}
+
 		GrantDefaultAbilitiesAndEffects();
 
 		OnAbilitySystemInitialized();
@@ -312,6 +318,20 @@ void AZomCharacterBase::HandleDefenseResolved(const FMCS_DefenseEntry& ResolvedD
 	AbilitySystemComponent->TryActivateAbilitiesByTag(FGameplayTagContainer(ResolvedDefense.DefenseTag));
 }
 
+void AZomCharacterBase::HandleHitReactionResolved(const FMCS_HitReaction& ResolvedReaction)
+{
+	// Per OnHitReactionResolved's contract: this fires on the hand-off path (HitReactionTag valid) or the
+	// Blueprint-only path (bAutoPlayHitReactionMontage false, HitReactionTag empty). Nothing to activate in the latter.
+	if (!ResolvedReaction.HitReactionTag.IsValid() || !AbilitySystemComponent)
+	{
+		return;
+	}
+
+	// Must start the montage synchronously: the component arms its death/explicit-reaction locks right after this
+	// returns, and only if the montage is already playing. UZomGA_HitReaction retriggers, so back-to-back hits restart it.
+	AbilitySystemComponent->TryActivateAbilitiesByTag(FGameplayTagContainer(ResolvedReaction.HitReactionTag));
+}
+
 // Returns the current attack situation, which is used to determine which attacks are valid for the character.
 FMCS_AttackSituation AZomCharacterBase::GetCurrentAttackSituation() const
 {
@@ -356,10 +376,10 @@ bool AZomCharacterBase::CanBeTargeted_Implementation() const
 // applied (see ApplyGameplayEffectToSelf) - Damage's SetByCaller magnitude carries the hit-specific amount,
 // while the Damage->Health conversion and clamping stays centralized in UZomAttributeSetBase::PostGameplayEffectExecute.
 // Runs on the struck actor (this), which is why EffectContext's source object is set to itself rather than the
-// attacker - the interface doesn't pass along an instigator, only the swing's Damage/Hit/AttackEntry data. Not a
+// attacker - HandleHitboxHit supplies Attacker (other callers may pass null), but it isn't written into the context yet. Not a
 // problem for the Damage attribute write itself (SetByCaller doesn't care who's listed as the causer), just a
 // known gap for anything that later wants "who dealt this hit" (kill credit, XP, combat log) off the context.
-bool AZomCharacterBase::TakeCombatDamage_Implementation(float Damage, const FHitResult& Hit, const FMCS_AttackEntry& AttackEntry) const
+bool AZomCharacterBase::TakeCombatDamage_Implementation(float Damage, const FHitResult& Hit, const FMCS_AttackEntry& AttackEntry, AActor* Attacker) const
 {
 	if (!AbilitySystemComponent || Damage <= 0.f)
 	{
@@ -379,13 +399,27 @@ bool AZomCharacterBase::TakeCombatDamage_Implementation(float Damage, const FHit
 	SpecHandle.Data->SetSetByCallerMagnitude(TAG_Zom_SetByCaller_Magnitude.GetTag(), Damage);
 
 	const FActiveGameplayEffectHandle ActiveHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-	return ActiveHandle.WasSuccessfullyApplied();
+	if (!ActiveHandle.WasSuccessfullyApplied())
+	{
+		return false;
+	}
+
+	if (CombatHitReactionComponent)
+	{
+		// The attack authors the severity, but death is decided by Health. The Damage->Health conversion has already
+		// run synchronously, so a lethal hit is upgraded to Death - the component then locks it in and fires
+		// OnDeathReactionFinished. Attacker may be null (see above); hit direction still resolves from Hit's impact point.
+		const EPGAS_HitSeverity Severity = GetHealth() <= 0.f ? EPGAS_HitSeverity::Death : AttackEntry.HitSeverity;
+		CombatHitReactionComponent->PerformHitReaction(Hit, const_cast<AZomCharacterBase*>(this), Severity, Attacker);
+	}
+
+	return true;
 }
 
 // Fires on the attacker when their own CombatHitboxComponent sweep lands on someone else (self-hits are already
 // filtered out by the component itself). AttackEntry.Damage is the base/minimum damage for the resolved attack -
 // future modifier passes (weapon upgrades, difficulty scaling, crits, etc.) should adjust it here, before it's
-// handed to TakeCombatDamage, since that function has no attacker context to make that kind of call with.
+// handed to TakeCombatDamage, since that runs on the struck actor and only receives this attacker as a reference.
 void AZomCharacterBase::HandleHitboxHit(AActor* HitActor, const FHitResult& HitResult, FMCS_AttackEntry AttackEntry)
 {
 	// Early out if there's no valid hit actor or it doesn't implement the combat interface.
@@ -415,7 +449,7 @@ void AZomCharacterBase::HandleHitboxHit(AActor* HitActor, const FHitResult& HitR
 			return; // Parried - attack negated, no damage applied.
 		}
 
-		if (DefenderDefense->bIsInDefenseWindow && DefenderDefense->TryDefense())
+		if (DefenderDefense->bIsInDefenseWindow && DefenderDefense->TryDefense(this))
 		{
 			// A successful block doesn't necessarily zero the damage out - GetCurrentDefense().
 			// DamageMitigationPercent (authored per-row, defaults to 1.0/full negation) decides how much
@@ -432,6 +466,6 @@ void AZomCharacterBase::HandleHitboxHit(AActor* HitActor, const FHitResult& HitR
 		}
 	}
 
-	// Route the hit to the struck actor's TakeCombatDamage implementation.
-	IMCS_CombatCharacterInterface::Execute_TakeCombatDamage(HitActor, AttackEntry.Damage, HitResult, AttackEntry);
+	// Route the hit to the struck actor's TakeCombatDamage implementation. This runs on the attacker, so pass self.
+	IMCS_CombatCharacterInterface::Execute_TakeCombatDamage(HitActor, AttackEntry.Damage, HitResult, AttackEntry, this);
 }
