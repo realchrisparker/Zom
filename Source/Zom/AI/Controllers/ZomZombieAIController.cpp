@@ -14,8 +14,8 @@
 #include "StructUtils/StructView.h"
 #include "Zom/Characters/ZomZombieBase.h"
 #include "Zom/Characters/Data/ZombieTypeData.h"
-#include "Zom/AI/ZomPerceptionEventPayload.h"
-#include "Zom/AI/ZomCombatEventPayload.h"
+#include "Zom/AI/Payloads/ZomPerceptionEventPayload.h"
+#include "Zom/AI/Payloads/ZomCombatEventPayload.h"
 #include "Zom/Misc/ZomGameplayTags.h"
 #include "MotionCombatSystem/Events/MCS_CombatEventBus.h"
 

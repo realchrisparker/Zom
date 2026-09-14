@@ -8,6 +8,9 @@
 // General purpose channel for anything without a more specific home.
 ZOM_API DECLARE_LOG_CATEGORY_EXTERN(LogZom, Log, All);
 
+// AI controllers, zombie spawning and pooling.
+ZOM_API DECLARE_LOG_CATEGORY_EXTERN(LogZomAI, Log, All);
+
 // Characters, pawns and their components.
 ZOM_API DECLARE_LOG_CATEGORY_EXTERN(LogZomCharacter, Log, All);
 

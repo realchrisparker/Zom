@@ -3,8 +3,8 @@
 
 #include "Zom/Objectives/ZomDefendVolume.h"
 #include "Zom/Objectives/ZomObjectiveSubsystem.h"
-#include "Zom/AI/ZomZombiePoolSubsystem.h"
-#include "Zom/AI/ZomZombieSpawnDirector.h"
+#include "Zom/SubSystems/ZombiePoolSpawner/ZomZombiePoolSubsystem.h"
+#include "Zom/SubSystems/ZombiePoolSpawner/Director/ZomZombieSpawnDirector.h"
 #include "Zom/Characters/ZomZombieBase.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/Pawn.h"

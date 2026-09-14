@@ -5,8 +5,8 @@
 #include "AbilitySystemComponent.h"
 #include "Zom/AI/Controllers/ZomZombieAIController.h"
 #include "Zom/Characters/Data/ZombieTypeData.h"
-#include "Zom/AI/ZomZombiePoolSubsystem.h"
-#include "Zom/AI/ZomToxicGasVolume.h"
+#include "Zom/SubSystems/ZombiePoolSpawner/ZomZombiePoolSubsystem.h"
+#include "Zom/Characters/Volumes/ZomToxicGasVolume.h"
 #include "Zom/Abilities/AttributeSets/ZomZombieAttributeSet.h"
 #include "Zom/Misc/ZomLogChannels.h"
 #include "Perception/AISense_Damage.h"
@@ -52,6 +52,8 @@ void AZomZombieBase::InitializeForType(UZombieTypeData* InTypeData)
 	{
 		return;
 	}
+
+	ZombieType = ZombieTypeData->ZombieType;
 
 	// UZombieTypeData::Health/Speed/AttackDamage are *initial* values only (Section 4.1) - seeded here, the
 	// live attribute is authoritative afterward, until the next InitializeForType (pooled reactivation).

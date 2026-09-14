@@ -99,6 +99,7 @@ enum class EZombieType : uint8
 	Walker	UMETA(DisplayName = "Walker"),
 	Runner	UMETA(DisplayName = "Runner"),
 	Tank	UMETA(DisplayName = "Tank"),
+	Bloater	UMETA(DisplayName = "Bloater"),
 };
 
 /**

@@ -24,6 +24,7 @@ public class Zom : ModuleRules
 			"StateTreeModule",
 			"GameplayStateTreeModule",
 			"NavigationSystem",
+			"DeveloperSettings",
 			"GameplayAbilities",
 			"GameplayTasks",
 			"Niagara",

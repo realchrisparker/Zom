@@ -4,6 +4,7 @@
 #include "Zom/Misc/ZomLogChannels.h"
 
 DEFINE_LOG_CATEGORY(LogZom);
+DEFINE_LOG_CATEGORY(LogZomAI);
 DEFINE_LOG_CATEGORY(LogZomCharacter);
 DEFINE_LOG_CATEGORY(LogZomGame);
 DEFINE_LOG_CATEGORY(LogZomInput);

@@ -47,6 +47,12 @@ public:
 	// Properties
 	// -------------
 
+	// The type of this zombie (Walker/Runner/Tank/Bloater), mirrored from ZombieTypeData->ZombieType in
+	// InitializeForType - read-only so it can't disagree with the data asset that actually drives stats. Random
+	// selection happens upstream in UZomZombieSpawnDirector (picks the UZombieTypeData), not on this actor.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zom", meta = (DisplayName = "Zombie Type"))
+	EZombieType ZombieType = EZombieType::Walker;
+
 	// -------------
 	// IMCS_CombatCharacterInterface
 	// -------------
