@@ -82,7 +82,7 @@ protected:
 	// Properties
 	// -------------	
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Zom", meta = (DisplayName = "Zombie Type Data"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zom", meta = (DisplayName = "Zombie Type Data"))
 	TObjectPtr<UZombieTypeData> ZombieTypeData;
 
 	// Spawned on death if ZombieTypeData->Category is Bloater (Section 5.3).
