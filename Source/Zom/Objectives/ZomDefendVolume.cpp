@@ -6,6 +6,8 @@
 #include "Zom/SubSystems/ZombiePoolSpawner/ZomZombiePoolSubsystem.h"
 #include "Zom/SubSystems/ZombiePoolSpawner/Director/ZomZombieSpawnDirector.h"
 #include "Zom/Characters/ZomZombieBase.h"
+#include "Zom/Characters/Data/ZombieTypeData.h"
+#include "Zom/Misc/ZomLogChannels.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/Pawn.h"
 
@@ -27,6 +29,15 @@ AZomDefendVolume::AZomDefendVolume()
 void AZomDefendVolume::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// Register now so the wave's classes are prewarmed before the player ever triggers it.
+	if (UZomZombiePoolSubsystem* PoolSubsystem = GetWorld()->GetSubsystem<UZomZombiePoolSubsystem>())
+	{
+		for (UZombieTypeData* Type : ZombieTypes)
+		{
+			PoolSubsystem->RegisterZombieType(Type);
+		}
+	}
 }
 
 void AZomDefendVolume::OnVolumeOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -48,12 +59,23 @@ void AZomDefendVolume::OnVolumeOverlap(UPrimitiveComponent* OverlappedComponent,
 		return;
 	}
 
+	// Without types every spawn is refused, and an empty wave would count as cleared and complete Defend immediately.
+	const bool bHasZombieTypes = ZombieTypes.ContainsByPredicate([](const TObjectPtr<UZombieTypeData>& Type)
+	{
+		return Type != nullptr;
+	});
+	if (!bHasZombieTypes)
+	{
+		UE_LOG(LogZomAI, Warning, TEXT("%s has no ZombieTypes assigned - Defend wave not started."), *GetName());
+		return;
+	}
+
 	bWaveStarted = true;
 
 	for (int32 Index = 0; Index < WaveSize; ++Index)
 	{
 		const FTransform& SpawnTransform = SpawnPoints[Index % SpawnPoints.Num()];
-		if (AZomZombieBase* Zombie = PoolSubsystem->SpawnDirector->RequestCrowdSpawn(PoolSubsystem, SpawnTransform))
+		if (AZomZombieBase* Zombie = PoolSubsystem->SpawnDirector->RequestSpawn(PoolSubsystem, ToRawPtrTArrayUnsafe(ZombieTypes), SpawnTransform))
 		{
 			ActiveWaveZombies.Add(Zombie);
 		}

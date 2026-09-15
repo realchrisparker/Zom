@@ -9,6 +9,7 @@
 
 class UBoxComponent;
 class AZomZombieBase;
+class UZombieTypeData;
 
 
 /**
@@ -46,6 +47,11 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Zom|Defend")
 	int32 WaveSize = 8;
+
+	// Types the wave picks from at random for each zombie (anything but Boss; list a type more than once to weight it).
+	// Registered with the pool on BeginPlay so their classes are prewarmed. The wave won't start without at least one.
+	UPROPERTY(EditAnywhere, Category = "Zom|Defend")
+	TArray<TObjectPtr<UZombieTypeData>> ZombieTypes;
 
 	UPROPERTY(EditAnywhere, Category = "Zom|Defend")
 	float WaveClearCheckInterval = 1.f;

@@ -47,9 +47,9 @@ public:
 	// Properties
 	// -------------
 
-	// The type of this zombie (Walker/Runner/Tank/Bloater), mirrored from ZombieTypeData->ZombieType in
-	// InitializeForType - read-only so it can't disagree with the data asset that actually drives stats. Random
-	// selection happens upstream in UZomZombieSpawnDirector (picks the UZombieTypeData), not on this actor.
+	// The type of this zombie (Walker/Runner/Tank/Bloater). Overwritten from ZombieTypeData->ZombieType in
+	// InitializeForType, so the data asset wins once play starts. Random type selection happens upstream in
+	// UZomZombieSpawnDirector (picks the UZombieTypeData from the spawning volume), not on this actor.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zom", meta = (DisplayName = "Zombie Type"))
 	EZombieType ZombieType = EZombieType::Walker;
 
@@ -64,6 +64,12 @@ protected:
 	virtual void BeginPlay() override;
 
 	virtual void HandleDeath() override;
+
+	// Fired at the end of every InitializeForType (BeginPlay and each pool activation), after ZombieType/stats are
+	// applied. A pooled zombie's construction script and BeginPlay only run once, at prewarm, so this is the Blueprint
+	// hook for per-activation work: re-rolling a mesh variant, clearing old damage decals, playing a spawn effect.
+	UFUNCTION(BlueprintImplementableEvent, Category = "Zom", meta = (DisplayName = "On Zombie Activated"))
+	void ReceiveZombieActivated();
 
 	// Bound to ZombieAttributeSet->OnDamageTaken; reports the hit to AI perception (UAISense_Damage) so the
 	// possessing AZomZombieAIController can react even if the instigator is outside sight/hearing range.

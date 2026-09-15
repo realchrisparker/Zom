@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
-#include "Zom/Characters/Enums/ZomCharacterEnums.h"
 #include "ZomZombiePoolSubsystem.generated.h"
 
 
@@ -16,14 +15,27 @@ class UZomZombieSpawnDirector;
 DECLARE_MULTICAST_DELEGATE_OneParam(FZomOnZombieReleased, AZomZombieBase* /*Zombie*/);
 
 
+// Pooled instances of one zombie Blueprint class.
+USTRUCT()
+struct FZomZombieClassPool
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TArray<TObjectPtr<AZomZombieBase>> Zombies;
+};
+
+
 /**
  * [Proposed type] UWorldSubsystem, not UGameInstanceSubsystem - it owns actual pooled actors that live in one
  * world/level, unlike UZomObjectiveSubsystem/UZomSaveGame's state, which must survive a level reload (Section
  * 9 of the dev doc). Pre-spawns and recycles pooled zombie actors via SetActorHiddenInGame/SetActorEnableCollision,
- * never SpawnActor()/Destroy() at runtime - PrewarmPool() is initial setup, not a runtime activation/deactivation.
+ * never SpawnActor()/Destroy() at runtime - prewarming is setup, not a runtime activation/deactivation.
  *
- * Configured from UZomZombieSpawnSettings (Project Settings > Game > Zom Zombie Spawning) at world begin play, then
- * prewarms itself and starts SpawnDirector a tick later - nothing else needs to call PrewarmPool().
+ * Keeps one pool per zombie Blueprint class (UZombieTypeData::ZombieClass), sized by UZombieTypeData::PoolSize, so a
+ * Tank is always a BP_Tank and a Bloater a BP_Zombie_Bloater. Spawn/defend volumes register the types they use.
+ * Types registered before spawning starts are prewarmed together the tick after world begin play (then SpawnDirector
+ * starts); later ones - e.g. from a streamed-in volume - are prewarmed as they register.
  */
 UCLASS()
 class ZOM_API UZomZombiePoolSubsystem : public UWorldSubsystem
@@ -39,49 +51,38 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Zom|Pooling")
 	TObjectPtr<UZomZombieSpawnDirector> SpawnDirector;
 
-	// Class to spawn for Crowd-category zombies (Walker/Runner/Auds/Eyes - type differs by UZombieTypeData
-	// assigned per-activation via AcquireZombie, not by class). Copied from UZomZombieSpawnSettings.
-	UPROPERTY(BlueprintReadOnly, Category = "Zom|Pooling")
-	TSubclassOf<AZomZombieBase> CrowdZombieClass;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Zom|Pooling")
-	TSubclassOf<AZomZombieBase> BloaterZombieClass;
-
-	// Crowd pool sized to the 15-zombie ceiling plus headroom (design doc suggests 20).
-	UPROPERTY(BlueprintReadOnly, Category = "Zom|Pooling")
-	int32 CrowdPoolSize = 20;
-
-	// Separate small Bloater pool capped at 2.
-	UPROPERTY(BlueprintReadOnly, Category = "Zom|Pooling")
-	int32 BloaterPoolSize = 2;
-
 	// Fired after a zombie is returned to the pool (death or despawn). UZomZombieSpawnDirector listens so the
 	// spawn volume that owned it stops counting it.
 	FZomOnZombieReleased OnZombieReleased;
 
-	// Pre-spawns the pool (the one place this subsystem calls SpawnActor - initial setup, not a runtime
-	// acquire/release). Runs automatically the tick after world begin play; later calls do nothing.
+	// Ensures InTypeData's ZombieClass has a pool of at least InTypeData->PoolSize (spawning the difference is the one
+	// place this subsystem calls SpawnActor). Before spawning starts the type is only queued, so pooled zombies never
+	// spawn ahead of actor BeginPlay. Safe to call repeatedly; null does nothing.
 	UFUNCTION(BlueprintCallable, Category = "Zom|Pooling")
-	void PrewarmPool();
+	void RegisterZombieType(UZombieTypeData* InTypeData);
 
-	// Activates a hidden/disabled pooled zombie of the given category as InTypeData, at SpawnTransform (nudged out
-	// of blocking geometry and other zombies if needed, with any leftover velocity cleared).
-	// Returns nullptr if the budget for that category is exhausted. Boss is never drawn from this pool.
+	// True if InTypeData's class pool has an inactive zombie ready to activate.
+	UFUNCTION(BlueprintPure, Category = "Zom|Pooling")
+	bool HasAvailableZombie(const UZombieTypeData* InTypeData) const;
+
+	// Activates an inactive pooled zombie of InTypeData's ZombieClass as InTypeData, at SpawnTransform (nudged out of
+	// blocking geometry and other zombies if needed, with any leftover velocity cleared). Returns nullptr if that
+	// class has no free zombie or was never registered. Budget rules live in UZomZombieSpawnDirector, not here.
 	UFUNCTION(BlueprintCallable, Category = "Zom|Pooling")
-	AZomZombieBase* AcquireZombie(EZomZombieCategory Category, UZombieTypeData* InTypeData, const FTransform& SpawnTransform);
+	AZomZombieBase* AcquireZombie(UZombieTypeData* InTypeData, const FTransform& SpawnTransform);
 
 	// Returns a zombie to the pool (hidden, collision disabled, ticking off) and broadcasts OnZombieReleased.
 	// Never calls Destroy(). Does nothing for a zombie that's already pooled.
 	UFUNCTION(BlueprintCallable, Category = "Zom|Pooling")
 	void ReleaseZombie(AZomZombieBase* Zombie);
 
-	// Number of currently-activated (non-hidden) Crowd-category zombies. Read by UZomZombieSpawnDirector
+	// Active zombies whose current type is Crowd-category, across every class pool. Read by UZomZombieSpawnDirector
 	// against UZomDifficultyData::TargetActiveCrowdCount (Section 10).
 	UFUNCTION(BlueprintCallable, Category = "Zom|Pooling")
 	int32 GetActiveCrowdCount() const;
 
-	// Capsule half height of CrowdZombieClass, used to lift floor-level spawn points (0 if no class is set).
-	float GetCrowdCapsuleHalfHeight() const;
+	// Capsule half height of InTypeData's ZombieClass, used to lift floor-level spawn points (0 if not loaded).
+	float GetCapsuleHalfHeight(const UZombieTypeData* InTypeData) const;
 
 protected:
 	// Game and PIE worlds only - editor and asset preview worlds shouldn't get pooled zombies.
@@ -92,14 +93,15 @@ private:
 	// have their BeginPlay (which can start the State Tree) run after DeactivateZombie had paused them.
 	void StartSpawning();
 
-	void SpawnPoolBatch(TSubclassOf<AZomZombieBase> ZombieClass, int32 Count, TArray<TObjectPtr<AZomZombieBase>>& OutPool);
+	void PrewarmType(UZombieTypeData* InTypeData);
 	static void DeactivateZombie(AZomZombieBase* Zombie);
 
 	UPROPERTY()
-	TArray<TObjectPtr<AZomZombieBase>> CrowdPool;
+	TMap<TObjectPtr<UClass>, FZomZombieClassPool> ClassPools;
 
+	// Registered before StartSpawning; prewarmed there.
 	UPROPERTY()
-	TArray<TObjectPtr<AZomZombieBase>> BloaterPool;
+	TArray<TObjectPtr<UZombieTypeData>> PendingTypes;
 
-	bool bPoolPrewarmed = false;
+	bool bSpawningStarted = false;
 };

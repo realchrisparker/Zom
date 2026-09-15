@@ -4,12 +4,13 @@
 #include "Zom/Characters/Animations/Base/ZomZombieAnimInstanceBase.h"
 #include "Zom/Characters/Base/ZomCharacterBase.h"
 #include "Zom/Characters/Components/ZomCharacterMovementComponent.h"
+#include "KismetAnimationLibrary.h"
 
 
 // Constructor
 UZomZombieAnimInstanceBase::UZomZombieAnimInstanceBase()
 {
-    AnimationType = GetRandomInteger(1);
+    AnimationType = GetRandomInteger(2);
 }
 
 // Called when the anim instance is created and its owning component/actor are valid; good place to cache references
@@ -56,7 +57,10 @@ void UZomZombieAnimInstanceBase::NativeUpdateAnimation(float DeltaSeconds)
 
     // Velocity
     Velocity_LastFrame = Velocity;
-    Velocity = MovementComponent->Velocity;    
+    Velocity = MovementComponent->Velocity;
+
+    // Rotation
+    ActorRotation = Character->GetActorRotation();
 }
 
 // Called every frame, potentially on a worker thread; only safe to read data here, not to modify UObjects
@@ -72,6 +76,9 @@ void UZomZombieAnimInstanceBase::NativeThreadSafeUpdateAnimation(float DeltaSeco
     // Speed / velocity state
     Speed2D = Velocity.Size2D();
     bHasVelocity = !Velocity.IsNearlyZero();
+
+    // Movement direction relative to the actor's facing
+    Direction = UKismetAnimationLibrary::CalculateDirection(Velocity, ActorRotation);
 
     // Acceleration derived from the change in velocity over time
     Acceleration = (DeltaSeconds > KINDA_SMALL_NUMBER) ? (Velocity - Velocity_LastFrame) / DeltaSeconds : FVector::ZeroVector;

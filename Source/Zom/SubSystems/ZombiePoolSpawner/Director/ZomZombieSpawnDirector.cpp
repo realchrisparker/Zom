@@ -17,29 +17,13 @@
 
 void UZomZombieSpawnDirector::ApplySettings(const UZomZombieSpawnSettings& Settings)
 {
-	CrowdTypes.Reset();
-	for (const TSoftObjectPtr<UZombieTypeData>& SoftType : Settings.CrowdTypes)
-	{
-		if (UZombieTypeData* Type = SoftType.LoadSynchronous())
-		{
-			CrowdTypes.Add(Type);
-		}
-	}
-
-	BloaterType = Settings.BloaterType.LoadSynchronous();
 	ActiveDifficultyTier = Settings.DefaultDifficultyTier.LoadSynchronous();
 
 	FallbackSpawnInterval = Settings.FallbackSpawnInterval;
 	ActivationRadius = Settings.ActivationRadius;
 	// Never inside ActivationRadius, or a volume could be despawned and repopulated by consecutive updates.
 	DespawnRadius = FMath::Max(Settings.DespawnRadius, Settings.ActivationRadius);
-	MinSpawnDistanceFromPlayer = Settings.MinSpawnDistanceFromPlayer;
 	SpawnLocationAttempts = FMath::Max(1, Settings.SpawnLocationAttempts);
-
-	if (CrowdTypes.IsEmpty())
-	{
-		UE_LOG(LogZomAI, Warning, TEXT("No CrowdTypes set in Project Settings > Game > Zom Zombie Spawning - crowd spawns will be refused."));
-	}
 }
 
 void UZomZombieSpawnDirector::StartDirector()
@@ -75,9 +59,19 @@ void UZomZombieSpawnDirector::StopDirector()
 
 void UZomZombieSpawnDirector::RegisterSpawnVolume(AZomZombieSpawnVolume* Volume)
 {
-	if (Volume)
+	if (!Volume)
 	{
-		SpawnVolumes.AddUnique(Volume);
+		return;
+	}
+
+	SpawnVolumes.AddUnique(Volume);
+
+	if (UZomZombiePoolSubsystem* PoolSubsystem = GetPoolSubsystem())
+	{
+		for (UZombieTypeData* Type : Volume->ZombieTypes)
+		{
+			PoolSubsystem->RegisterZombieType(Type);
+		}
 	}
 }
 
@@ -138,30 +132,38 @@ void UZomZombieSpawnDirector::PopulateVolume(AZomZombieSpawnVolume* Volume)
 	}
 }
 
-AZomZombieBase* UZomZombieSpawnDirector::RequestCrowdSpawn(UZomZombiePoolSubsystem* PoolSubsystem, const FTransform& SpawnTransform) const
+AZomZombieBase* UZomZombieSpawnDirector::RequestSpawn(UZomZombiePoolSubsystem* PoolSubsystem, const TArray<UZombieTypeData*>& ZombieTypes, const FTransform& SpawnTransform) const
 {
-	if (!PoolSubsystem || CrowdTypes.Num() == 0)
-	{
-		return nullptr;
-	}
-
-	if (ActiveDifficultyTier && PoolSubsystem->GetActiveCrowdCount() >= ActiveDifficultyTier->TargetActiveCrowdCount)
-	{
-		return nullptr;
-	}
-
-	UZombieTypeData* ChosenType = CrowdTypes[FMath::RandRange(0, CrowdTypes.Num() - 1)];
-	return PoolSubsystem->AcquireZombie(EZomZombieCategory::Crowd, ChosenType, SpawnTransform);
+	UZombieTypeData* ChosenType = PoolSubsystem ? ChooseSpawnableType(*PoolSubsystem, ZombieTypes) : nullptr;
+	return ChosenType ? PoolSubsystem->AcquireZombie(ChosenType, SpawnTransform) : nullptr;
 }
 
-AZomZombieBase* UZomZombieSpawnDirector::RequestBloaterSpawn(UZomZombiePoolSubsystem* PoolSubsystem, const FTransform& SpawnTransform) const
+UZombieTypeData* UZomZombieSpawnDirector::ChooseSpawnableType(const UZomZombiePoolSubsystem& PoolSubsystem, const TArray<UZombieTypeData*>& ZombieTypes) const
 {
-	if (!PoolSubsystem || !BloaterType)
+	const bool bCrowdCapReached = ActiveDifficultyTier && PoolSubsystem.GetActiveCrowdCount() >= ActiveDifficultyTier->TargetActiveCrowdCount;
+
+	TArray<UZombieTypeData*, TInlineAllocator<8>> Candidates;
+	for (UZombieTypeData* Type : ZombieTypes)
 	{
-		return nullptr;
+		// Null = an unassigned array slot left in the Details panel. Boss is a placed instance, never pooled.
+		if (!Type || Type->Category == EZomZombieCategory::Boss)
+		{
+			continue;
+		}
+
+		// The tier only meters Crowd density (Section 10) - Bloaters are capped by their own pool size.
+		if (bCrowdCapReached && Type->Category == EZomZombieCategory::Crowd)
+		{
+			continue;
+		}
+
+		if (PoolSubsystem.HasAvailableZombie(Type))
+		{
+			Candidates.Add(Type);
+		}
 	}
 
-	return PoolSubsystem->AcquireZombie(EZomZombieCategory::Bloater, BloaterType, SpawnTransform);
+	return Candidates.IsEmpty() ? nullptr : Candidates[FMath::RandRange(0, Candidates.Num() - 1)];
 }
 
 void UZomZombieSpawnDirector::UpdateDirector()
@@ -232,18 +234,16 @@ void UZomZombieSpawnDirector::UpdateDirector()
 		}
 	}
 
-	// Nearest first, so when the pool/tier budget runs out it's the volumes closest to a player that got zombies.
+	// Nearest first, so when budget runs out it's the volumes closest to a player that got zombies.
 	Candidates.Sort([](const FSpawnCandidate& A, const FSpawnCandidate& B)
 	{
 		return A.NearestPlayerDistanceSq < B.NearestPlayerDistanceSq;
 	});
 
+	// No early out when one volume can't fill - volumes have different type mixes, so a later one may still fit.
 	for (const FSpawnCandidate& Candidate : Candidates)
 	{
-		if (!FillVolume(*PoolSubsystem, *Candidate.Volume, PlayerLocations))
-		{
-			break;
-		}
+		FillVolume(*PoolSubsystem, *Candidate.Volume, PlayerLocations);
 	}
 }
 
@@ -263,22 +263,37 @@ void UZomZombieSpawnDirector::ScheduleNextUpdate()
 
 bool UZomZombieSpawnDirector::FillVolume(UZomZombiePoolSubsystem& PoolSubsystem, AZomZombieSpawnVolume& Volume, const TArray<FVector>& PlayerLocations)
 {
-	// Spawn volumes return navmesh (floor-level) points; lift by the capsule so it doesn't start in the ground.
-	const float CapsuleHalfHeight = PoolSubsystem.GetCrowdCapsuleHalfHeight();
+	// No types assigned (warned in the volume's BeginPlay). Not a budget problem.
+	if (!Volume.HasZombieTypes())
+	{
+		return true;
+	}
+
+	const TArray<UZombieTypeData*>& ZombieTypes = ToRawPtrTArrayUnsafe(Volume.ZombieTypes);
 
 	for (int32 PendingCount = Volume.GetPendingSpawnCount(); PendingCount > 0; --PendingCount)
 	{
-		FVector NavLocation;
-		if (!Volume.FindSpawnLocation(PlayerLocations, MinSpawnDistanceFromPlayer, SpawnLocationAttempts, NavLocation))
+		// Type first, so the spawn point can be lifted by that class's own capsule.
+		UZombieTypeData* ChosenType = ChooseSpawnableType(PoolSubsystem, ZombieTypes);
+		if (!ChosenType)
 		{
-			// No usable point this update (no navmesh in the box, or every try was too close to a player). Budget
-			// isn't the problem, so other volumes can still spawn.
+			return false;
+		}
+
+		FVector NavLocation;
+		if (!Volume.FindSpawnLocation(PlayerLocations, SpawnLocationAttempts, NavLocation))
+		{
+			// No usable point this update (no navmesh in the box, or every try was inside the volume's
+			// MinSpawnDistanceFromPlayer). Budget isn't the problem, so other volumes can still spawn.
 			UE_LOG(LogZomAI, Verbose, TEXT("%s: no valid spawn location found this update."), *Volume.GetName());
 			return true;
 		}
 
-		const FTransform SpawnTransform(FRotator(0.f, FMath::FRandRange(0.f, 360.f), 0.f), NavLocation + FVector(0.f, 0.f, CapsuleHalfHeight));
-		AZomZombieBase* Zombie = RequestCrowdSpawn(&PoolSubsystem, SpawnTransform);
+		// Navmesh points are floor level; lift by the capsule so it doesn't start in the ground.
+		const FVector SpawnLocation = NavLocation + FVector(0.f, 0.f, PoolSubsystem.GetCapsuleHalfHeight(ChosenType));
+		const FTransform SpawnTransform(FRotator(0.f, FMath::FRandRange(0.f, 360.f), 0.f), SpawnLocation);
+
+		AZomZombieBase* Zombie = PoolSubsystem.AcquireZombie(ChosenType, SpawnTransform);
 		if (!Zombie)
 		{
 			return false;

@@ -9,6 +9,7 @@
 
 class UBoxComponent;
 class AZomZombieBase;
+class UZombieTypeData;
 class UZomZombieSpawnDirector;
 
 
@@ -56,6 +57,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zom|Spawning", meta = (ClampMin = "0", UIMin = "0"))
 	int32 SpawnMaximum = 6;
 
+	// Types this volume picks from at random for each zombie it spawns, so each zone sets its own mix (Walker, Runner,
+	// Tank, Bloater - anything but Boss). List a type more than once to weight it. Each type's Zombie Class is
+	// prewarmed in the pool when the volume registers. A volume with none never spawns.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zom|Spawning")
+	TArray<TObjectPtr<UZombieTypeData>> ZombieTypes;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Zom|Spawning")
 	EZomSpawnVolumeActivation ActivationMode = EZomSpawnVolumeActivation::Director;
 
@@ -66,6 +73,10 @@ public:
 	// Seconds after a cycle is cleared before the volume can populate again.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zom|Spawning", meta = (ClampMin = "0", Units = "s", EditCondition = "!bSpawnOnce"))
 	float RepopulateDelay = 60.f;
+
+	// Spawn points closer than this to any player are rejected. 0 = no minimum.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zom|Spawning", meta = (ClampMin = "0", UIMin = "0", Units = "cm"))
+	float MinSpawnDistanceFromPlayer = 0.f;
 
 	// -------------
 	// Functions
@@ -81,6 +92,9 @@ public:
 
 	bool IsPopulationCycleActive() const { return bCycleActive; }
 
+	// True if ZombieTypes has at least one assigned entry.
+	bool HasZombieTypes() const;
+
 	// Not mid-cycle, not exhausted, past RepopulateDelay, and (for PlayerEnter) triggered by a player.
 	bool CanStartPopulationCycle(double WorldTime) const;
 
@@ -90,9 +104,9 @@ public:
 	// Zombies still owed to the current cycle (rolled count minus those spawned and not despawned).
 	int32 GetPendingSpawnCount() const;
 
-	// Random navmesh point inside the box, at least MinDistanceFromPlayer from every player. Returns false if none
-	// was found within Attempts tries.
-	bool FindSpawnLocation(const TArray<FVector>& PlayerLocations, float MinDistanceFromPlayer, int32 Attempts, FVector& OutNavLocation) const;
+	// Random navmesh point inside the box, at least MinSpawnDistanceFromPlayer from every player. Returns false if
+	// none was found within Attempts tries.
+	bool FindSpawnLocation(const TArray<FVector>& PlayerLocations, int32 Attempts, FVector& OutNavLocation) const;
 
 	// Squared distance from Point to the box's world bounds (0 inside) - measured to the box, not its center, so
 	// one ActivationRadius works for volumes of any size.

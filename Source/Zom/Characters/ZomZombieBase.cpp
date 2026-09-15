@@ -72,6 +72,8 @@ void AZomZombieBase::InitializeForType(UZombieTypeData* InTypeData)
 	{
 		AIController->ConfigureForType(ZombieTypeData);
 	}
+
+	ReceiveZombieActivated();
 }
 
 void AZomZombieBase::HandleDamageTaken(AActor* DamageInstigator, float Amount)

@@ -8,6 +8,9 @@
 #include "ZombieTypeData.generated.h"
 
 
+class AZomZombieBase;
+
+
 /**
  * Health, speed, per-sense detection radius, damage, attack cooldown - one asset per zombie type
  * (Walker/Runner/Auds/Eyes/Bloater). New crowd types are content, not code (Section 5.1 of the dev doc).
@@ -22,13 +25,28 @@ class ZOM_API UZombieTypeData : public UPrimaryDataAsset
 	GENERATED_BODY()
 
 public:
-	// Which pool budget this type draws from (UZomZombiePoolSubsystem) and, on death, returns to
-	// (AZomZombieBase::HandleDeath). Boss doesn't use UZombieTypeData at all (Section 5.1/6).
+	// Which budget this type counts against: Crowd types count toward the difficulty tier's TargetActiveCrowdCount;
+	// Bloaters are capped by their own PoolSize (and spawn toxic gas on death, AZomZombieBase::HandleDeath). Boss
+	// doesn't use UZombieTypeData at all (Section 5.1/6).
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom", meta = (DisplayName = "Category"))
 	EZomZombieCategory Category = EZomZombieCategory::Crowd;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Zom", meta = (DisplayName = "Type"))
 	EZombieType ZombieType = EZombieType::Walker;
+
+	// -------------
+	// Pooling
+	// -------------
+
+	// Blueprint pooled and spawned for this type (e.g. BP_Tank). Soft so this asset and the Blueprint - which usually
+	// defaults to this asset - don't hard-reference each other.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom|Pooling", meta = (DisplayName = "Zombie Class"))
+	TSoftClassPtr<AZomZombieBase> ZombieClass;
+
+	// Instances of ZombieClass pre-spawned once a level uses this type - also the most that can be active at once.
+	// Types sharing a class share one pool, sized to the largest PoolSize among them.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom|Pooling", meta = (DisplayName = "Pool Size", ClampMin = "0"))
+	int32 PoolSize = 10;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom", meta = (DisplayName = "Health"))
 	float Health = 100.f;

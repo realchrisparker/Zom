@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Zom/Characters/Enums/ZomCharacterEnums.h"
 #include "ZomZombieSpawnDirector.generated.h"
 
 
@@ -28,20 +27,12 @@ class ZOM_API UZomZombieSpawnDirector : public UObject
 	GENERATED_BODY()
 
 public:
-	// Candidate types to pick from when spawning a Crowd zombie (Walker/Runner/Auds/Eyes - no C++ subclass
-	// per type, per Section 5.2). Loaded from UZomZombieSpawnSettings when the pool subsystem starts.
-	UPROPERTY(BlueprintReadOnly, Category = "Zom|Spawning")
-	TArray<TObjectPtr<UZombieTypeData>> CrowdTypes;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Zom|Spawning")
-	TObjectPtr<UZombieTypeData> BloaterType;
-
 	// Active difficulty tier (Section 10). A new tier is a new UZomDifficultyData asset assigned here, not new code.
 	// Starts as UZomZombieSpawnSettings::DefaultDifficultyTier; swapping it at runtime applies from the next update.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zom|Spawning")
 	TObjectPtr<UZomDifficultyData> ActiveDifficultyTier;
 
-	// Loads types/tier and copies radii from Settings. Called by the owning pool subsystem.
+	// Loads the difficulty tier and copies timing/radii from Settings. Called by the owning pool subsystem.
 	void ApplySettings(const UZomZombieSpawnSettings& Settings);
 
 	// Listens for zombies returning to the pool and runs the first update. Called by the owning pool subsystem
@@ -50,7 +41,8 @@ public:
 
 	void StopDirector();
 
-	// Called by AZomZombieSpawnVolume::BeginPlay. Safe to call more than once.
+	// Called by AZomZombieSpawnVolume::BeginPlay. Also registers the volume's ZombieTypes with the pool so their
+	// classes get prewarmed. Safe to call more than once.
 	UFUNCTION(BlueprintCallable, Category = "Zom|Spawning")
 	void RegisterSpawnVolume(AZomZombieSpawnVolume* Volume);
 
@@ -63,21 +55,22 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Zom|Spawning")
 	void PopulateVolume(AZomZombieSpawnVolume* Volume);
 
-	// Requests one Crowd-category activation at SpawnTransform, picking a random type from CrowdTypes. If
-	// ActiveDifficultyTier is set, refuses once PoolSubsystem->GetActiveCrowdCount() already meets its
-	// TargetActiveCrowdCount (unmetered if no tier is assigned).
+	// Activates one zombie at SpawnTransform, picking at random among ZombieTypes that can spawn right now (see
+	// ChooseSpawnableType). The caller supplies the list, so each spawn/defend volume sets its own mix. Returns
+	// nullptr if none of them can spawn.
 	UFUNCTION(BlueprintCallable, Category = "Zom|Spawning")
-	AZomZombieBase* RequestCrowdSpawn(UZomZombiePoolSubsystem* PoolSubsystem, const FTransform& SpawnTransform) const;
-
-	// Requests one Bloater-category activation at SpawnTransform.
-	UFUNCTION(BlueprintCallable, Category = "Zom|Spawning")
-	AZomZombieBase* RequestBloaterSpawn(UZomZombiePoolSubsystem* PoolSubsystem, const FTransform& SpawnTransform) const;
+	AZomZombieBase* RequestSpawn(UZomZombiePoolSubsystem* PoolSubsystem, const TArray<UZombieTypeData*>& ZombieTypes, const FTransform& SpawnTransform) const;
 
 private:
 	void UpdateDirector();
 	void ScheduleNextUpdate();
 
-	// Spawns Volume's pending zombies. Returns false once the pool/tier budget is exhausted, so the caller can stop.
+	// Random pick among ZombieTypes that are non-null, not Boss, have a free zombie in their class pool, and - for
+	// Crowd types - haven't hit ActiveDifficultyTier's TargetActiveCrowdCount (Section 10; Bloaters are capped by their
+	// own PoolSize instead). Duplicates in the list weight the pick. Returns nullptr if nothing qualifies.
+	UZombieTypeData* ChooseSpawnableType(const UZomZombiePoolSubsystem& PoolSubsystem, const TArray<UZombieTypeData*>& ZombieTypes) const;
+
+	// Spawns Volume's pending zombies. Returns false if it stopped because none of its types could spawn.
 	bool FillVolume(UZomZombiePoolSubsystem& PoolSubsystem, AZomZombieSpawnVolume& Volume, const TArray<FVector>& PlayerLocations);
 
 	// Returns Volume's zombies that are beyond DespawnRadius from every player to the pool.
@@ -97,7 +90,6 @@ private:
 	float FallbackSpawnInterval = 5.f;
 	float ActivationRadius = 5000.f;
 	float DespawnRadius = 7000.f;
-	float MinSpawnDistanceFromPlayer = 1500.f;
 	int32 SpawnLocationAttempts = 8;
 
 	FTimerHandle UpdateTimer;

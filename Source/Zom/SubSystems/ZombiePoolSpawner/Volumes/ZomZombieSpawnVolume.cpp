@@ -5,6 +5,8 @@
 #include "Zom/SubSystems/ZombiePoolSpawner/ZomZombiePoolSubsystem.h"
 #include "Zom/SubSystems/ZombiePoolSpawner/Director/ZomZombieSpawnDirector.h"
 #include "Zom/Characters/ZomZombieBase.h"
+#include "Zom/Characters/Data/ZombieTypeData.h"
+#include "Zom/Misc/ZomLogChannels.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/Pawn.h"
 #include "NavigationSystem.h"
@@ -46,6 +48,11 @@ void AZomZombieSpawnVolume::PostEditChangeProperty(FPropertyChangedEvent& Proper
 void AZomZombieSpawnVolume::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (!HasZombieTypes())
+	{
+		UE_LOG(LogZomAI, Warning, TEXT("%s has no ZombieTypes assigned - it will never spawn zombies."), *GetName());
+	}
 
 	if (ActivationMode == EZomSpawnVolumeActivation::PlayerEnter)
 	{
@@ -108,6 +115,14 @@ int32 AZomZombieSpawnVolume::GetAliveCount() const
 	return AliveCount;
 }
 
+bool AZomZombieSpawnVolume::HasZombieTypes() const
+{
+	return ZombieTypes.ContainsByPredicate([](const TObjectPtr<UZombieTypeData>& Type)
+	{
+		return Type != nullptr;
+	});
+}
+
 bool AZomZombieSpawnVolume::CanStartPopulationCycle(double WorldTime) const
 {
 	if (bCycleActive || bExhausted || WorldTime < RepopulateAllowedTime)
@@ -135,7 +150,7 @@ int32 AZomZombieSpawnVolume::GetPendingSpawnCount() const
 	return bCycleActive ? FMath::Max(0, CycleTargetCount - CycleSpawnedCount) : 0;
 }
 
-bool AZomZombieSpawnVolume::FindSpawnLocation(const TArray<FVector>& PlayerLocations, float MinDistanceFromPlayer, int32 Attempts, FVector& OutNavLocation) const
+bool AZomZombieSpawnVolume::FindSpawnLocation(const TArray<FVector>& PlayerLocations, int32 Attempts, FVector& OutNavLocation) const
 {
 	UWorld* World = GetWorld();
 	const UNavigationSystemV1* NavSystem = World ? FNavigationSystem::GetCurrent<UNavigationSystemV1>(World) : nullptr;
@@ -148,7 +163,8 @@ bool AZomZombieSpawnVolume::FindSpawnLocation(const TArray<FVector>& PlayerLocat
 	const FVector LocalExtent = SpawnBox->GetUnscaledBoxExtent();
 	// Search the box's full height so points on slopes/stairs inside it still find navmesh.
 	const FVector QueryExtent(50.f, 50.f, SpawnBox->GetScaledBoxExtent().Z);
-	const double MinDistanceSq = FMath::Square(MinDistanceFromPlayer);
+	// 0 (the default) never rejects a point.
+	const double MinDistanceSq = FMath::Square(MinSpawnDistanceFromPlayer);
 
 	for (int32 Attempt = 0; Attempt < Attempts; ++Attempt)
 	{

@@ -61,6 +61,18 @@ public:
     FVector Velocity_LastFrame = FVector::ZeroVector;
 
     // -------------
+    // Rotation / Direction
+    // -------------
+
+    // World rotation of the owning actor, sampled on the game thread each frame.
+    UPROPERTY(BlueprintReadWrite, Category = "Zom|Rotation", meta = (DisplayName = "Actor Rotation"))
+    FRotator ActorRotation = FRotator::ZeroRotator;
+
+    // Movement direction relative to the actor's facing, in degrees [-180, 180]. 0 = forward, 90 = right, -90 = left, +/-180 = backward.
+    UPROPERTY(BlueprintReadWrite, Category = "Zom|Locomotion", meta = (DisplayName = "Direction"))
+    float Direction = 0.0f;
+
+    // -------------
     // Acceleration
     // -------------
 

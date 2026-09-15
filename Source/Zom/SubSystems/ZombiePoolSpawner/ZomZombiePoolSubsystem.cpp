@@ -6,6 +6,7 @@
 #include "Zom/SubSystems/ZombiePoolSpawner/Settings/ZomZombieSpawnSettings.h"
 #include "Zom/AI/Controllers/ZomZombieAIController.h"
 #include "Zom/Characters/ZomZombieBase.h"
+#include "Zom/Characters/Data/ZombieTypeData.h"
 #include "Zom/Misc/ZomLogChannels.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -34,15 +35,9 @@ void UZomZombiePoolSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
 	Super::OnWorldBeginPlay(InWorld);
 
-	const UZomZombieSpawnSettings* Settings = GetDefault<UZomZombieSpawnSettings>();
-	CrowdZombieClass = Settings->CrowdZombieClass.LoadSynchronous();
-	BloaterZombieClass = Settings->BloaterZombieClass.LoadSynchronous();
-	CrowdPoolSize = Settings->CrowdPoolSize;
-	BloaterPoolSize = Settings->BloaterPoolSize;
-
 	if (SpawnDirector)
 	{
-		SpawnDirector->ApplySettings(*Settings);
+		SpawnDirector->ApplySettings(*GetDefault<UZomZombieSpawnSettings>());
 	}
 
 	InWorld.GetTimerManager().SetTimerForNextTick(this, &UZomZombiePoolSubsystem::StartSpawning);
@@ -55,7 +50,13 @@ bool UZomZombiePoolSubsystem::DoesSupportWorldType(const EWorldType::Type WorldT
 
 void UZomZombiePoolSubsystem::StartSpawning()
 {
-	PrewarmPool();
+	bSpawningStarted = true;
+
+	for (UZombieTypeData* Type : PendingTypes)
+	{
+		PrewarmType(Type);
+	}
+	PendingTypes.Empty();
 
 	if (SpawnDirector)
 	{
@@ -63,27 +64,41 @@ void UZomZombiePoolSubsystem::StartSpawning()
 	}
 }
 
-void UZomZombiePoolSubsystem::PrewarmPool()
+void UZomZombiePoolSubsystem::RegisterZombieType(UZombieTypeData* InTypeData)
 {
-	if (bPoolPrewarmed)
+	if (!InTypeData)
 	{
 		return;
 	}
-	bPoolPrewarmed = true;
 
-	if (!CrowdZombieClass)
+	if (!bSpawningStarted)
 	{
-		UE_LOG(LogZomAI, Warning, TEXT("No CrowdZombieClass set in Project Settings > Game > Zom Zombie Spawning - the crowd pool is empty."));
+		PendingTypes.AddUnique(InTypeData);
+		return;
 	}
 
-	SpawnPoolBatch(CrowdZombieClass, CrowdPoolSize, CrowdPool);
-	SpawnPoolBatch(BloaterZombieClass, BloaterPoolSize, BloaterPool);
+	PrewarmType(InTypeData);
 }
 
-void UZomZombiePoolSubsystem::SpawnPoolBatch(TSubclassOf<AZomZombieBase> ZombieClass, int32 Count, TArray<TObjectPtr<AZomZombieBase>>& OutPool)
+void UZomZombiePoolSubsystem::PrewarmType(UZombieTypeData* InTypeData)
 {
 	UWorld* World = GetWorld();
-	if (!ZombieClass || !World)
+	if (!InTypeData || !World)
+	{
+		return;
+	}
+
+	UClass* ZombieClass = InTypeData->ZombieClass.LoadSynchronous();
+	if (!ZombieClass)
+	{
+		UE_LOG(LogZomAI, Warning, TEXT("%s has no Zombie Class set - zombies of this type can't spawn."), *InTypeData->GetName());
+		return;
+	}
+
+	// Types sharing a class top its one pool up to the largest PoolSize instead of each adding a batch.
+	FZomZombieClassPool& ClassPool = ClassPools.FindOrAdd(ZombieClass);
+	const int32 MissingCount = InTypeData->PoolSize - ClassPool.Zombies.Num();
+	if (MissingCount <= 0)
 	{
 		return;
 	}
@@ -91,12 +106,12 @@ void UZomZombiePoolSubsystem::SpawnPoolBatch(TSubclassOf<AZomZombieBase> ZombieC
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	for (int32 Index = 0; Index < Count; ++Index)
+	for (int32 Index = 0; Index < MissingCount; ++Index)
 	{
 		if (AZomZombieBase* Zombie = World->SpawnActor<AZomZombieBase>(ZombieClass, FTransform::Identity, SpawnParams))
 		{
 			DeactivateZombie(Zombie);
-			OutPool.Add(Zombie);
+			ClassPool.Zombies.Add(Zombie);
 		}
 	}
 }
@@ -129,11 +144,26 @@ void UZomZombiePoolSubsystem::DeactivateZombie(AZomZombieBase* Zombie)
 	Zombie->SetActorTickEnabled(false);
 }
 
-AZomZombieBase* UZomZombiePoolSubsystem::AcquireZombie(EZomZombieCategory Category, UZombieTypeData* InTypeData, const FTransform& SpawnTransform)
+bool UZomZombiePoolSubsystem::HasAvailableZombie(const UZombieTypeData* InTypeData) const
 {
-	TArray<TObjectPtr<AZomZombieBase>>& Pool = (Category == EZomZombieCategory::Bloater) ? BloaterPool : CrowdPool;
+	UClass* ZombieClass = InTypeData ? InTypeData->ZombieClass.Get() : nullptr;
+	const FZomZombieClassPool* ClassPool = ZombieClass ? ClassPools.Find(ZombieClass) : nullptr;
+	return ClassPool && ClassPool->Zombies.ContainsByPredicate([](const TObjectPtr<AZomZombieBase>& Zombie)
+	{
+		return Zombie && Zombie->IsHidden();
+	});
+}
 
-	for (AZomZombieBase* Zombie : Pool)
+AZomZombieBase* UZomZombiePoolSubsystem::AcquireZombie(UZombieTypeData* InTypeData, const FTransform& SpawnTransform)
+{
+	UClass* ZombieClass = InTypeData ? InTypeData->ZombieClass.Get() : nullptr;
+	FZomZombieClassPool* ClassPool = ZombieClass ? ClassPools.Find(ZombieClass) : nullptr;
+	if (!ClassPool)
+	{
+		return nullptr;
+	}
+
+	for (AZomZombieBase* Zombie : ClassPool->Zombies)
 	{
 		if (Zombie && Zombie->IsHidden())
 		{
@@ -166,7 +196,7 @@ AZomZombieBase* UZomZombiePoolSubsystem::AcquireZombie(EZomZombieCategory Catego
 		}
 	}
 
-	// Budget for this category is exhausted (or the pool was never prewarmed).
+	// Every zombie of this class is already active.
 	return nullptr;
 }
 
@@ -185,19 +215,24 @@ void UZomZombiePoolSubsystem::ReleaseZombie(AZomZombieBase* Zombie)
 int32 UZomZombiePoolSubsystem::GetActiveCrowdCount() const
 {
 	int32 ActiveCount = 0;
-	for (const AZomZombieBase* Zombie : CrowdPool)
+	for (const TPair<TObjectPtr<UClass>, FZomZombieClassPool>& Pair : ClassPools)
 	{
-		if (Zombie && !Zombie->IsHidden())
+		for (const AZomZombieBase* Zombie : Pair.Value.Zombies)
 		{
-			++ActiveCount;
+			const UZombieTypeData* TypeData = (Zombie && !Zombie->IsHidden()) ? Zombie->GetZombieTypeData() : nullptr;
+			if (TypeData && TypeData->Category == EZomZombieCategory::Crowd)
+			{
+				++ActiveCount;
+			}
 		}
 	}
 	return ActiveCount;
 }
 
-float UZomZombiePoolSubsystem::GetCrowdCapsuleHalfHeight() const
+float UZomZombiePoolSubsystem::GetCapsuleHalfHeight(const UZombieTypeData* InTypeData) const
 {
-	const AZomZombieBase* ZombieDefaults = CrowdZombieClass ? CrowdZombieClass->GetDefaultObject<AZomZombieBase>() : nullptr;
+	UClass* ZombieClass = InTypeData ? InTypeData->ZombieClass.Get() : nullptr;
+	const AZomZombieBase* ZombieDefaults = ZombieClass ? Cast<AZomZombieBase>(ZombieClass->GetDefaultObject()) : nullptr;
 	const UCapsuleComponent* Capsule = ZombieDefaults ? ZombieDefaults->GetCapsuleComponent() : nullptr;
 	return Capsule ? Capsule->GetScaledCapsuleHalfHeight() : 0.f;
 }
