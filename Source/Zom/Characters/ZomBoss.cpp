@@ -3,6 +3,7 @@
 
 #include "Zom/Characters/ZomBoss.h"
 #include "AbilitySystemComponent.h"
+#include "Engine/GameInstance.h"
 #include "Components/StateTreeComponent.h"
 #include "Components/AudioComponent.h"
 #include "Zom/Abilities/AttributeSets/ZomZombieAttributeSet.h"

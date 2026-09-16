@@ -4,6 +4,9 @@
 #include "Zom/Characters/ZomPlayerCharacter.h"
 #include "Zom/Characters/Components/ZomCharacterMovementComponent.h"
 #include "MotionWarpingComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Sight.h"
 #include "GameFramework/GameplayCameraComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "ZomPlayerController.h"
@@ -34,6 +37,11 @@ AZomPlayerCharacter::AZomPlayerCharacter(const FObjectInitializer& ObjectInitial
 
 	CurrentCamera = FGameplayTagContainer(TAG_Zom_Camera_State_Default.GetTag());
 
+	// What makes this character visible to AI sight at all - see the header. Which senses it registers for is
+	// set in BeginPlay: bAutoRegisterAsSource and RegisterAsSourceForSenses are protected (editor-only knobs),
+	// so RegisterForSense() is the sole way to do it from C++, and it needs a world.
+	PerceptionStimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("PerceptionStimuliSource"));
+
 	// Starting ability - granted via DefaultAbilities (base class, GrantDefaultAbilitiesAndEffects) once the ASC
 	// is initialized. Set here as a C++ default; override per-Blueprint if needed.
 	DefaultAbilities.Add(UZomGA_LightAttack::StaticClass());
@@ -48,6 +56,14 @@ AZomPlayerCharacter::AZomPlayerCharacter(const FObjectInitializer& ObjectInitial
 void AZomPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// Registers this character as a sight stimuli source now that there's a world (and so a perception system)
+	// to register with. Without this the player is invisible to every zombie: DefaultEngine.ini turns off the
+	// sight sense's auto-registration of pawns, so only actors registered here are ever sight targets.
+	if (PerceptionStimuliSource)
+	{
+		PerceptionStimuliSource->RegisterForSense(UAISense_Sight::StaticClass());
+	}
 
 	BindCombatCoreEvents();
 }

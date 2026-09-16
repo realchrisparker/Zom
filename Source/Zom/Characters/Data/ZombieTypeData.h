@@ -9,6 +9,7 @@
 
 
 class AZomZombieBase;
+class UZomCharacterSoundSet;
 
 
 /**
@@ -72,4 +73,13 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom|Perception", meta = (DisplayName = "Hearing Radius"))
 	float HearingRadius = 600.f;
+
+	// -------------
+	// Audio
+	// -------------
+
+	// Vocals (idle growl, hit, death) for this type, applied to UZomCharacterAudioComponent on every activation. Types
+	// can share one asset. Null keeps the Blueprint's DefaultSoundSet.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom|Audio", meta = (DisplayName = "Sound Set"))
+	TObjectPtr<UZomCharacterSoundSet> SoundSet;
 };

@@ -130,6 +130,9 @@ void UZomZombiePoolSubsystem::DeactivateZombie(AZomZombieBase* Zombie)
 		AIController->PauseBrain();
 	}
 
+	// Stops self-running per-activation work (idle vocal timer, voice audio) that hiding the actor wouldn't.
+	Zombie->HandleDeactivated();
+
 	// SetActorTickEnabled doesn't stop component ticks - without this a hidden zombie with collision off can keep
 	// falling (e.g. prewarmed at the origin over no floor) until it passes KillZ and is destroyed out from under the pool.
 	if (UCharacterMovementComponent* MovementComponent = Zombie->GetCharacterMovement())

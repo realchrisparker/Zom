@@ -26,15 +26,21 @@ AZomZombieAIController::AZomZombieAIController()
 	// redeclaring it in this class would be a UHT shadowing error.
 	SetPerceptionComponent(*CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("PerceptionComponent")));
 
+	// bDetectFriendlies = false is what keeps the horde from perceiving itself: this controller's team comes
+	// from its pawn's faction tag (see GetGenericTeamId), so every other zombie and the Boss - all
+	// Zom.Character.Enemy - are Friendly to it under the engine's default attitude solver, and their
+	// sight/hearing stimuli are dropped before they ever reach HandleTargetPerceptionUpdated. For sight this
+	// happens before a listener/target pair even becomes a query (UAISense_Sight::RegisterNewQuery).
+	// Neutrals stay on for actors with no faction of their own (props, noise sources), still worth hearing.
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
 	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
 	SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
-	SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
+	SightConfig->DetectionByAffiliation.bDetectFriendlies = false;
 
 	HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("HearingConfig"));
 	HearingConfig->DetectionByAffiliation.bDetectEnemies = true;
 	HearingConfig->DetectionByAffiliation.bDetectNeutrals = true;
-	HearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
+	HearingConfig->DetectionByAffiliation.bDetectFriendlies = false;
 
 	// No radius, no affiliation filter to configure (UAISenseConfig_Damage doesn't have one) - Damage is an
 	// explicit UAISense_Damage::ReportDamageEvent() call (made by AZomZombieBase whenever it takes damage),
@@ -62,6 +68,14 @@ void AZomZombieAIController::OnPossess(APawn* InPawn)
 
 	const AZomZombieBase* OwningZombie = Cast<AZomZombieBase>(InPawn);
 	ConfigureForType(OwningZombie ? OwningZombie->GetZombieTypeData() : nullptr);
+
+	// GetGenericTeamId() now resolves through InPawn, but FPerceptionListener cached this listener's team when
+	// it registered (FPerceptionListener::UpdateListenerProperties) - before possession, when there was no pawn
+	// to read it from. Without this refresh the affiliation filtering would keep running on that stale NoTeam.
+	if (PerceptionComponent)
+	{
+		PerceptionComponent->RequestStimuliListenerUpdate();
+	}
 
 	// Bind to the global combat event bus so this zombie's State Tree can react to defense/parry/block state -
 	// RemoveDynamic before AddDynamic guards against a double-bind if OnPossess is ever called again for this
@@ -99,6 +113,19 @@ void AZomZombieAIController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 
 	Super::EndPlay(EndPlayReason);
+}
+
+FGenericTeamId AZomZombieAIController::GetGenericTeamId() const
+{
+	if (const IGenericTeamAgentInterface* PawnTeamAgent = Cast<const IGenericTeamAgentInterface>(GetPawn()))
+	{
+		return PawnTeamAgent->GetGenericTeamId();
+	}
+
+	// Unpossessed: AAIController's own stored id (NoTeam unless something set it). Differs from every real
+	// faction id, so an unpossessed controller reads as Hostile to everything rather than Friendly - it has no
+	// pawn to sense with anyway, and OnPossess refreshes the listener as soon as it gets one.
+	return Super::GetGenericTeamId();
 }
 
 void AZomZombieAIController::ConfigureForType(const UZombieTypeData* TypeData)
@@ -143,6 +170,17 @@ void AZomZombieAIController::ResumeBrain()
 void AZomZombieAIController::HandleTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
 	if (!Actor || !StateTreeComponent)
+	{
+		return;
+	}
+
+	// Second line of defence behind the affiliation flags, and the only one that covers damage: as the
+	// constructor notes, UAISenseConfig_Damage has no affiliation filter at all, so without this a zombie
+	// clipped by another zombie's attack (or standing in a Bloater's gas) would turn and chase its own kind.
+	// Attitude resolves through the faction tags (AZomCharacterBase::GetGenericTeamId), so this agrees with
+	// UMCS_GlobalFunctions::AreActorsSameFaction() by construction rather than by convention.
+	// Bailing out before the payload is built also keeps a friendly from overwriting LastKnownTargetLocation.
+	if (GetTeamAttitudeTowards(*Actor) == ETeamAttitude::Friendly)
 	{
 		return;
 	}
@@ -236,19 +274,4 @@ void AZomZombieAIController::HandleBlockSuccess(AActor* Defender, AActor* Attack
 	Payload.Defender = Defender;
 	Payload.Attacker = Attacker;
 	StateTreeComponent->SendStateTreeEvent(TAG_Zom_Combat_Event_DefenseSuccess.GetTag(), FConstStructView::Make(Payload));
-}
-
-bool AZomZombieAIController::HasValidTarget() const
-{
-	return CurrentTarget.IsValid();
-}
-
-AActor* AZomZombieAIController::GetCurrentTarget() const
-{
-	return CurrentTarget.Get();
-}
-
-FVector AZomZombieAIController::GetLastKnownTargetLocation() const
-{
-	return LastKnownTargetLocation;
 }

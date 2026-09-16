@@ -43,6 +43,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Zom")
 	void InitializeForType(UZombieTypeData* InTypeData);
 
+	// Called by UZomZombiePoolSubsystem whenever this zombie is parked in the pool (prewarm and release on death).
+	// Hiding an actor doesn't stop its timers or audio, so per-activation work that runs on its own is stopped here.
+	void HandleDeactivated();
+
 	// -------------
 	// Properties
 	// -------------

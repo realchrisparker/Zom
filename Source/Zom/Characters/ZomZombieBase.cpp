@@ -3,8 +3,10 @@
 
 #include "Zom/Characters/ZomZombieBase.h"
 #include "AbilitySystemComponent.h"
+#include "Engine/World.h"
 #include "Zom/AI/Controllers/ZomZombieAIController.h"
 #include "Zom/Characters/Data/ZombieTypeData.h"
+#include "Zom/Characters/Components/ZomCharacterAudioComponent.h"
 #include "Zom/SubSystems/ZombiePoolSpawner/ZomZombiePoolSubsystem.h"
 #include "Zom/Characters/Volumes/ZomToxicGasVolume.h"
 #include "Zom/Abilities/AttributeSets/ZomZombieAttributeSet.h"
@@ -73,6 +75,18 @@ void AZomZombieBase::InitializeForType(UZombieTypeData* InTypeData)
 		AIController->ConfigureForType(ZombieTypeData);
 	}
 
+	// A type with no sound set keeps whatever the Blueprint's DefaultSoundSet applied. Idle vocals restart either way,
+	// since pooling (HandleDeactivated) stopped them.
+	if (CharacterAudioComponent)
+	{
+		if (ZombieTypeData->SoundSet)
+		{
+			CharacterAudioComponent->SetSoundSet(ZombieTypeData->SoundSet);
+		}
+
+		CharacterAudioComponent->StartIdleVocals();
+	}
+
 	ReceiveZombieActivated();
 }
 
@@ -95,6 +109,15 @@ void AZomZombieBase::HandleDeath()
 	else
 	{
 		UE_LOG(LogZomCharacter, Warning, TEXT("%s died but no UZomZombiePoolSubsystem was found - not returned to a pool."), *GetName());
+	}
+}
+
+void AZomZombieBase::HandleDeactivated()
+{
+	// AtLocation one-shots (the death vocal) are left playing - only the idle scheduler and the voice stop.
+	if (CharacterAudioComponent)
+	{
+		CharacterAudioComponent->StopAudio();
 	}
 }
 

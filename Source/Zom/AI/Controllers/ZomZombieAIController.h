@@ -4,6 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+// Not forward-declarable: the inline GetCurrentTarget() below upcasts ACharacter* -> AActor*, and a
+// derived-to-base pointer conversion needs the complete type. AIController.h doesn't pull Character.h in,
+// so without this the accessor only compiles by luck of unity-build ordering.
+#include "GameFramework/Character.h"
 #include "ZomZombieAIController.generated.h"
 
 
@@ -43,6 +47,12 @@ public:
 
 	virtual void OnPossess(APawn* InPawn) override;
 
+	// Perception reads the *listener's* team off this controller (it owns the perception component) and a
+	// sensed target's team off the pawn, so the two have to agree. Rather than storing a copy that can drift,
+	// this defers to the possessed pawn's own AZomCharacterBase::GetGenericTeamId(), which is itself derived
+	// from its faction tag - one authored source of truth for the whole chain.
+	virtual FGenericTeamId GetGenericTeamId() const override;
+
 	// Unbinds this controller from UMCS_CombatEventBus (bound in OnPossess) so a stale callback can't fire
 	// into a StateTreeComponent that's about to go away.
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -62,13 +72,13 @@ public:
 	// Backs property bindings for tasks in an already-active State Tree state (e.g. Chase needs the target's
 	// current location every tick it's active). Distinct from the perception events, which drive transitions.
 	UFUNCTION(BlueprintCallable, Category = "Zom|AI")
-	bool HasValidTarget() const;
+	bool HasValidTarget() const { return CurrentTarget.IsValid(); };
 
 	UFUNCTION(BlueprintCallable, Category = "Zom|AI")
-	AActor* GetCurrentTarget() const;
+	AActor* GetCurrentTarget() const { return CurrentTarget.Get(); };
 
 	UFUNCTION(BlueprintCallable, Category = "Zom|AI")
-	FVector GetLastKnownTargetLocation() const;
+	FVector GetLastKnownTargetLocation() const { return LastKnownTargetLocation; };
 
 protected:
 	UFUNCTION()

@@ -94,3 +94,13 @@ ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Boss_Phase2);
 // -------------
 
 ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Camera_State_Default);
+
+// -------------
+// Audio (keys into UZomCharacterSoundSet::Sounds, played through UZomCharacterAudioComponent; add new events
+// here and author a matching row in the sound set - no component changes needed)
+// -------------
+
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Audio_Vocal_Idle);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Audio_Vocal_Hit_Light);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Audio_Vocal_Hit_Heavy);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Audio_Vocal_Death);

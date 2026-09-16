@@ -11,6 +11,7 @@
 #include "Zom/Characters/Enums/ZomCharacterEnums.h"
 #include "MotionCombatSystem/Interfaces/MCS_CombatTargetInterface.h"
 #include "MotionCombatSystem/Structs/MCS_HitReaction.h"
+#include "GenericTeamAgentInterface.h"
 #include "ZomCharacterBase.generated.h"
 
 
@@ -24,6 +25,8 @@ class UMCS_CombatCoreComponent;
 class UMCS_CombatHitboxComponent;
 class UMCS_CombatHitReactionComponent;
 class UMCS_CombatDefenseComponent;
+class UAudioComponent;
+class UZomCharacterAudioComponent;
 struct FOnAttributeChangeData;
 struct FMCS_AttackEntry;
 
@@ -35,7 +38,7 @@ struct FMCS_AttackEntry;
  * GetAbilitySystemComponent() without caring where the component physically lives.
  */
 UCLASS(Blueprintable, meta=(DisplayName="Zom Character Base"))
-class ZOM_API AZomCharacterBase : public ACharacter, public IAbilitySystemInterface, public IMCS_CombatCharacterInterface
+class ZOM_API AZomCharacterBase : public ACharacter, public IAbilitySystemInterface, public IMCS_CombatCharacterInterface, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -73,6 +76,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Zom|Combat", meta = (DisplayName = "Get Combat Defense Component"))
 	UMCS_CombatDefenseComponent* GetCombatDefenseComponent() const { return CombatDefenseComponent; }
 
+	// Returns the tag-driven character audio component (vocals, and later impacts).
+	UFUNCTION(BlueprintCallable, Category = "Zom|Audio", meta = (DisplayName = "Get Character Audio Component"))
+	UZomCharacterAudioComponent* GetCharacterAudioComponent() const { return CharacterAudioComponent; }
+
 	// Returns the current attack situation, which is used to determine which attacks are valid for the character.
 	UFUNCTION(BlueprintCallable, Category = "Zom|Combat", meta = (DisplayName = "Get Current Attack Situation"))
 	FMCS_AttackSituation GetCurrentAttackSituation() const;
@@ -103,6 +110,30 @@ public:
 	// InitializeAbilitySystem call later in the same function has run, so AbilitySystemComponent is still null.
 	UFUNCTION(BlueprintImplementableEvent, Category = "Zom|Abilities", meta = (DisplayName = "On Ability System Initialized"))
 	void OnAbilitySystemInitialized();
+
+	// -------------
+	// IGenericTeamAgentInterface
+	// -------------
+
+	// Team identity for the engine's generic team system, DERIVED from this character's
+	// IMCS_CombatCharacterInterface::GetFactionTag() - the faction tag stays the one authored source of truth
+	// for affiliation, and this is only the numeric form AI perception is able to filter on
+	// (UAISense_Sight::RegisterNewQuery rejects a listener/target pair on affiliation before it ever becomes a
+	// sight query; there is no GameplayTag hook anywhere in that path).
+	//
+	// Implemented here on the PAWN, not only on the controller, because FGenericTeamId::GetTeamIdentifier()
+	// only ever queries the actor it's handed: perception resolves a sensed target's team through it, and a
+	// pawn that doesn't implement this interface reads back as NoTeam, leaving friend/foe unable to tell
+	// anything apart.
+	virtual FGenericTeamId GetGenericTeamId() const override;
+
+	// Intentionally unsupported - see the .cpp. Affiliation is authored as the faction tag, so there is no
+	// stored id to assign; overriding a character's faction means overriding GetFactionTag().
+	virtual void SetGenericTeamId(const FGenericTeamId& NewTeamID) override;
+
+	// Maps a Zom.Character.* faction tag onto the FGenericTeamId perception filters with. Exposed so anything
+	// else needing the numeric form uses the same mapping rather than inventing a second one.
+	static FGenericTeamId FactionTagToTeamId(const FGameplayTag& FactionTag);
 
 	// -------------
 	// Properties
@@ -150,6 +181,9 @@ public:
 	virtual bool TakeCombatDamage_Implementation(float Damage, const FHitResult& Hit, const FMCS_AttackEntry& AttackEntry, AActor* Attacker) const override;
 
 protected:
+
+	// Called after all components are initialized; wires the character audio component to the voice
+	virtual void PostInitializeComponents() override;
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -260,6 +294,17 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Zom|Combat", meta = (DisplayName = "MCS_CombatDefenseComponent"))
 	TObjectPtr<UMCS_CombatDefenseComponent> CombatDefenseComponent;
+
+	// Audio components. Every AZomCharacterBase subclass gets a head-attached voice plus the tag-driven audio
+	// component that plays its UZomCharacterSoundSet through it. The Boss's DialogueAudioComponent stays separate.
+
+	// Head-attached voice that Voice sound set entries (idle growls, hit vocals) play on. Never auto-activates.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Zom|Audio", meta = (DisplayName = "Voice Audio Component"))
+	TObjectPtr<UAudioComponent> VoiceAudioComponent;
+
+	// Plays this character's sounds by Zom.Audio.* tag and runs the idle vocal scheduler.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Zom|Audio", meta = (DisplayName = "Character Audio Component"))
+	TObjectPtr<UZomCharacterAudioComponent> CharacterAudioComponent;
 
 private:
 

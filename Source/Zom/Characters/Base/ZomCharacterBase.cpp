@@ -3,6 +3,9 @@
 
 #include "Zom/Characters/Base/ZomCharacterBase.h"
 #include "Zom/Characters/Components/ZomCharacterMovementComponent.h"
+#include "Zom/Characters/Components/ZomCharacterAudioComponent.h"
+#include "Components/AudioComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "AbilitySystemComponent.h"
 #include "GameplayEffect.h"
 #include "Zom/Abilities/AttributeSets/ZomAttributeSetBase.h"
@@ -32,6 +35,26 @@ AZomCharacterBase::AZomCharacterBase(const FObjectInitializer& ObjectInitializer
 	CombatHitboxComponent = CreateDefaultSubobject<UMCS_CombatHitboxComponent>(TEXT("CombatHitboxComponent"));
 	CombatHitReactionComponent = CreateDefaultSubobject<UMCS_CombatHitReactionComponent>(TEXT("CombatHitReactionComponent"));
 	CombatDefenseComponent = CreateDefaultSubobject<UMCS_CombatDefenseComponent>(TEXT("CombatDefenseComponent"));
+
+	// Audio components. The voice follows the head so vocals come from the mouth; change the socket on the Blueprint
+	// if a skeleton names it differently. CharacterAudioComponent is handed the voice in PostInitializeComponents.
+
+	VoiceAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("VoiceAudioComponent"));
+	VoiceAudioComponent->SetupAttachment(GetMesh(), TEXT("head"));
+	VoiceAudioComponent->bAutoActivate = false;
+
+	CharacterAudioComponent = CreateDefaultSubobject<UZomCharacterAudioComponent>(TEXT("CharacterAudioComponent"));
+}
+
+// Called after all components are initialized; wires the character audio component to the voice
+void AZomCharacterBase::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	if (CharacterAudioComponent)
+	{
+		CharacterAudioComponent->SetVoiceAudioComponent(VoiceAudioComponent);
+	}
 }
 
 // Called when the game starts or when spawned
@@ -40,6 +63,13 @@ void AZomCharacterBase::BeginPlay()
 	Super::BeginPlay();
 
 	CombatState = ECombatState::None;
+
+	// Player/Boss sound set. Zombies re-apply theirs from UZombieTypeData in InitializeForType, right after this.
+	if (CharacterAudioComponent && CharacterAudioComponent->DefaultSoundSet)
+	{
+		CharacterAudioComponent->SetSoundSet(CharacterAudioComponent->DefaultSoundSet);
+		CharacterAudioComponent->StartIdleVocals();
+	}
 }
 
 // Called every frame
@@ -272,6 +302,57 @@ float AZomCharacterBase::GetMaxHealth() const
 	return AttributeSet ? AttributeSet->GetMaxHealth() : 0.f;
 }
 
+// One id per distinct faction tag, matched by exact equality, so that team attitude and
+// UMCS_GlobalFunctions::AreActorsSameFaction() can never disagree about two actors: the engine's default
+// attitude solver is "same id = Friendly, different id = Hostile", and AreActorsSameFaction is "same tag",
+// which lines up exactly as long as the mapping stays 1:1. An unrecognised or empty tag deliberately falls
+// through to NoTeam, which differs from every real id and so reads as Hostile - the same "empty = unaffiliated
+// = always targetable" rule IMCS_CombatCharacterInterface::GetFactionTag() documents.
+//
+// Ids are FGenericTeamId values and must stay below FGenericTeamId::NoTeamId (255).
+namespace ZomTeamIds
+{
+	constexpr uint8 Player = 0;
+	constexpr uint8 Enemy = 1;
+	constexpr uint8 NPC = 2;
+}
+
+FGenericTeamId AZomCharacterBase::FactionTagToTeamId(const FGameplayTag& FactionTag)
+{
+	if (FactionTag == TAG_Zom_Character_Player.GetTag())
+	{
+		return FGenericTeamId(ZomTeamIds::Player);
+	}
+
+	if (FactionTag == TAG_Zom_Character_Enemy.GetTag())
+	{
+		return FGenericTeamId(ZomTeamIds::Enemy);
+	}
+
+	if (FactionTag == TAG_Zom_Character_NPC.GetTag())
+	{
+		return FGenericTeamId(ZomTeamIds::NPC);
+	}
+
+	return FGenericTeamId::NoTeam;
+}
+
+FGenericTeamId AZomCharacterBase::GetGenericTeamId() const
+{
+	// Execute_ rather than calling GetFactionTag_Implementation() directly, so a Blueprint override of the
+	// faction tag is honoured here too - otherwise the tag and the team could describe different factions.
+	return FactionTagToTeamId(IMCS_CombatCharacterInterface::Execute_GetFactionTag(this));
+}
+
+void AZomCharacterBase::SetGenericTeamId(const FGenericTeamId& NewTeamID)
+{
+	// Nothing to assign: GetGenericTeamId() is derived from the faction tag, so honouring this would mean
+	// storing a second affiliation that could contradict GetFactionTag() and AreActorsSameFaction(). Logged
+	// rather than silently ignored, since a caller expecting the team to change would otherwise see no effect.
+	UE_LOG(LogZom, Warning, TEXT("%s: SetGenericTeamId(%d) ignored - team is derived from the faction tag; override GetFactionTag() instead."),
+		*GetNameSafe(this), NewTeamID.GetId());
+}
+
 // Empty at this level; each subclass overrides it for actor-level death consequences (Section 4.6).
 void AZomCharacterBase::HandleDeath()
 {
@@ -404,13 +485,23 @@ bool AZomCharacterBase::TakeCombatDamage_Implementation(float Damage, const FHit
 		return false;
 	}
 
+	// The attack authors the severity, but death is decided by Health. The Damage->Health conversion has already
+	// run synchronously, so a lethal hit is upgraded to Death.
+	const EPGAS_HitSeverity Severity = GetHealth() <= 0.f ? EPGAS_HitSeverity::Death : AttackEntry.HitSeverity;
+
 	if (CombatHitReactionComponent)
 	{
-		// The attack authors the severity, but death is decided by Health. The Damage->Health conversion has already
-		// run synchronously, so a lethal hit is upgraded to Death - the component then locks it in and fires
-		// OnDeathReactionFinished. Attacker may be null (see above); hit direction still resolves from Hit's impact point.
-		const EPGAS_HitSeverity Severity = GetHealth() <= 0.f ? EPGAS_HitSeverity::Death : AttackEntry.HitSeverity;
+		// The component locks a Death reaction in and fires OnDeathReactionFinished. Attacker may be null (see above);
+		// hit direction still resolves from Hit's impact point.
 		CombatHitReactionComponent->PerformHitReaction(Hit, const_cast<AZomCharacterBase*>(this), Severity, Attacker);
+	}
+
+	if (CharacterAudioComponent)
+	{
+		// Parried/fully-blocked hits never reach TakeCombatDamage, so only landed hits vocalize. On a lethal hit
+		// HandleDeath has already run by now (a zombie is already pooled and hidden), which is why a sound set's
+		// Vocal.Death row must be authored as AtLocation - Voice entries are skipped on a hidden owner.
+		CharacterAudioComponent->PlayHitReactionSound(Severity);
 	}
 
 	return true;

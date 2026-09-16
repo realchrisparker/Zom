@@ -16,6 +16,7 @@ class AZomPlayerController;
 class UMotionWarpingComponent;
 class UGameplayCameraComponent;
 class UMCS_CombatHitboxComponent;
+class UAIPerceptionStimuliSourceComponent;
 
 
 /**
@@ -170,6 +171,13 @@ protected:
 	// Gameplay camera component, attached to the character's mesh
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Zom", meta = (DisplayName = "GameplayCamera", AllowPrivateAccess = "true"))
 	TObjectPtr<UGameplayCameraComponent> GameplayCamera;
+
+	// What makes this character visible to AI sight at all: DefaultEngine.ini turns off the sight sense's
+	// auto-registration of every pawn, so zombies only ever run sight queries against actors carrying one of
+	// these. Sight only - Hearing and Damage reach a listener through explicitly reported events, not through
+	// source registration.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Zom|AI", meta = (DisplayName = "Perception Stimuli Source", AllowPrivateAccess = "true"))
+	TObjectPtr<UAIPerceptionStimuliSourceComponent> PerceptionStimuliSource;
 
 private:
 

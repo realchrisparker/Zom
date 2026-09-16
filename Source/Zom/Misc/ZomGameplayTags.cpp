@@ -42,3 +42,8 @@ UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_SetByCaller_RestoreStamina, "Zom.SetByCal
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Boss_Phase2, "Zom.Boss.Phase2", "Toggled on AZomBoss's ASC when Health crosses the phase-two threshold (~50%), off the AttributeSet's health-change delegate.")
 
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Camera_State_Default, "Zom.Camera.State.Default", "AZomPlayerCharacter::CameraStateTag's default value; maps to CR_Player_Default in CDE_Player's CameraRigsByTag.")
+
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Audio_Vocal_Idle, "Zom.Audio.Vocal.Idle", "Idle vocal (e.g. zombie growl) scheduled by UZomCharacterAudioComponent while the character stands still.")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Audio_Vocal_Hit_Light, "Zom.Audio.Vocal.Hit.Light", "Vocal played on a Light/Dazed hit reaction (and fallback for heavier severities with no Heavy row).")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Audio_Vocal_Hit_Heavy, "Zom.Audio.Vocal.Hit.Heavy", "Vocal played on a Heavy/Stagger/Knockback/Knockdown/Critical hit reaction.")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Zom_Audio_Vocal_Death, "Zom.Audio.Vocal.Death", "Vocal played on a lethal hit. Author as AtLocation so it survives the zombie being pooled on death.")
