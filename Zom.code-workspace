@@ -21,7 +21,12 @@
 		},
 		"sarif-viewer.connectToGithubCodeScanning": "off",
 		"workbench.browser.newTabPlacement": "sideGroup",
-		"editor.tabCompletion": "on"
+		"editor.tabCompletion": "on",
+		"workbench.editor.showTabs": "multiple",
+		"workbench.editor.tabActionReserveSpace": false,
+		"workbench.editor.titleScrollbarSizing": "default",
+		"workbench.editor.useModal": "off",
+		"workbench.editor.wrapTabs": true
 	},
 	"extensions": {
 		"recommendations": [

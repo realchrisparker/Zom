@@ -17,6 +17,7 @@ class UMotionWarpingComponent;
 class UGameplayCameraComponent;
 class UMCS_CombatHitboxComponent;
 class UAIPerceptionStimuliSourceComponent;
+class UZomCharacterNoiseComponent;
 
 
 /**
@@ -56,6 +57,13 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Zom", meta = (DisplayName = "Get Gameplay Camera Component"))
 	UGameplayCameraComponent* GetGameplayCameraComponent() const { return GameplayCamera; }
+
+	/**
+	 * Returns the component that makes this character audible to AI hearing.
+	 * @return The character noise component.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Zom|Noise", meta = (DisplayName = "Get Character Noise Component"))
+	UZomCharacterNoiseComponent* GetCharacterNoiseComponent() const { return CharacterNoiseComponent; }
 
 	/**
 	 * Returns the current camera tag.
@@ -178,6 +186,12 @@ protected:
 	// source registration.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Zom|AI", meta = (DisplayName = "Perception Stimuli Source", AllowPrivateAccess = "true"))
 	TObjectPtr<UAIPerceptionStimuliSourceComponent> PerceptionStimuliSource;
+
+	// The counterpart to the stimuli source above: that one makes the player visible, this one makes the
+	// player audible. It reports noise to the hearing sense explicitly rather than registering as a source,
+	// which is why hearing needs no entry in PerceptionStimuliSource's sense list.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Zom|Noise", meta = (DisplayName = "Character Noise Component", AllowPrivateAccess = "true"))
+	TObjectPtr<UZomCharacterNoiseComponent> CharacterNoiseComponent;
 
 private:
 

@@ -113,3 +113,31 @@ enum class EZomZombieCategory : uint8
 	Bloater	UMETA(DisplayName = "Bloater"),
 	Boss	UMETA(DisplayName = "Boss")
 };
+/**
+ * How UZomCharacterNoiseComponent decides a foot has planted. Both routes converge on the same
+ * NotifyFootstep() entry point, so the noise math, audio call and debug drawing exist exactly once.
+ */
+UENUM(BlueprintType, meta = (DisplayName = "Zom Footstep Trigger"))
+enum class EZomFootstepTrigger : uint8
+{
+	// Distance-based cadence from a self-re-arming timer. Works on any animation, including motion-matched
+	// locomotion with no authored notifies, so it needs zero content to function. The default.
+	StrideTimer	UMETA(DisplayName = "Stride Timer"),
+
+	// UAnimNotify_ZomFootstep placed on the locomotion animations. Frame-accurate to the visible foot
+	// plant, at the cost of authoring and maintaining a notify on every locomotion asset.
+	AnimNotify	UMETA(DisplayName = "Anim Notify")
+};
+
+/**
+ * Which foot a footstep belongs to. Selects the mesh socket a noise emission originates from.
+ */
+UENUM(BlueprintType, meta = (DisplayName = "Zom Foot"))
+enum class EZomFoot : uint8
+{
+	Left		UMETA(DisplayName = "Left"),
+	Right		UMETA(DisplayName = "Right"),
+
+	// Origin falls back to the capsule bottom rather than a foot socket.
+	Unspecified	UMETA(DisplayName = "Unspecified")
+};

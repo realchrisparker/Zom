@@ -27,6 +27,34 @@ Progress is checkpointed and mirrored onto the player's ability system as Gamepl
 - **Objectives & save/checkpoint** — a persistent objective subsystem, checkpoint-based restore on death or relaunch, with saved attributes reapplied through a Gameplay Effect rather than a raw write.
 - **Inventory & items** — a shared data asset covering weapons (Machete, Fire Axe, Pistol, Pump Shotgun, Crossbow) and consumables (Medicine, ammo, Bandage).
 - **Accessibility settings** — audio-cue captions, colorblind-safe HUD, screen-effects toggle.
+- **Tag-driven character audio** — every character plays its sounds (idle growls, hit and death vocals, footsteps) by Gameplay Tag from a swappable sound set data asset, so a pooled zombie reactivated as a different type simply swaps sets. Idle vocals run on a staggered timer so a horde never growls in unison.
+- **Stealth & noise** — the player's movement is audible to zombie hearing. How far a step carries depends on gait, stance, speed, footwear and the physical surface underfoot (grass is near-silent, metal carries), and one-off noises like a gunshot can be given a large range to pull in zombies from rooms the player has never seen. Hearing a noise sends a zombie to investigate the location rather than locking onto the player, because hearing ignores walls.
+
+## Character Components
+
+Components that live on the characters alongside the MCS combat set. All of them are timer or event driven — none tick.
+
+| Component | Lives on | Purpose |
+|---|---|---|
+| `UZomCharacterMovementComponent` | Player | Gait (walk/run/sprint), stance and rotation-mode locomotion feeding the motion-matching animation. |
+| `UZomCharacterAudioComponent` | Every character | Plays sounds by `Zom.Audio.*` tag from a `UZomCharacterSoundSet` (per-sound volume/pitch randomisation, play chance, cooldown), on the head-attached voice or as a one-shot in the world. Runs the idle vocal scheduler and maps hit-reaction severity to vocals. |
+| `UZomCharacterNoiseComponent` | Player | Makes movement audible to AI. Samples the surface underfoot, emits a footstep noise on each step, reports it to AI hearing and hands the footstep sound to the audio component. |
+
+Audio and noise are deliberately separate: audio is what the player hears, noise is what the AI hears. They diverge on purpose — a silenced weapon is loud to the player and quiet to a zombie.
+
+### How the noise system fits together
+
+| Piece | Type | Role |
+|---|---|---|
+| `UZomNoiseLibrary` | Blueprint function library | The reusable maths: `CalculateNoiseLevel` (locomotion weight × surface loudness, 0–1) and `CalculateNoiseDistance` (level × multiplier, in cm), plus `ReportNoise`, the project's single call into AI hearing. Usable by anything — a gunshot ability or a thrown bottle doesn't need the component. |
+| `UZomSurfaceAudioSet` | Data asset (`DA_SurfaceAudio`) | Per physical surface: how loud it is underfoot and which footstep sound it plays. |
+| `UZomSurfaceAudioSubsystem` | Game instance subsystem | Loads that asset once and flattens it into a fixed array indexed by surface type, so a lookup is a single array index. |
+| `UZomNoiseSettings` | Project Settings > Game > Zom Stealth | Project-wide tuning: the surface set, footstep range, minimum reportable noise, and the reference hearing range. |
+| `UAnimNotify_ZomFootstep` | Anim notify | Frame-accurate alternative to the component's stride timer; which one drives footsteps is a setting on the component. |
+
+Surface types (Concrete, Wood, Metal, Grass, Dirt, Gravel, Water, Glass, Carpet, Tile) are defined in `DefaultEngine.ini`. A zombie type's `HearingRadius` acts as its hearing sensitivity: at the project's reference range (600) it hears a noise at exactly the computed distance, at double it hears twice as far.
+
+**Debugging:** `Zom.Debug.Noise 1` in the console (or the `ZomDebugNoise` cheat) draws each footstep as two waveform rings — one at the foot, and one filled disc at the distance a zombie can hear it, coloured green to red by loudness. `Zom.Debug.Noise 2` adds a readout of noise level, dB, radius, surface and stride interval.
 
 ## Tech Stack
 
@@ -42,9 +70,9 @@ Progress is checkpointed and mirrored onto the player's ability system as Gamepl
 
 ## Project Status
 
-This is a work-in-progress solo project, not a finished game. See:
+This is a work-in-progress solo project, not a finished game. See [`Zom_Development_Document.md`](Zom_Development_Document.md) for the architecture and [`Zom_Build_Checklist.md`](Zom_Build_Checklist.md) for build status.
 
-The C++ gameplay/combat/AI scaffolding is largely in place; content authoring (State Tree assets, zombie type data, weapon/item data, UI widgets, main/pause menus) is still in progress.
+The C++ gameplay/combat/AI scaffolding is largely in place; content authoring (State Tree assets, zombie type data, weapon/item data, physical material and surface audio assets, footstep sounds, UI widgets, main/pause menus) is still in progress.
 
 ## Getting Started
 

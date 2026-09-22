@@ -17,6 +17,9 @@
 #include "Zom/AI/Payloads/ZomPerceptionEventPayload.h"
 #include "Zom/AI/Payloads/ZomCombatEventPayload.h"
 #include "Zom/Misc/ZomGameplayTags.h"
+#include "Zom/Misc/ZomLogChannels.h"
+#include "Zom/Libraries/ZomNoiseLibrary.h"
+#include "Zom/SubSystems/SurfaceAudio/Settings/ZomNoiseSettings.h"
 #include "MotionCombatSystem/Events/MCS_CombatEventBus.h"
 
 
@@ -149,6 +152,17 @@ void AZomZombieAIController::ConfigureForType(const UZombieTypeData* TypeData)
 
 	CurrentTarget.Reset();
 	LastKnownTargetLocation = FVector::ZeroVector;
+
+	// Cleared alongside the target for the same reason: a pooled zombie reactivated somewhere else must not
+	// wake up already walking towards a noise it heard in its previous life.
+	ClearHeardNoise();
+}
+
+// Called by an Investigate state once it has reached the noise and found nothing.
+void AZomZombieAIController::ClearHeardNoise()
+{
+	bHasHeardNoise = false;
+	LastHeardNoiseLocation = FVector::ZeroVector;
 }
 
 void AZomZombieAIController::PauseBrain()
@@ -209,8 +223,31 @@ void AZomZombieAIController::HandleTargetPerceptionUpdated(AActor* Actor, FAISti
 	}
 	else if (bIsHearing && Stimulus.WasSuccessfullySensed())
 	{
-		CurrentTarget = Cast<ACharacter>(Actor);
-		LastKnownTargetLocation = Stimulus.StimulusLocation;
+		// Hearing locates a noise; it does not identify a target. UAISense_Hearing does no line-of-sight or
+		// occlusion work at all (confirmed in UAISense_Hearing::Update - it is a pure distance test), so
+		// promoting the noise's instigator to CurrentTarget here would let a footstep heard through a solid
+		// wall skip Investigate and go straight to a confirmed chase, which would make stealth meaningless.
+		// The tree gets a location to investigate; only Sight and Damage confirm a target.
+		bHasHeardNoise = true;
+		LastHeardNoiseLocation = Stimulus.StimulusLocation;
+
+		// Strength and Tag are the Loudness and FName that UZomNoiseLibrary::ReportNoise passed to
+		// ReportNoiseEvent, round-tripped back by the engine - so the tree can tell a gunshot from a
+		// footstep, and how loud it was, with no extra plumbing.
+		Payload.Strength = Stimulus.Strength;
+		Payload.NoiseDistance = UZomNoiseLibrary::LoudnessToNoiseDistance(Stimulus.Strength, GetDefault<UZomNoiseSettings>()->ReferenceHearingRange);
+		Payload.NoiseTag = FGameplayTag::RequestGameplayTag(Stimulus.Tag, /*ErrorIfNotFound*/ false);
+
+		// If this is already the actor being chased, hearing it is a genuine position update. This never
+		// creates a target from nothing - it only refreshes one that Sight or Damage already established.
+		if (CurrentTarget.IsValid() && Actor == CurrentTarget.Get())
+		{
+			LastKnownTargetLocation = Stimulus.StimulusLocation;
+		}
+
+		UE_LOG(LogZomAI, Verbose, TEXT("%s heard '%s' at %s (strength %.3f, emitted radius %.0f uu)"), *GetNameSafe(GetPawn()),
+			*Stimulus.Tag.ToString(), *Stimulus.StimulusLocation.ToCompactString(), Stimulus.Strength, Payload.NoiseDistance);
+
 		StateTreeComponent->SendStateTreeEvent(TAG_Zom_Perception_Hearing_NoiseHeard.GetTag(), FConstStructView::Make(Payload));
 	}
 	else if (bIsDamage && Stimulus.WasSuccessfullySensed())

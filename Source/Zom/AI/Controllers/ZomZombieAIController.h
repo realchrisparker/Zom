@@ -80,6 +80,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Zom|AI")
 	FVector GetLastKnownTargetLocation() const { return LastKnownTargetLocation; };
 
+	// Deliberately separate from the target getters above. A heard noise is a place worth investigating, not
+	// a confirmed target - hearing does no line-of-sight check, so a noise through a wall must not read as
+	// "I can see you". An Investigate state binds to these; Chase binds to the target getters.
+	UFUNCTION(BlueprintCallable, Category = "Zom|AI")
+	bool HasHeardNoise() const { return bHasHeardNoise; };
+
+	UFUNCTION(BlueprintCallable, Category = "Zom|AI")
+	FVector GetLastHeardNoiseLocation() const { return LastHeardNoiseLocation; };
+
+	// Called by an Investigate state once it has reached the noise and found nothing, so the zombie does not
+	// keep re-investigating the same spot.
+	UFUNCTION(BlueprintCallable, Category = "Zom|AI")
+	void ClearHeardNoise();
+
 protected:
 	UFUNCTION()
 	void HandleTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
@@ -131,4 +145,9 @@ private:
 
 	// Last known location of the current target, updated on perception events. Used to back State Tree property
 	FVector LastKnownTargetLocation = FVector::ZeroVector;
+
+	// Where the last noise came from, and whether there is one outstanding. Separate from the target fields
+	// above because hearing is unoccluded: this is somewhere to go and look, not someone that has been seen.
+	FVector LastHeardNoiseLocation = FVector::ZeroVector;
+	bool bHasHeardNoise = false;
 };

@@ -14,4 +14,8 @@ class ZOM_API UZomCheatManager : public UCheatManager
 public:
 	UZomCheatManager();
 
+	// Toggles the player's noise emission rings (the Zom.Debug.Noise console variable).
+	// 0 off, 1 rings, 2 rings plus the per-step readout.
+	UFUNCTION(exec)
+	void ZomDebugNoise(int32 Enable = 1);
 };

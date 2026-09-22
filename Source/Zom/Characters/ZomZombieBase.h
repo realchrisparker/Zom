@@ -10,6 +10,7 @@
 class UZombieTypeData;
 class UZomZombieAttributeSet;
 class AZomToxicGasVolume;
+class AZomZombieAIController;
 
 
 /**
@@ -34,6 +35,10 @@ public:
 	// Getter so AZomZombieAIController doesn't hold a second reference to the same asset.
 	UFUNCTION(BlueprintPure, Category = "Zom", meta = (DisplayName = "Get Zombie Type Data"))
 	const UZombieTypeData* GetZombieTypeData() const { return ZombieTypeData; }
+
+	// Getter for the cached AI controller reference.
+	UFUNCTION(BlueprintPure, Category = "Zom", meta = (DisplayName = "Get Zombie AI Controller"))
+	AZomZombieAIController* GetZombieAIController() const { return ZombieAIController.Get(); }
 
 	// Seeds Health/MoveSpeed/AttackDamage from InTypeData and tells the possessing AZomZombieAIController to
 	// reconfigure perception for it. Called once from BeginPlay for the editor-assigned default type, and
@@ -65,7 +70,14 @@ public:
 	virtual FGameplayTag GetFactionTag_Implementation() const;
 
 protected:
+	// Game start play.
 	virtual void BeginPlay() override;
+
+	// Called when this pawn is possessed by a controller
+	virtual void PossessedBy(AController* NewController) override;
+
+	// Called when this pawn is unpossessed by its controller
+	virtual void UnPossessed() override;
 
 	virtual void HandleDeath() override;
 
@@ -98,4 +110,10 @@ protected:
 	// Spawned on death if ZombieTypeData->Category is Bloater (Section 5.3).
 	UPROPERTY(EditDefaultsOnly, Category = "Zom")
 	TSubclassOf<AZomToxicGasVolume> ToxicGasVolumeClass;
+
+private:
+	
+	// The AI controller for this zombie.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Zom", meta = (AllowPrivateAccess = "true"))
+	TWeakObjectPtr<AZomZombieAIController> ZombieAIController;
 };

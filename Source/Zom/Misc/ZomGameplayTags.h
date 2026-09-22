@@ -104,3 +104,33 @@ ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Audio_Vocal_Idle);
 ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Audio_Vocal_Hit_Light);
 ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Audio_Vocal_Hit_Heavy);
 ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Audio_Vocal_Death);
+
+// -------------
+// Audio - footsteps (keys into UZomCharacterSoundSet::Sounds like the vocals above, but chosen by the
+// surface underfoot: UZomSurfaceAudioSet maps each EPhysicalSurface to one of these, and
+// UZomCharacterNoiseComponent hands the result to PlayCharacterSoundAtLocation. The sound itself still
+// lives in the character's own sound set, so two characters can sound different on the same floor)
+// -------------
+
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Audio_Footstep_Default);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Audio_Footstep_Concrete);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Audio_Footstep_Wood);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Audio_Footstep_Metal);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Audio_Footstep_Grass);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Audio_Footstep_Dirt);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Audio_Footstep_Gravel);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Audio_Footstep_Water);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Audio_Footstep_Glass);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Audio_Footstep_Carpet);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Audio_Footstep_Tile);
+
+// -------------
+// Noise (what the AI hears, which is NOT the same thing as what the player hears - a silenced weapon is
+// loud to the player and quiet to a zombie. Passed as the FName tag of UAISense_Hearing::ReportNoiseEvent
+// by UZomNoiseLibrary::ReportNoise, and survives into FAIStimulus::Tag, so AZomZombieAIController can tell
+// a footstep from a gunshot without any extra plumbing)
+// -------------
+
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Noise_Footstep);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Noise_Gunshot);
+ZOM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Zom_Noise_Impact);

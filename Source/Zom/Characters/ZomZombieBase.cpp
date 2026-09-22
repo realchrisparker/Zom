@@ -46,6 +46,24 @@ void AZomZombieBase::BeginPlay()
 	InitializeForType(ZombieTypeData);
 }
 
+// Called when this pawn is possessed by a controller
+void AZomZombieBase::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	// Cache the player controller reference if the new controller is a player controller
+	ZombieAIController = Cast<AZomZombieAIController>(NewController);
+}
+
+// Called when this pawn is unpossessed by its controller
+void AZomZombieBase::UnPossessed()
+{
+	Super::UnPossessed();
+
+	// Clear the cached player controller reference
+	ZombieAIController = nullptr;
+}
+
 void AZomZombieBase::InitializeForType(UZombieTypeData* InTypeData)
 {
 	ZombieTypeData = InTypeData;

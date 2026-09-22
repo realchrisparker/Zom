@@ -3,6 +3,7 @@
 
 #include "Zom/Characters/ZomPlayerCharacter.h"
 #include "Zom/Characters/Components/ZomCharacterMovementComponent.h"
+#include "Zom/Characters/Components/ZomCharacterNoiseComponent.h"
 #include "MotionWarpingComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
@@ -41,6 +42,11 @@ AZomPlayerCharacter::AZomPlayerCharacter(const FObjectInitializer& ObjectInitial
 	// set in BeginPlay: bAutoRegisterAsSource and RegisterAsSourceForSenses are protected (editor-only knobs),
 	// so RegisterForSense() is the sole way to do it from C++, and it needs a world.
 	PerceptionStimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("PerceptionStimuliSource"));
+
+	// What makes this character AUDIBLE to AI, as opposed to visible. Player-only for now: zombies hearing
+	// each other is the cross-zombie alerting design (dev doc Section 5.4), which is deliberately not on the
+	// current build path, so this sits here rather than on AZomCharacterBase.
+	CharacterNoiseComponent = CreateDefaultSubobject<UZomCharacterNoiseComponent>(TEXT("CharacterNoiseComponent"));
 
 	// Starting ability - granted via DefaultAbilities (base class, GrantDefaultAbilitiesAndEffects) once the ASC
 	// is initialized. Set here as a C++ default; override per-Blueprint if needed.

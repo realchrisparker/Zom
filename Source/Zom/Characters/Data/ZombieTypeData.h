@@ -71,6 +71,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom|Perception", meta = (DisplayName = "Sight Angle Degrees"))
 	float SightAngleDegrees = 70.f;
 
+	// Doubles as this type's hearing SENSITIVITY, not just an absolute radius. Noise emitters author a radius
+	// in world units and divide it by UZomNoiseSettings::ReferenceHearingRange to get the Loudness the engine
+	// wants, so the distance a type actually hears a given noise is NoiseRadius * (HearingRadius /
+	// ReferenceHearingRange). At the reference value it hears exactly the authored radius; at double it hears
+	// twice as far; at 0 it is deaf regardless of how loud the noise was.
+	//
+	// Keep the baseline type (the Walker) equal to ReferenceHearingRange, or every debug noise ring in the
+	// game is drawn at a distance no zombie actually uses.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zom|Perception", meta = (DisplayName = "Hearing Radius"))
 	float HearingRadius = 600.f;
 
