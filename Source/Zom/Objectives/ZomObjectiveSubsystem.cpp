@@ -54,3 +54,9 @@ void UZomObjectiveSubsystem::RestoreStep(EZomObjectiveStep Step)
 		MirrorTagForStep(PriorStep);
 	}
 }
+
+void UZomObjectiveSubsystem::ResetObjectives()
+{
+	CurrentStep = EZomObjectiveStep::Fetch;
+	CompletedSteps.Reset();
+}

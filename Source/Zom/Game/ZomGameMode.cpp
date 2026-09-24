@@ -5,6 +5,7 @@
 #include "Zom/Characters/ZomPlayerCharacter.h"
 #include "Zom/Characters/ZomPlayerController.h"
 #include "Zom/Levels/ZomCheckpoint.h"
+#include "Zom/Game/ZomGameInstance.h"
 #include "Zom/Game/ZomGameSession.h"
 #include "Zom/Game/ZomGameState.h"
 #include "Zom/Game/ZomHUD.h"
@@ -19,8 +20,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "AbilitySystemComponent.h"
 
-
-const FString AZomGameMode::SaveSlotName = TEXT("ZomSaveSlot");
 
 AZomGameMode::AZomGameMode()
 {
@@ -42,19 +41,19 @@ void AZomGameMode::InitGame(const FString& MapName, const FString& Options, FStr
 {
 	Super::InitGame(MapName, Options, ErrorMessage);
 
-	if (UGameplayStatics::DoesSaveGameExist(SaveSlotName, 0))
+	if (UZomGameInstance* ZomGameInstance = GetGameInstance<UZomGameInstance>())
 	{
-		LoadedSaveGame = Cast<UZomSaveGame>(UGameplayStatics::LoadGameFromSlot(SaveSlotName, 0));
+		LoadedSaveGame = ZomGameInstance->GetLoadedSave();
 	}
+
+	CurrentCheckpointID = LoadedSaveGame ? LoadedSaveGame->CheckpointID : EZomCheckpointID::Entry;
 }
 
 AActor* AZomGameMode::ChoosePlayerStart_Implementation(AController* Player)
 {
-	const EZomCheckpointID TargetCheckpointID = LoadedSaveGame ? LoadedSaveGame->CheckpointID : EZomCheckpointID::Entry;
-
 	for (TActorIterator<AZomCheckpoint> It(GetWorld()); It; ++It)
 	{
-		if (It->CheckpointID == TargetCheckpointID)
+		if (It->CheckpointID == CurrentCheckpointID)
 		{
 			return *It;
 		}

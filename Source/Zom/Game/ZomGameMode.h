@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "Zom/Game/ZomCheckpointEnums.h"
 #include "ZomGameMode.generated.h"
 
 
@@ -18,14 +19,23 @@ class ZOM_API AZomGameMode : public AGameModeBase
 public:
 	AZomGameMode();
 
+	// The checkpoint a save made now would resume from - seeded from the loaded save (or Entry) and advanced by
+	// SetCurrentCheckpoint as the player reaches checkpoints. Read by UZomGameInstance::SaveCurrentState.
+	UFUNCTION(BlueprintPure, Category = "Zom|Save")
+	EZomCheckpointID GetCurrentCheckpointID() const { return CurrentCheckpointID; }
+
+	UFUNCTION(BlueprintCallable, Category = "Zom|Save")
+	void SetCurrentCheckpoint(EZomCheckpointID CheckpointID) { CurrentCheckpointID = CheckpointID; }
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	// Loads the save slot before ChoosePlayerStart_Implementation runs, since checkpoint selection depends on it.
+	// Loads the save slot (via UZomGameInstance) before ChoosePlayerStart_Implementation runs, since checkpoint
+	// selection depends on it.
 	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
 
-	// Selects the AZomCheckpoint matching the loaded save's CheckpointID (Entry if no save exists).
+	// Selects the AZomCheckpoint matching CurrentCheckpointID (the loaded save's, or Entry if no save exists).
 	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
 
 	// Reapplies saved Health/Stamina (via a Gameplay Effect, not a direct attribute write) and resumes
@@ -33,8 +43,8 @@ protected:
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
 private:
-	static const FString SaveSlotName;
-
 	UPROPERTY()
 	TObjectPtr<UZomSaveGame> LoadedSaveGame;
+
+	EZomCheckpointID CurrentCheckpointID = EZomCheckpointID::Entry;
 };

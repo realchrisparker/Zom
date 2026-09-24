@@ -4,6 +4,8 @@
 #include "Zom/Characters/ZomPlayerController.h"
 #include "Zom/Characters/ZomPlayerCharacter.h"
 #include "Zom/Characters/Enums/ZomCharacterEnums.h"
+#include "Zom/Game/ZomHUD.h"
+#include "Zom/Settings/ZomGameUserSettings.h"
 #include "Zom/Abilities/GA/Base/ZomGameplayAbilityBase.h"
 #include "AbilitySystemComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -108,6 +110,10 @@ void AZomPlayerController::SetupInputComponent()
     {
         EnhancedInputComponent->BindAction(IA_Parry, ETriggerEvent::Started, this, &AZomPlayerController::Input_Parry);
     }
+    if (IA_PauseMenu)
+    {
+        EnhancedInputComponent->BindAction(IA_PauseMenu, ETriggerEvent::Started, this, &AZomPlayerController::Input_Pause);
+    }
     if (IA_RangedShoot)
     {
         // EnhancedInputComponent->BindAction(IA_RangedShoot, ETriggerEvent::Started, this, &AZomPlayerController::ActivateAbilityByClass, RangedShootAbilityClass);
@@ -150,7 +156,16 @@ void AZomPlayerController::Input_Look(const FInputActionValue& Value)
         return;
     }
 
-    const FVector2D LookAxisVector = Value.Get<FVector2D>();
+    FVector2D LookAxisVector = Value.Get<FVector2D>();
+
+    if (const UZomGameUserSettings* Settings = UZomGameUserSettings::Get())
+    {
+        LookAxisVector *= Settings->LookSensitivity;
+        if (Settings->bInvertLookY)
+        {
+            LookAxisVector.Y = -LookAxisVector.Y;
+        }
+    }
 
     PlayerCharacter->AddControllerYawInput(LookAxisVector.X);
     PlayerCharacter->AddControllerPitchInput(LookAxisVector.Y);
@@ -304,6 +319,14 @@ void AZomPlayerController::Input_Parry()
             CombatDefense->PerformDefense(EMCS_DefenseIntent::Parry, Attacker);
             CombatDefense->TryParry();
         }
+    }
+}
+
+void AZomPlayerController::Input_Pause()
+{
+    if (AZomHUD* ZomHUD = GetHUD<AZomHUD>())
+    {
+        ZomHUD->ShowPauseMenu();
     }
 }
 

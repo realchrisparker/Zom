@@ -44,6 +44,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Zom|Objectives")
 	void RestoreStep(EZomObjectiveStep Step);
 
+	// Clears all progress back to the first step, for New Game. The subsystem outlives level travel, so without
+	// this a new run would inherit the previous run's CompletedSteps. Tags need no clearing - the next level
+	// spawns a fresh pawn/ASC.
+	UFUNCTION(BlueprintCallable, Category = "Zom|Objectives")
+	void ResetObjectives();
+
 private:
 	void MirrorTagForStep(EZomObjectiveStep Step) const;
 	static FGameplayTag GetCompletionTagForStep(EZomObjectiveStep Step);

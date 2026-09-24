@@ -38,6 +38,12 @@ public class Zom : ModuleRules
 			"DrawDebugLibrary",
 			"CustomizableObject",
 			"UMG",
+			"CommonUI",
+			"CommonInput",
+			"AudioModulation",
+			"MoviePlayer",
+			"RenderCore",
+			"RHI",
 			"MotionCombatSystem"
 		});
 

@@ -110,6 +110,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Zom|Input")
 	TObjectPtr<UInputAction> IA_Shove;
 
+	// Opens AZomHUD's pause menu. Closing it is CommonUI's Back action, not this - menus take UI-only input.
+	UPROPERTY(EditDefaultsOnly, Category = "Zom|Input")
+	TObjectPtr<UInputAction> IA_PauseMenu;
+
 	// // -------------
 	// // Ability Classes
 	// // -------------
@@ -153,6 +157,7 @@ private:
 	void Input_HeavyAttack();
 	void Input_Dodge();
 	void Input_Parry();
+	void Input_Pause();
 	// void Input_RangedShoot();
 	// void Input_Reload();
 	// void Input_Shove();
